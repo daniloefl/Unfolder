@@ -9,8 +9,7 @@ import matplotlib.pyplot as plt
 
 theano.config.compute_test_value = 'warn'
 
-class dfu:
-
+class Unfolder:
   # Constructor of unfolding class
   # bkg is a list or array with the contents of the background histogram
   # mig is a 2D array such that mig[i, j] contains the number of events in bin i at truth level

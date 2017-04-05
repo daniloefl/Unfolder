@@ -1,6 +1,7 @@
+#!/usr/bin/env python
 
 import itertools
-from dfu import dfu
+from Unfolder import Unfolder
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns 
@@ -158,7 +159,7 @@ for i in range(0, len(hreco)): hdata[i] += hreco[i]
 
 
 # Create unfolding class
-m = dfu(hbkg, hmig, heff)
+m = Unfolder(hbkg, hmig, heff)
 m.prior = "uniform"
 #m.prior = "gaussian"
 
