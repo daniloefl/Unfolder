@@ -34,7 +34,7 @@ htruth, hreco, hbkg, hmig, hnrt, heff = makeHistograms(tr, bkg, x)
 
 # plot migration matrix as it will be used next for unfolding
 if makeDebugPlots:
-  plotMigrations(hmig.T, x, "Number of events for each (reco, truth) configuration", extension)
+  plotMigrations(hmig.T, x, "Number of events for each (reco, truth) configuration", "prt", extension)
 
 # plot the truth, reco and bkg histograms as they will be received by the unfolding
 # code
