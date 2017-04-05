@@ -7,7 +7,7 @@ import seaborn as sns
 import numpy as np
 import pymc3 as pm
 sns.set(color_codes=True)
-sns.set(font_scale=1.2)
+sns.set(font_scale=1.3)
 import matplotlib.cm as cm
 
 makeDebugPlots = True
@@ -157,8 +157,19 @@ for i in range(0, len(hbkg)): hdata[i] += hbkg[i]
 for i in range(0, len(hreco)): hdata[i] += hreco[i]
 
 
-# unfold
-m = dfu(hbkg, hdata, hmig, heff)
+# Create unfolding class
+m = dfu(hbkg, hmig, heff)
+
+# double check that the truth calculated in the unfolding class
+# using hmig is the same as the one we estimated directly before
+fig = plt.figure(figsize=(10, 10))
+plt.errorbar(x[:-1]+x_err[:-1], m.truth, np.zeros(len(m.truth)), x_err[:-1], fmt = 'ro', markersize=10, label="Truth from response matrix projection")
+plt.errorbar(x[:-1]+x_err[:-1], htruth, np.zeros(len(htruth)), x_err[:-1], fmt = 'bv', markersize=5, label = "Truth from histogram of data")
+plt.legend()
+plt.xlabel("Truth observable")
+plt.ylabel("Events")
+plt.savefig("crossCheckTruth.png")
+plt.close()
 
 # plot response matrix P(r|t)*eff(r)
 plotMigrations(m.response.T, x, "Response matrix P(r|t)*eff(t)", "responseMatrix")
@@ -168,7 +179,7 @@ plotMigrations(m.response_noeff.T, x, "Migration probabilities P(r|t)", "migrati
 #print "TEST"
 #m.test()
 #print "END OF TEST"
-m.run()
+m.run(hdata)
 m.sample(20000)
 
 # plot marginal distributions
@@ -183,21 +194,5 @@ plt.close()
 #pm.forestplot(m.trace, varnames=['Truth'], main="Truth")
 
 # plot unfolded spectrum
-fig = plt.figure(figsize=(10, 10))
-plt.errorbar(x[:-1]+x_err[:-1], hdata, np.sqrt(hdata), x_err[:-1], fmt = 'bs', linewidth=2, label = "Pseudo-data", markersize=5)
-plt.errorbar(x[:-1]+x_err[:-1], hreco, np.sqrt(hreco), x_err[:-1], fmt = 'co', linewidth=2, label = "Background subtracted", markersize=5)
-plt.errorbar(x[:-1]+x_err[:-1], m.hunf_mode, m.hunf_err, x_err[:-1], fmt = 'r^', linewidth=2, label = "Unfolded mode")
-plt.errorbar(x[:-1]+x_err[:-1], htruth, np.sqrt(htruth), x_err[:-1], fmt = 'gv', linewidth=2, label = "Truth", markersize=10)
-plt.errorbar(x[:-1]+x_err[:-1], m.hunf, m.hunf_err, x_err[:-1], fmt = 'rv', linewidth=2, label = "Unfolded mean", markersize=5)
-plt.legend()
-plt.ylabel("Events")
-plt.xlabel("Observable")
-plt.tight_layout()
-
-if showPlots:
-  plt.show()
-plt.savefig('%s.%s' % ("plotUnfolded", extension))
-plt.close()
-
-
+m.plotUnfolded(x, x_err, "plotUnfolded.png")
 
