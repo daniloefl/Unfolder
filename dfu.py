@@ -92,7 +92,7 @@ class dfu:
     with self.model:         # all in this scope is in the model's context
       # Define the prior
       if self.prior == "gaussian":
-        self.T = pm.Normal('Truth', mu = self.truth, sd = np.sqrt(self.truth), shape = (Nt))
+        self.T = pm.Normal('Truth', mu = self.truth, sd = np.sqrt(self.truth), shape = (self.Nt))
       else: # if none of the names above matched, assume it is uniform
         self.T = pm.Uniform('Truth', 0.0, 10*max(self.truth), shape = (self.Nt))
       self.var_bkg = theano.shared(value = self.asMat(self.bkg))

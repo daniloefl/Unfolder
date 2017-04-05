@@ -159,6 +159,8 @@ for i in range(0, len(hreco)): hdata[i] += hreco[i]
 
 # Create unfolding class
 m = dfu(hbkg, hmig, heff)
+m.prior = "uniform"
+#m.prior = "gaussian"
 
 # double check that the truth calculated in the unfolding class
 # using hmig is the same as the one we estimated directly before
