@@ -33,3 +33,54 @@ After this, running the following should run a test unfolding:
 ```
 
 
+# Usage
+
+Given a background histogram to be subtracted ```bkg```; a matrix ```mig``` with counts in its element ```mig[i, j]```
+how many events are expected to have been renerated in particle-level bin ```i``` and reconstructed-level bin ```j```;
+and an efficiency histogram ```eff```, which has in each entry ```i```
+(1 - (# events in truth bin ```i``` that fails reconstruction)/(# events in truth bin ```i```));
+we can build the unfolding model as follows:
+
+```
+model = Unfolder(bkg, mig, eff)
+model.prior = "uniform"             # For a uniform prior
+#model.prior = "gaussian"           # For a Gaussian prior with means at the truth bins
+                                    # and width in each bin given by sqrt(truth)
+```
+
+The response matrix P(reco = j|truth = i)*efficiency(i) is now stored in ```model.response```.
+For convenience, the same matrix without the efficiency multiplication is stored in ```model.response_noeff```.
+
+The statistical model can be prepared for a given input data as follows:
+
+```
+model.run(data)
+```
+
+Afterwards, one can draw samples to find the posterior as follows:
+
+```
+model.sample(20000)
+```
+
+The toy ```k``` produced in the trith bin ```i``` are stored in ```model.trace.Truth[k, i]```. So you can see
+the distribution of the posterior marginalized for bin ```i``` by plotting:
+
+```
+plt.figure()
+sns.distplot(model.trace.Truth[:, i], kde = True, hist = True, label = "Posterior histogram marginalized in bin %d" %i)
+plt.legend()
+plt.show()
+```
+
+If you are only interested in the means of the posterior marginalized in each bin, you can plot it to compare it with
+the truth distribution as follows:
+
+```
+model.plotUnfolded(x, x_err, "plotUnfolded.png")
+```
+
+Here, ```x``` are the X axis entries for the plot and ```x_err``` are the half-width of the X axis bins for cosmetic
+reasons.
+
+

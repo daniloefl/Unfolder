@@ -4,11 +4,14 @@ import numpy as np
 import seaborn as sns 
 import theano
 import theano.tensor
-
 import matplotlib.pyplot as plt
 
 theano.config.compute_test_value = 'warn'
 
+'''
+Shows reference for Full Bayesian Unfolding to encourage people to give credit for the original
+work (which is not mine!).
+'''
 def printReferences():
   print "This software has been produced using the ideas put forth in:"
   print "Choudalakis, G., ``Fully Bayesian Unfolding'', physics.data-an:1201.4612, https://arxiv.org/abs/1201.4612"
@@ -18,13 +21,19 @@ def printReferences():
 
 printReferences()
 
+'''
+Class that uses Fully Bayesian Unfolding to
+unfold a distribution using NUTS to sample the prior distribution.
+'''
 class Unfolder:
-  # Constructor of unfolding class
-  # bkg is a list or array with the contents of the background histogram
-  # mig is a 2D array such that mig[i, j] contains the number of events in bin i at truth level
-  #        that are reconstructed in bin j at reco level
-  # eff is a list or array with the contents of the efficiency histogram, defined as:
-  #        eff[i] = (1 - (# events in truth bin i that fail reco)/(# events in truth bin i))
+  '''
+  Constructor of unfolding class
+  bkg is a list or array with the contents of the background histogram
+  mig is a 2D array such that mig[i, j] contains the number of events in bin i at truth level
+         that are reconstructed in bin j at reco level
+  eff is a list or array with the contents of the efficiency histogram, defined as:
+         eff[i] = (1 - (# events in truth bin i that fail reco)/(# events in truth bin i))
+  '''
   def __init__(self, bkg, mig, eff):
     self.bkg = bkg         # background
     self.Nr = mig.shape[1] # number of reco bins
@@ -61,12 +70,16 @@ class Unfolder:
       self.reco[j] = tsum         # reco dist(j) = P(r=j and it is in truth)
     self.prior = "uniform"
 
-  # Transforms an array of doubles into a Theano-type array
-  # So that it can be used in the model
+  '''
+  Transforms an array of doubles into a Theano-type array
+  So that it can be used in the model
+  '''
   def asMat(self, x):
     return np.asarray(x,dtype=theano.config.floatX)
 
-  # Test to debug the model building
+  '''
+  Test to debug the model building
+  '''
   def test(self):
     var_bkg = theano.shared(value = self.asMat(self.bkg))
     var_bkg.reshape((len(self.bkg), 1))
@@ -87,13 +100,15 @@ class Unfolder:
     test.extend([0.]*(len(self.bkg)-1))
     print "f:", f(test)
 
-  # Create the model
-  # and store it in self.model
-  # the prior is the unfolded distribution
-  # The idea is that the prior is sampled with toy experiments and the
-  # reconstructed variable R_j = \sum_i truth_i * response_ij + background_j
-  # is constrained to be the observed data
-  # under such conditions, the posterior converges to the unfolded distribution
+  '''
+  Create the model
+  and store it in self.model
+  the prior is the unfolded distribution
+  The idea is that the prior is sampled with toy experiments and the
+  reconstructed variable R_j = \sum_i truth_i * response_ij + background_j
+  is constrained to be the observed data
+  under such conditions, the posterior converges to the unfolded distribution
+  '''
   def run(self, data):
     self.data = data         # copy data
     self.model = pm.Model()  # create the model
@@ -109,10 +124,12 @@ class Unfolder:
       self.R = theano.tensor.dot(self.T, self.var_response) + self.var_bkg
       self.U = pm.Poisson('U', mu = self.R, observed = self.data, shape = (self.Nr, 1))
 
-  # Samples the prior with N toy experiments
-  # Saves the toys in self.trace, the unfolded
-  # distribution mean and mode in self.hunf and self.hunf_mode respectively
-  # the sqrt of the variance in self.hunf_err
+  '''
+  Samples the prior with N toy experiments
+  Saves the toys in self.trace, the unfolded
+  distribution mean and mode in self.hunf and self.hunf_mode respectively
+  the sqrt of the variance in self.hunf_err
+  '''
   def sample(self, N = 100000):
     with self.model:
       start = pm.find_MAP()
@@ -129,8 +146,10 @@ class Unfolder:
         self.hunf_mode[i] = stats.mode(self.trace.Truth[:, i])[0][0]
         self.hunf_err[i] = np.std(self.trace.Truth[:, i])
 
-  # Plot the distributions for each bin regardless of the other bins
-  # Marginalizing each bin's PDF
+  '''
+  Plot the distributions for each bin regardless of the other bins
+  Marginalizing each bin's PDF
+  '''
   def plotMarginal(self, fname):
     fig = plt.figure(figsize=(10, 20))
     for i in range(0, len(self.data)):
@@ -143,7 +162,9 @@ class Unfolder:
     plt.savefig("%s"%fname)
     plt.close()
 
-  # Plot data, truth, reco and unfolded result
+  '''
+  Plot data, truth, reco and unfolded result
+  '''
   def plotUnfolded(self, x, x_err, fname = "plotUnfolded.png"):
     fig = plt.figure(figsize=(10, 10))
     plt.errorbar(x[:-1]+x_err[:-1], self.data, np.sqrt(self.data), x_err[:-1], fmt = 'bs', linewidth=2, label = "Pseudo-data", markersize=5)
