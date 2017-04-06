@@ -42,10 +42,13 @@ and an efficiency histogram ```eff```, which has in each entry ```i```
 we can build the unfolding model as follows:
 
 ```
-model = Unfolder(bkg, mig, eff)
-model.prior = "uniform"             # For a uniform prior
-#model.prior = "gaussian"           # For a Gaussian prior with means at the truth bins
+model = Unfolder(bkg, mig, eff)     # Call the constructor to initialise the model parameters
+model.setUniformPrior()             # Using a uniform prior is the default
+#model.setGaussianPrior()           # For a Gaussian prior with means at the truth bins
                                     # and width in each bin given by sqrt(truth)
+#model.setGaussianPrior(mean, sd)   # If vectors (with the size of the truth distribution number of bins)
+                                    # are given, they will be used as the means and widths of the Gaussians
+                                    # bin-by-bin, instead of the defaults
 ```
 
 The response matrix P(reco = j|truth = i)*efficiency(i) is now stored in ```model.response```.

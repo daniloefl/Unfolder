@@ -69,6 +69,29 @@ class Unfolder:
         tsum += self.mig[i, j]    # calculate the sum of all truth bins in the same reco bin
       self.reco[j] = tsum         # reco dist(j) = P(r=j and it is in truth)
     self.prior = "uniform"
+    self.priorAttributes = {}
+
+  '''
+  Use a Gaussian prior with bin-by-bin width given by widths and mean given by means.
+  If either widths or means is set to None, the truth distribution is used with
+  widths given by the square root of the bin contents.
+  '''
+  def setGaussianPrior(widths = None, means = None):
+    if means == None:
+      self.priorAttributes['mean'] = self.truth[:]
+    else:
+      self.priorAttributes['mean'] = means[:]
+    if widths == None:
+      self.priorAttributes['sd'] = np.sqrt(self.truth[:])
+    else:
+      self.priorAttributes['sd'] = widths[:]
+    self.prior = "gaussian"
+
+  '''
+  Set a uniform prior.
+  '''
+  def setUniformPrior():
+    self.prior = "uniform"
 
   '''
   Transforms an array of doubles into a Theano-type array
@@ -115,7 +138,7 @@ class Unfolder:
     with self.model:         # all in this scope is in the model's context
       # Define the prior
       if self.prior == "gaussian":
-        self.T = pm.Normal('Truth', mu = self.truth, sd = np.sqrt(self.truth), shape = (self.Nt))
+        self.T = pm.Normal('Truth', mu = self.priorAttributes['mean'], sd = self.priorAttributes['sd'], shape = (self.Nt))
       else: # if none of the names above matched, assume it is uniform
         self.T = pm.Uniform('Truth', 0.0, 10*max(self.truth), shape = (self.Nt))
       self.var_bkg = theano.shared(value = self.asMat(self.bkg))
