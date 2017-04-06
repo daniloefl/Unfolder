@@ -209,11 +209,23 @@ class H2D:
   '''
   Multiply histogram by a scalar.
   '''
-  def __matmul__(self, other):
+  def __mul__(self, other):
     h = H2D(self)
     if isinstance(other, H1D): raise 'Can only multiply histograms with scalars'
-    for i in range(0, other.x.shape[0]):
-      for j in range(0, other.x.shape[1]):
+    for i in range(0, h.val.shape[0]):
+      for j in range(0, h.val.shape[1]):
+        h.val[i,j] *= other
+        h.err[i,j] *= other**2
+    return h
+
+  '''
+  Multiply histogram by a scalar.
+  '''
+  def __rmul__(self, other):
+    h = H2D(self)
+    if isinstance(other, H1D): raise 'Can only multiply histograms with scalars'
+    for i in range(0, h.val.shape[0]):
+      for j in range(0, h.val.shape[1]):
         h.val[i,j] *= other
         h.err[i,j] *= other**2
     return h

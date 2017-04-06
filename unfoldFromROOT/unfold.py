@@ -35,8 +35,8 @@ data = reco + bkg
 
 # Create unfolding class
 m = Unfolder(bkg, mig, eff)
-#m.setUniformPrior()
-m.setGaussianPrior()
+m.setUniformPrior()
+#m.setGaussianPrior()
 
 # plot response matrix P(r|t)*eff(r)
 plotH2D(m.response.T(), "Particle-level bin", "Reconstructed-level bin", "Response matrix P(r|t)*eff(t)", "responseMatrix", extension)
@@ -44,7 +44,7 @@ plotH2D(m.response.T(), "Particle-level bin", "Reconstructed-level bin", "Respon
 plotH2D(m.response_noeff.T(), "Particle-level bin", "Reconstructed-level bin", "Migration probabilities P(r|t)", "migrationMatrix", extension)
 
 m.run(data)
-m.sample(20000)
+m.sample(100000)
 
 # plot marginal distributions
 m.plotMarginal("plotMarginal.%s" % extension)
