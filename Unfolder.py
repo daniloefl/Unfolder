@@ -9,6 +9,15 @@ import matplotlib.pyplot as plt
 
 theano.config.compute_test_value = 'warn'
 
+def printReferences():
+  print "This software has been produced using the ideas put forth in:"
+  print "Choudalakis, G., ``Fully Bayesian Unfolding'', physics.data-an:1201.4612, https://arxiv.org/abs/1201.4612"
+  print "Please cite it if you plan to publish this."
+  print "More information on the software itself can be found in https://github.com/daniloefl/Unfolder"
+  print ""
+
+printReferences()
+
 class Unfolder:
   # Constructor of unfolding class
   # bkg is a list or array with the contents of the background histogram
