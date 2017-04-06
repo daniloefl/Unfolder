@@ -76,7 +76,7 @@ class Unfolder:
   If either widths or means is set to None, the truth distribution is used with
   widths given by the square root of the bin contents.
   '''
-  def setGaussianPrior(widths = None, means = None):
+  def setGaussianPrior(self, widths = None, means = None):
     if means == None:
       self.priorAttributes['mean'] = self.truth[:]
     else:
@@ -90,7 +90,7 @@ class Unfolder:
   '''
   Set a uniform prior.
   '''
-  def setUniformPrior():
+  def setUniformPrior(self):
     self.prior = "uniform"
 
   '''
