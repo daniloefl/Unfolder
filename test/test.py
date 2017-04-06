@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 
 import itertools
-from Unfolder import Unfolder
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns 
 import numpy as np
 import pymc3 as pm
 import matplotlib.cm as cm
+
+from Unfolder import Unfolder
 
 from utils import *
 
@@ -52,7 +53,7 @@ for i in range(0, len(hreco)): hdata[i] += hreco[i]
 
 
 # Create unfolding class
-m = Unfolder(hbkg, hmig, heff)
+m = Unfolder.Unfolder(hbkg, hmig, heff)
 m.setUniformPrior()
 #m.setGaussianPrior()
 
