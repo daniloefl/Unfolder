@@ -40,17 +40,21 @@ Given a background histogram to be subtracted ```bkg```; a matrix ```mig``` with
 how many events are expected to have been renerated in particle-level bin ```i``` and reconstructed-level bin ```j```;
 and an efficiency histogram ```eff```, which has in each entry ```i```
 (1 - (# events in truth bin ```i``` that fails reconstruction)/(# events in truth bin ```i```));
-we can build the unfolding model as follows:
+we can build the unfolding model as follows.
+Including the truth original histogram is optional, as it can be calculated from the matrix ```mig```,
+however, in such cases the error bars of the truth histogram are not guaranteed to be correct (one
+needs to know the correlation between the truth events and the one that pass simultaneously
+truth and reco to estimate the truth histogram from the efficiency and the migration matrix).
 
 ```
 #from Unfolder import Unfolder
-model = Unfolder.Unfolder(bkg, mig, eff)  # Call the constructor to initialise the model parameters
-model.setUniformPrior()                   # Using a uniform prior is the default
-#model.setGaussianPrior()                 # For a Gaussian prior with means at the truth bins
-                                          # and width in each bin given by sqrt(truth)
-#model.setGaussianPrior(mean, sd)         # If vectors (with the size of the truth distribution number of bins)
-                                          # are given, they will be used as the means and widths of the Gaussians
-                                          # bin-by-bin, instead of the defaults
+model = Unfolder.Unfolder(bkg, mig, eff, truth)  # Call the constructor to initialise the model parameters
+model.setUniformPrior()                          # Using a uniform prior is the default
+#model.setGaussianPrior()                        # For a Gaussian prior with means at the truth bins
+                                                 # and width in each bin given by sqrt(truth)
+#model.setGaussianPrior(mean, sd)                # If vectors (with the size of the truth distribution number of bins)
+                                                 # are given, they will be used as the means and widths of the Gaussians
+                                                 # bin-by-bin, instead of the defaults
 ```
 
 The response matrix P(reco = j|truth = i)*efficiency(i) is now stored in ```model.response```.
@@ -82,10 +86,15 @@ If you are only interested in the means of the posterior marginalized in each bi
 the truth distribution as follows:
 
 ```
-model.plotUnfolded(x, x_err, "plotUnfolded.png")
+model.plotUnfolded("plotUnfolded.png")
 ```
 
-Here, ```x``` are the X axis entries for the plot and ```x_err``` are the half-width of the X axis bins for cosmetic
-reasons.
+The software also comes with two histogram classes: H1D and H2D, as well as plotting functions for them, plotH1D and
+plotH2D.
+Internally, all information is stored using those classes to guarantee that error propagation is done correctly.
+You can also send the inputs to the software using those classes. They have the advantage to also be able to read
+a ROOT TH1 or TH2 histogram. An example on how to do the analysis from a ROOT file is shown in
+unfoldFromROOT/unfold.py .
+
 
 
