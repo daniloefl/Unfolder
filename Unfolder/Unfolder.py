@@ -7,6 +7,7 @@ import theano
 import theano.tensor
 import matplotlib.pyplot as plt
 from Histogram import H1D, H2D, plotH1D, plotH2D
+from scipy import stats
 
 theano.config.compute_test_value = 'warn'
 
@@ -141,7 +142,6 @@ class Unfolder:
       self.trace = pm.sample(N, step, start = start)
       pm.summary(self.trace)
 
-      from scipy import stats
       self.hunf = H1D(self.truth)
       self.hunf_mode = H1D(self.truth)
       for i in range(0, self.Nt):
@@ -196,7 +196,7 @@ class Unfolder:
   def plotSkewness(self, fname, extension = "png"):
     fig = plt.figure(figsize=(10, 10))
     sk = H1D(self.recoWithoutFakes)
-    sk.val = scipy.stats.skew(self.trace.Truth, axis = 0, bias = False)
+    sk.val = stats.skew(self.trace.Truth, axis = 0, bias = False)
     sk.err = np.zeros(len(sk.val))
     plotH1D(sk, "Particle-level observable", "Skewness", "Skewness of the distribution after unfolding", fname, extension)
 

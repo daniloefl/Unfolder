@@ -62,13 +62,16 @@ m.sample(100000)
 m.plotMarginal("plotMarginal.%s" % extension)
 
 # plot correlations
-m.plotPairs("pairPlot.%s" % extension)
+#m.plotPairs("pairPlot.%s" % extension)
 m.plotCov("covPlot", extension)
 m.plotCorr("corrPlot", extension)
 m.plotSkewness("skewPlot", extension)
 
 print "Mean of unfolded data:"
-print np.mean(m.trace.Truth)
+print np.mean(m.trace.Truth, axis = 0)
+
+print "Sqrt of variance of unfolded data:"
+print np.std(m.trace.Truth, axis = 0)
 
 print "Skewness of unfolded data:"
 print scipy.stats.skew(m.trace.Truth)

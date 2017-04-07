@@ -104,7 +104,7 @@ class H1D:
   def overBinWidth(self):
     h = H1D(self)
     for i in range(0, len(self.x)):
-      f = self.x_err*2.0
+      f = self.x_err[i]*2.0
       h.err[i] = h.err[i]/f**2
       h.val[i] /= f
     return h
