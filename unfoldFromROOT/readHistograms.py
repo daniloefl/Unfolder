@@ -12,7 +12,7 @@ Read unfolding factors from a ROOT file
 def getHistograms(fname = "out_ttallhad_psrw_Syst.root", direc = "nominal"):
   L = luminosity
   f = ROOT.TFile.Open(fname)
-  truth = L*H1D(f.Get("%s/%s" % (direc, "unfoldPart_mttCoarse_cat2b2HTTmasscut")))
+  truth = L*H1D(f.Get("%s/%s" % (direc, "unfoldPart_mttCoarse")))
   recoWithFakes = L*H1D(f.Get("%s/%s" % (direc, "unfoldReco_mttCoarse_cat2b2HTTmasscut")))
   # input assumed to have reco in X axis and truth in Y, so transpose it to the truth in X axis convention
   mig = L*H2D(f.Get("%s/%s" % (direc, "unfoldMigRecoPart_mttCoarse_cat2b2HTTmasscut"))).T()

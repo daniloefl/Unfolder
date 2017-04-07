@@ -209,7 +209,7 @@ class Unfolder:
     plt.errorbar(self.datasubbkg.x, self.datasubbkg.val, self.datasubbkg.err**0.5, self.datasubbkg.x_err, fmt = 'co', linewidth=2, label = "Background subtracted", markersize=10)
     plt.errorbar(self.recoWithoutFakes.x, self.recoWithoutFakes.val, self.recoWithoutFakes.err**0.5, self.recoWithoutFakes.x_err, fmt = 'mv', linewidth=2, label = "Expected signal (no fakes) distribution", markersize=5)
     plt.errorbar(self.hunf_mode.x, self.hunf_mode.val, self.hunf_mode.err**0.5, self.hunf_mode.x_err, fmt = 'r^', linewidth=2, label = "Unfolded mode", markersize = 5)
-    plt.errorbar(self.truth.x, self.truth.val, self.truth.err**0.5, self.truth.x_err, fmt = 'gv', linewidth=2, label = "Truth", markersize=10)
+    plt.errorbar(self.truth.x, self.truth.val, self.truth.err**0.5, self.truth.x_err, fmt = 'g^', linewidth=2, label = "Truth", markersize=10)
     plt.errorbar(self.hunf.x, self.hunf.val, self.hunf.err**0.5, self.hunf.x_err, fmt = 'rv', linewidth=2, label = "Unfolded mean", markersize=5)
     plt.legend()
     plt.ylabel("Events")
@@ -224,10 +224,11 @@ class Unfolder:
   '''
   def plotOnlyUnfolded(self, f = 1.0, normaliseByBinWidth = True, units = "fb", fname = "plotOnlyUnfolded.png"):
     fig = plt.figure(figsize=(10, 10))
-    expectedCs = f*self.recoWithoutFakes
+    expectedCs = f*self.truth
     observedCs = f*self.hunf
-    expectedCs = expectedCs.overBinWidth()
-    observedCs = observedCs.overBinWidth()
+    if normaliseByBinWidth:
+      expectedCs = expectedCs.overBinWidth()
+      observedCs = observedCs.overBinWidth()
     plt.errorbar(expectedCs.x, expectedCs.val, expectedCs.err**0.5, expectedCs.x_err, fmt = 'g^', linewidth=2, label = "Truth", markersize=10)
     plt.errorbar(observedCs.x, observedCs.val, observedCs.err**0.5, observedCs.x_err, fmt = 'rv', linewidth=2, label = "Unfolded mean", markersize=5)
     plt.legend()

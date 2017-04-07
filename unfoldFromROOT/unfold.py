@@ -82,5 +82,5 @@ print np.cov(m.trace.Truth, rowvar = False)
 
 # plot unfolded spectrum
 m.plotUnfolded("plotUnfolded.png")
-m.plotOnlyUnfolded(luminosity, True, "fb/GeV", "plotOnlyUnfolded.png")
+m.plotOnlyUnfolded(luminosity*1e3, True, "fb/GeV", "plotOnlyUnfolded.png")
 
