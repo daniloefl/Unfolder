@@ -37,16 +37,21 @@ class H1D:
   Load a 1D histogram from ROOT.
   '''
   def loadFromROOT(self, rootObj):
-    self.val   = np.zeros(rootObj.GetNbinsX()+2, dtype = np.float64)
-    self.err   = np.zeros(rootObj.GetNbinsX()+2, dtype = np.float64)
-    self.x     = np.zeros(rootObj.GetNbinsX()+2, dtype = np.float64)
-    self.x_err = np.zeros(rootObj.GetNbinsX()+2, dtype = np.float64)
-    for i in range(0, rootObj.GetNbinsX()+2):
-      self.val[i]   = rootObj.GetBinContent(i)
-      self.err[i]   = rootObj.GetBinError(i)**2
-      self.x[i]     = rootObj.GetXaxis().GetBinCenter(i)
-      self.x_err[i] = rootObj.GetXaxis().GetBinWidth(i)*0.5
-    
+    self.val   = np.zeros(rootObj.GetNbinsX(), dtype = np.float64)
+    self.err   = np.zeros(rootObj.GetNbinsX(), dtype = np.float64)
+    self.x     = np.zeros(rootObj.GetNbinsX(), dtype = np.float64)
+    self.x_err = np.zeros(rootObj.GetNbinsX(), dtype = np.float64)
+    for i in range(0, rootObj.GetNbinsX()):
+      self.val[i]   = rootObj.GetBinContent(i+1)
+      self.err[i]   = rootObj.GetBinError(i+1)**2
+      self.x[i]     = rootObj.GetXaxis().GetBinCenter(i+1)
+      self.x_err[i] = rootObj.GetXaxis().GetBinWidth(i+1)*0.5
+      if i == 0:
+        self.val[i]+= rootObj.GetBinContent(0)
+        self.err[i]+= rootObj.GetBinError(0)**2
+      if i == rootObj.GetNbinsX()-1:
+        self.val[i]+= rootObj.GetBinContent(rootObj.GetNbinsX()+1)
+        self.err[i]+= rootObj.GetBinError(rootObj.GetNbinsX()+1)**2
     self.shape = self.val.shape
 
 
@@ -237,22 +242,34 @@ class H2D:
   Load a 2D histogram from ROOT.
   '''
   def loadFromROOT(self, rootObj):
-    self.val   = np.zeros((rootObj.GetNbinsX()+2, rootObj.GetNbinsY()+2), dtype = np.float64)
-    self.err   = np.zeros((rootObj.GetNbinsX()+2, rootObj.GetNbinsY()+2), dtype = np.float64)
-    self.x     = np.zeros(rootObj.GetNbinsX()+2, dtype = np.float64)
-    self.x_err = np.zeros(rootObj.GetNbinsX()+2, dtype = np.float64)
-    self.y     = np.zeros(rootObj.GetNbinsY()+2, dtype = np.float64)
-    self.y_err = np.zeros(rootObj.GetNbinsY()+2, dtype = np.float64)
-    for i in range(0, rootObj.GetNbinsX()+2):
-      for j in range(0, rootObj.GetNbinsY()+2):
-        self.val[i,j]   = rootObj.GetBinContent(i, j)
-        self.err[i,j]   = rootObj.GetBinError(i, j)**2
-    for i in range(0, rootObj.GetNbinsX()+2):
-      self.x[i]       = rootObj.GetXaxis().GetBinCenter(i)
-      self.x_err[i]   = rootObj.GetXaxis().GetBinWidth(i)*0.5
-    for j in range(0, rootObj.GetNbinsY()+2):
-      self.y[j]       = rootObj.GetYaxis().GetBinCenter(j)
-      self.y_err[j]   = rootObj.GetYaxis().GetBinWidth(j)*0.5
+    self.val   = np.zeros((rootObj.GetNbinsX(), rootObj.GetNbinsY()), dtype = np.float64)
+    self.err   = np.zeros((rootObj.GetNbinsX(), rootObj.GetNbinsY()), dtype = np.float64)
+    self.x     = np.zeros(rootObj.GetNbinsX(), dtype = np.float64)
+    self.x_err = np.zeros(rootObj.GetNbinsX(), dtype = np.float64)
+    self.y     = np.zeros(rootObj.GetNbinsY(), dtype = np.float64)
+    self.y_err = np.zeros(rootObj.GetNbinsY(), dtype = np.float64)
+    for i in range(0, rootObj.GetNbinsX()):
+      for j in range(0, rootObj.GetNbinsY()):
+        self.val[i,j]   = rootObj.GetBinContent(i+1, j+1)
+        self.err[i,j]   = rootObj.GetBinError(i+1, j+1)**2
+    for i in range(0, rootObj.GetNbinsX()):
+      self.val[i,0]  += rootObj.GetBinContent(i+1, 0)
+      self.err[i,0]  += rootObj.GetBinError(i+1, 0)**2
+    for j in range(0, rootObj.GetNbinsY()):
+      self.val[0,j]  += rootObj.GetBinContent(0, j+1)
+      self.err[0,j]  += rootObj.GetBinError(0, j+1)**2
+    for i in range(0, rootObj.GetNbinsX()):
+      self.val[i,rootObj.GetNbinsY()-1]  += rootObj.GetBinContent(i+1, rootObj.GetNbinsY()+1)
+      self.err[i,rootObj.GetNbinsY()-1]  += rootObj.GetBinError(i+1, rootObj.GetNbinsY()+1)**2
+    for j in range(0, rootObj.GetNbinsY()):
+      self.val[rootObj.GetNbinsX()-1,j]  += rootObj.GetBinContent(rootObj.GetNbinsX()+1, j+1)
+      self.err[rootObj.GetNbinsX()-1,j]  += rootObj.GetBinError(rootObj.GetNbinsX()+1, j+1)**2
+    for i in range(0, rootObj.GetNbinsX()):
+      self.x[i]       = rootObj.GetXaxis().GetBinCenter(i+1)
+      self.x_err[i]   = rootObj.GetXaxis().GetBinWidth(i+1)*0.5
+    for j in range(0, rootObj.GetNbinsY()):
+      self.y[j]       = rootObj.GetYaxis().GetBinCenter(j+1)
+      self.y_err[j]   = rootObj.GetYaxis().GetBinWidth(j+1)*0.5
     self.shape = self.val.shape
 
 
