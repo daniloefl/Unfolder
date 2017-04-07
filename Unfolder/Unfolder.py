@@ -35,8 +35,11 @@ class Unfolder:
          that are reconstructed in bin j at reco level
   eff is a list or array with the contents of the efficiency histogram, defined as:
          eff[i] = (1 - (# events in truth bin i that fail reco)/(# events in truth bin i))
+  truth is the particle level histogram. If it is None, it is calculated from the migration
+         matrix mig and the efficiency, but if the efficiency has been defined as 1 - (not reco & truth)/truth
+         instead of (reco&truth)/truth, the error propagation will be incorrect.
   '''
-  def __init__(self, bkg, mig, eff):
+  def __init__(self, bkg, mig, eff, truth = None):
     self.bkg = H1D(bkg)    # background
     self.Nr = mig.shape[1] # number of reco bins
     self.Nt = mig.shape[0] # number of truth bins
@@ -62,8 +65,12 @@ class Unfolder:
     # if the prior is later chosen to be non-uniform, also calculate the truth distribution
     # so that the prior can be set according to it, if necessary
     # also useful to make plots
-    self.truth = self.mig.project('x').divideBinomial(self.eff) # truth dist(i)*eff(i) = P(t=i and it is reconstructed)
-    self.reco = self.mig.project('y')           # reco dist(j) = P(r=j and it is in truth)
+    # truth dist(i)*eff(i) = P(t=i and it is reconstructed)
+    if truth == None:
+      self.truth = self.mig.project('x').divideWithoutErrors(self.eff)
+    else:
+      self.truth = H1D(truth)
+    self.recoWithoutFakes = self.mig.project('y')           # reco dist(j) = P(r=j and it is in truth)
     self.prior = "uniform"
     self.priorAttributes = {}
 
@@ -106,9 +113,10 @@ class Unfolder:
   under such conditions, the posterior converges to the unfolded distribution
   '''
   def run(self, data):
-    self.data = H1D(data)    # copy data
-    self.model = pm.Model()  # create the model
-    with self.model:         # all in this scope is in the model's context
+    self.data = H1D(data)                    # copy data
+    self.datasubbkg = self.data - self.bkg   # For monitoring: data - bkg
+    self.model = pm.Model()                  # create the model
+    with self.model:                         # all in this scope is in the model's context
       # Define the prior
       if self.prior == "gaussian":
         self.T = pm.Normal('Truth', mu = self.priorAttributes['mean'], sd = self.priorAttributes['sd'], shape = (self.Nt))
@@ -138,9 +146,9 @@ class Unfolder:
       self.hunf_mode = H1D(self.truth)
       for i in range(0, self.Nt):
         self.hunf.val[i] = np.mean(self.trace.Truth[:, i])
-        self.hunf.err[i] = np.std(self.trace.Truth[:, i])
+        self.hunf.err[i] = np.std(self.trace.Truth[:, i])**2
         self.hunf_mode.val[i] = stats.mode(self.trace.Truth[:, i])[0][0]
-        self.hunf_mode.err[i] = np.std(self.trace.Truth[:, i])
+        self.hunf_mode.err[i] = np.std(self.trace.Truth[:, i])**2
 
   '''
   Plot the distributions for each bin regardless of the other bins
@@ -163,11 +171,12 @@ class Unfolder:
   '''
   def plotUnfolded(self, fname = "plotUnfolded.png"):
     fig = plt.figure(figsize=(10, 10))
-    plt.errorbar(self.data.x, self.data.val, self.data.err, self.data.x_err, fmt = 'bs', linewidth=2, label = "Pseudo-data", markersize=5)
-    plt.errorbar(self.reco.x, self.reco.val, self.reco.err, self.reco.x_err, fmt = 'co', linewidth=2, label = "Background subtracted", markersize=5)
-    plt.errorbar(self.hunf_mode.x, self.hunf_mode.val, self.hunf_mode.err, self.hunf_mode.x_err, fmt = 'r^', linewidth=2, label = "Unfolded mode")
-    plt.errorbar(self.truth.x, self.truth.val, self.truth.err, self.truth.x_err, fmt = 'gv', linewidth=2, label = "Truth", markersize=10)
-    plt.errorbar(self.hunf.x, self.hunf.val, self.hunf.err, self.hunf.x_err, fmt = 'rv', linewidth=2, label = "Unfolded mean", markersize=5)
+    plt.errorbar(self.data.x, self.data.val, self.data.err**0.5, self.data.x_err, fmt = 'bs', linewidth=2, label = "Pseudo-data", markersize=10)
+    plt.errorbar(self.datasubbkg.x, self.datasubbkg.val, self.datasubbkg.err**0.5, self.datasubbkg.x_err, fmt = 'co', linewidth=2, label = "Background subtracted", markersize=10)
+    plt.errorbar(self.recoWithoutFakes.x, self.recoWithoutFakes.val, self.recoWithoutFakes.err**0.5, self.recoWithoutFakes.x_err, fmt = 'mv', linewidth=2, label = "Expected signal (no fakes) distribution", markersize=5)
+    plt.errorbar(self.hunf_mode.x, self.hunf_mode.val, self.hunf_mode.err**0.5, self.hunf_mode.x_err, fmt = 'r^', linewidth=2, label = "Unfolded mode", markersize = 5)
+    plt.errorbar(self.truth.x, self.truth.val, self.truth.err**0.5, self.truth.x_err, fmt = 'gv', linewidth=2, label = "Truth", markersize=10)
+    plt.errorbar(self.hunf.x, self.hunf.val, self.hunf.err**0.5, self.hunf.x_err, fmt = 'rv', linewidth=2, label = "Unfolded mean", markersize=5)
     plt.legend()
     plt.ylabel("Events")
     plt.xlabel("Observable")

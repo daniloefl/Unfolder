@@ -56,7 +56,7 @@ for i in range(0, len(hreco)): hdata[i] += hreco[i]
 
 
 # Create unfolding class
-m = Unfolder.Unfolder(hbkg, hmig, heff)
+m = Unfolder.Unfolder(hbkg, hmig, heff, htruth)
 m.setUniformPrior()
 #m.setGaussianPrior()
 

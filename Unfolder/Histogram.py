@@ -42,10 +42,10 @@ class H1D:
     self.x     = np.zeros(rootObj.GetNbinsX(), dtype = np.float64)
     self.x_err = np.zeros(rootObj.GetNbinsX(), dtype = np.float64)
     for i in range(0, rootObj.GetNbinsX()):
-      self.val[i]   = rootObj.GetBinContent(i)
-      self.err[i]   = rootObj.GetBinError(i)**2
-      self.x[i]     = rootObj.GetXaxis().GetBinCenter(i)
-      self.x_err[i] = rootObj.GetXaxis().GetBinWidth(i)*0.5
+      self.val[i]   = rootObj.GetBinContent(i+1)
+      self.err[i]   = rootObj.GetBinError(i+1)**2
+      self.x[i]     = rootObj.GetXaxis().GetBinCenter(i+1)
+      self.x_err[i] = rootObj.GetXaxis().GetBinWidth(i+1)*0.5
     self.shape = self.val.shape
 
 
@@ -115,6 +115,17 @@ class H1D:
     return h
 
   '''
+  Get sum of entries
+  '''
+  def integral(self):
+    s = 0
+    se = 0
+    for i in range(0, len(self.val)):
+      s += self.val[i]
+      se += self.err[i]
+    return [s, se]
+
+  '''
   Divide histograms with binomial error prop.
   '''
   def divideBinomial(self, other):
@@ -123,11 +134,63 @@ class H1D:
       if len(self.x) != len(other.x): raise 'Trying to divide two incompatible histograms'
       for i in range(0, len(other.x)):
         if other.val[i] == 0: continue
-        h.err[i] = h.err[i]/other.val[i] # FIXME
-        h.val[i] /= other.val[i]
+        a = h.val[i]
+        b = other.val[i]
+        da2 = h.err[i]
+        db2 = other.err[i]
+        eff = a/b
+        if eff > 1: eff = 1
+        if eff < 0: eff = 0
+        h.err[i] = np.abs( ( (1 - 2*eff)*da2 + eff**2 * db2 )/(b**2) )
+        h.val[i] = eff
     else:
-      for i in range(0, len(other.x)): h.val[i] /= other
-      for i in range(0, len(other.x)): h.err[i] /= other**2
+      for i in range(0, len(other.x)):
+        a = h.val[i]
+        b = other
+        da2 = h.err[i]
+        db2 = 0
+        eff = a/b
+        h.val[i] = eff
+        h.err[i] = np.abs( ( (1 - 2*eff)*da2 + eff**2 * db2 )/(b**2) )
+    return h
+
+  '''
+  Divide a histogram a by a histogram e to get histogram b, propagating the errors under the assumption
+  that e is an efficiency histogram defined as a/b.
+  FIXME
+  '''
+  def divideInvertedBinomial(self, other):
+    h = H1D(self)
+    if isinstance(other, H1D):
+      if len(self.x) != len(other.x): raise 'Trying to divide two incompatible histograms'
+      for i in range(0, len(other.x)):
+        if other.val[i] == 0: continue
+        a = h.val[i]
+        e = other.val[i]
+        da2 = h.err[i]
+        de2 = other.err[i]
+        b = a/e
+        h.err[i] = (b**2*de2 - (1 - 2*e)*da2)/(e**2)
+        if h.err[i] < 0: h.err[i] = 0.0
+        h.val[i] = b
+    return h
+
+  '''
+  Divide histograms without propagating errors.
+  '''
+  def divideWithoutErrors(self, other):
+    h = H1D(self)
+    if isinstance(other, H1D):
+      if len(self.x) != len(other.x): raise 'Trying to divide two incompatible histograms'
+      for i in range(0, len(other.x)):
+        if other.val[i] == 0: continue
+        a = h.val[i]
+        b = other.val[i]
+        da2 = h.err[i]
+        db2 = other.err[i]
+        e = a/b
+        h.err[i] = da2/b
+        h.val[i] = e
     return h
 
 
@@ -170,14 +233,14 @@ class H2D:
     self.y_err = np.zeros(rootObj.GetNbinsY(), dtype = np.float64)
     for i in range(0, rootObj.GetNbinsX()):
       for j in range(0, rootObj.GetNbinsY()):
-        self.val[i,j]   = rootObj.GetBinContent(i, j)
-        self.err[i,j]   = rootObj.GetBinError(i, j)**2
+        self.val[i,j]   = rootObj.GetBinContent(i+1, j+1)
+        self.err[i,j]   = rootObj.GetBinError(i+1, j+1)**2
     for i in range(0, rootObj.GetNbinsX()):
-      self.x[i]       = rootObj.GetXaxis().GetBinCenter(i)
-      self.x_err[i]   = rootObj.GetXaxis().GetBinWidth(i)*0.5
+      self.x[i]       = rootObj.GetXaxis().GetBinCenter(i+1)
+      self.x_err[i]   = rootObj.GetXaxis().GetBinWidth(i+1)*0.5
     for j in range(0, rootObj.GetNbinsY()):
-      self.y[j]       = rootObj.GetYaxis().GetBinCenter(j)
-      self.y_err[j]   = rootObj.GetYaxis().GetBinWidth(j)*0.5
+      self.y[j]       = rootObj.GetYaxis().GetBinCenter(j+1)
+      self.y_err[j]   = rootObj.GetYaxis().GetBinWidth(j+1)*0.5
     self.shape = self.val.shape
 
 

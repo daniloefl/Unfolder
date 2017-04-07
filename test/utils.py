@@ -54,6 +54,7 @@ def plotSample(tr, bkg, x, extension = "png"):
 def makeHistograms(tr, bkg, x):
   htruth, useless1 = np.histogram(tr['Truth'], bins = x)
   hreco, useless2 = np.histogram(tr['Reco'], bins = x)
+  hrecoAndTruth, useless2 = np.histogram(tr[tr['Reco'] >= 0], bins = x)
   hbkg, useless3 = np.histogram(bkg, bins = x)
   hbkg = np.array(hbkg, dtype = np.float64)
   hmig, useless1, useless2 = np.histogram2d(tr['Truth'], tr['Reco'], bins=(x, x))
@@ -61,6 +62,7 @@ def makeHistograms(tr, bkg, x):
   hnrt, useless = np.histogram(tr[tr['Reco'] < 0], bins = x)
   # eff = truth and reco / truth  = (truth - (not reco and truth)) / truth = 1 - (not reco and truth)/truth
   heff = [1 - a*1.0/(b*1.0) for (a,b) in itertools.izip(hnrt, htruth)]
+  #heff = [a*1.0/(b*1.0) for (a,b) in itertools.izip(hrecoAndTruth, htruth)]
 
   return [htruth, hreco, hbkg, hmig, hnrt, heff]
 
