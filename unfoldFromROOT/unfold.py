@@ -7,6 +7,7 @@ import seaborn as sns
 import numpy as np
 import pymc3 as pm
 import matplotlib.cm as cm
+import scipy
 
 from Unfolder.Unfolder import Unfolder
 from Unfolder.Histogram import H1D, H2D, plotH1D, plotH2D
@@ -61,10 +62,22 @@ m.sample(100000)
 m.plotMarginal("plotMarginal.%s" % extension)
 
 # plot correlations
-sns.pairplot(pm.trace_to_dataframe(m.trace))
-plt.savefig("pairPlot.%s" % extension)
-plt.close()
+m.plotPairs("pairPlot.%s" % extension)
+m.plotCov("covPlot", extension)
+m.plotCorr("corrPlot", extension)
+m.plotSkewness("skewPlot", extension)
+
+print "Mean of unfolded data:"
+print np.mean(m.trace.Truth)
+
+print "Skewness of unfolded data:"
+print scipy.stats.skew(m.trace.Truth)
+
+print "Print out of the covariance matrix follows:"
+print np.cov(m.trace.Truth, rowvar = False)
+
 
 # plot unfolded spectrum
 m.plotUnfolded("plotUnfolded.png")
+m.plotOnlyUnfolded(luminosity, True, "fb/GeV", "plotOnlyUnfolded.png")
 

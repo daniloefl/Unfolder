@@ -6,7 +6,7 @@ import seaborn as sns
 import theano
 import theano.tensor
 import matplotlib.pyplot as plt
-from Histogram import H1D, H2D
+from Histogram import H1D, H2D, plotH1D, plotH2D
 
 theano.config.compute_test_value = 'warn'
 
@@ -167,6 +167,40 @@ class Unfolder:
     plt.close()
 
   '''
+  Plot the marginal distributions as well as the scatter plots of bins pairwise.
+  '''
+  def plotPairs(self, fname):
+    fig = plt.figure(figsize=(10, 10))
+    sns.pairplot(pm.trace_to_dataframe(self.trace), kind="reg")
+    plt.tight_layout()
+    plt.savefig("%s"%fname)
+    plt.close()
+
+  '''
+  Plot the covariance matrix.
+  '''
+  def plotCov(self, fname, extension = "png"):
+    fig = plt.figure(figsize=(10, 10))
+    plotH2D(np.cov(self.trace.Truth, rowvar = False), "Unfolded bin", "Unfolded bin", "Covariance matrix of unfolded bins", fname, extension)
+
+  '''
+  Plot the Pearson correlation coefficients.
+  '''
+  def plotCorr(self, fname, extension = "png"):
+    fig = plt.figure(figsize=(10, 10))
+    plotH2D(np.corrcoef(self.trace.Truth, rowvar = 0), "Unfolded bin", "Unfolded bin", "Pearson correlation coefficients of unfolded bins", fname, extension)
+
+  '''
+  Plot skewness.
+  '''
+  def plotSkewness(self, fname, extension = "png"):
+    fig = plt.figure(figsize=(10, 10))
+    sk = H1D(self.recoWithoutFakes)
+    sk.val = scipy.stats.skew(self.trace.Truth, axis = 0, bias = False)
+    sk.err = np.zeros(len(sk.val))
+    plotH1D(sk, "Particle-level observable", "Skewness", "Skewness of the distribution after unfolding", fname, extension)
+
+  '''
   Plot data, truth, reco and unfolded result
   '''
   def plotUnfolded(self, fname = "plotUnfolded.png"):
@@ -184,4 +218,22 @@ class Unfolder:
     plt.savefig(fname)
     plt.close()
 
+
+  '''
+  Plots only the unfolded distribution and expected after some normalisation factor f.
+  '''
+  def plotOnlyUnfolded(self, f = 1.0, normaliseByBinWidth = True, units = "fb", fname = "plotOnlyUnfolded.png"):
+    fig = plt.figure(figsize=(10, 10))
+    expectedCs = f*self.recoWithoutFakes
+    observedCs = f*self.hunf
+    expectedCs = expectedCs.overBinWidth()
+    observedCs = observedCs.overBinWidth()
+    plt.errorbar(expectedCs.x, expectedCs.val, expectedCs.err**0.5, expectedCs.x_err, fmt = 'g^', linewidth=2, label = "Truth", markersize=10)
+    plt.errorbar(observedCs.x, observedCs.val, observedCs.err**0.5, observedCs.x_err, fmt = 'rv', linewidth=2, label = "Unfolded mean", markersize=5)
+    plt.legend()
+    plt.ylabel("Differential cross section ["+units+"]")
+    plt.xlabel("Observable")
+    plt.tight_layout()
+    plt.savefig(fname)
+    plt.close()
 
