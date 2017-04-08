@@ -201,6 +201,16 @@ class Unfolder:
     plotH1D(sk, "Particle-level observable", "Skewness", "Skewness of the distribution after unfolding", fname, extension)
 
   '''
+  Plot kurtosis.
+  '''
+  def plotKurtosis(self, fname, extension = "png"):
+    fig = plt.figure(figsize=(10, 10))
+    sk = H1D(self.recoWithoutFakes)
+    sk.val = stats.kurtosis(self.trace.Truth, axis = 0, fisher = True, bias = False)
+    sk.err = np.zeros(len(sk.val))
+    plotH1D(sk, "Particle-level observable", "Fisher kurtosis", "Fisher kurtosis of the distribution after unfolding", fname, extension)
+
+  '''
   Plot data, truth, reco and unfolded result
   '''
   def plotUnfolded(self, fname = "plotUnfolded.png"):

@@ -66,6 +66,7 @@ m.plotMarginal("plotMarginal.%s" % extension)
 m.plotCov("covPlot", extension)
 m.plotCorr("corrPlot", extension)
 m.plotSkewness("skewPlot", extension)
+m.plotKurtosis("kurtosisPlot", extension)
 
 print "Mean of unfolded data:"
 print np.mean(m.trace.Truth, axis = 0)
@@ -74,7 +75,10 @@ print "Sqrt of variance of unfolded data:"
 print np.std(m.trace.Truth, axis = 0)
 
 print "Skewness of unfolded data:"
-print scipy.stats.skew(m.trace.Truth)
+print scipy.stats.skew(m.trace.Truth, bias = False)
+
+print "Kurtosis of unfolded data:"
+print scipy.stats.kurtosis(m.trace.Truth, bias = False)
 
 print "Print out of the covariance matrix follows:"
 print np.cov(m.trace.Truth, rowvar = False)
