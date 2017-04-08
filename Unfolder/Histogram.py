@@ -292,8 +292,8 @@ class H2D:
   def __sub__(self, other):
     h = H2D(self)
     if self.x.shape != other.x.shape: raise 'Trying to add two incompatible histograms'
-    for i in range(0, other.x.shape[0]):
-      for j in range(0, other.x.shape[1]):
+    for i in range(0, other.val.shape[0]):
+      for j in range(0, other.val.shape[1]):
         h.val[i,j] -= other.val[i,j]
         h.err[i,j] += other.err[i,j]
     return h
@@ -410,4 +410,13 @@ def plotH1D(h, xlabel = "x", ylabel = "Events", title = "", fname = "plotH1D", e
   plt.savefig('%s.%s' % (fname, extension))
   plt.close()
 
+def plotH1DWithText(h, ylabel = "Events", title = "", fname = "plotH1DWithText", extension = "png"):
+  fig = plt.figure()
+  plt.title(title)
+  plt.xticks(range(0, len(h.val)), h.x, rotation = 90)
+  plt.errorbar(range(0, len(h.val)), h.val, h.err**0.5, [0.5]*len(h.val), fmt = 'r+', markersize=10)
+  plt.ylabel(ylabel)
+  plt.xlabel("")
+  plt.savefig('%s.%s' % (fname, extension))
+  plt.close()
 

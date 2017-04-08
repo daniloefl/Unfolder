@@ -6,7 +6,7 @@ import seaborn as sns
 import theano
 import theano.tensor
 import matplotlib.pyplot as plt
-from Histogram import H1D, H2D, plotH1D, plotH2D
+from Histogram import H1D, H2D, plotH1D, plotH2D, plotH1DWithText
 from scipy import stats
 
 theano.config.compute_test_value = 'warn'
@@ -74,6 +74,11 @@ class Unfolder:
     self.recoWithoutFakes = self.mig.project('y')           # reco dist(j) = P(r=j and it is in truth)
     self.prior = "uniform"
     self.priorAttributes = {}
+    # for systematic uncertainties
+    self.bkg_syst = {}
+    self.reco_syst = {}
+    self.systematics = []
+
 
   '''
   Use a Gaussian prior with bin-by-bin width given by widths and mean given by means.
@@ -90,6 +95,14 @@ class Unfolder:
     else:
       self.priorAttributes['sd'] = copy.deepcopy(widths)
     self.prior = "gaussian"
+
+  '''
+  Add systematic uncertainty.
+  '''
+  def addUncertainty(self, name, bkg, reco):
+    self.bkg_syst[name] = H1D(bkg) - self.bkg
+    self.reco_syst[name] = reco - self.recoWithoutFakes
+    self.systematics.append(name)
 
   '''
   Set a uniform prior.
@@ -123,11 +136,29 @@ class Unfolder:
         self.T = pm.Normal('Truth', mu = self.priorAttributes['mean'], sd = self.priorAttributes['sd'], shape = (self.Nt))
       else: # if none of the names above matched, assume it is uniform
         self.T = pm.Uniform('Truth', 0.0, 10*max(self.truth.val), shape = (self.Nt))
+
       self.var_bkg = theano.shared(value = self.asMat(self.bkg.val))
-      self.var_bkg.reshape((self.Nr, 1))
+      #self.var_bkg.reshape((self.Nr, 1))
       self.var_response = theano.shared(value = self.asMat(self.response.val))
       self.R = theano.tensor.dot(self.T, self.var_response) + self.var_bkg
-      self.U = pm.Poisson('U', mu = self.R, observed = self.data.val, shape = (self.Nr, 1))
+
+      # reco result including systematics:
+      self.R_full = self.R
+
+      self.theta = {}
+      self.var_bkg_syst = {}
+      self.var_reco_syst = {}
+      self.R_syst = {}
+      for name in self.systematics:
+        self.theta[name] = pm.Normal('t_'+name, mu = 0, sd = 1) # nuisance parameter
+        # get background constribution
+        self.var_bkg_syst[name] = theano.shared(value = self.asMat(self.bkg_syst[name].val))
+        # calculate differential impact in the reco result
+        self.var_reco_syst[name] = theano.shared(value = self.asMat(self.reco_syst[name].val))
+        self.R_syst[name] = self.var_reco_syst[name] + self.var_bkg_syst[name]
+        # add it to the total reco result
+        self.R_full += self.theta[name]*self.R_syst[name]
+      self.U = pm.Poisson('U', mu = self.R_full, observed = self.data.val, shape = (self.Nr, 1))
 
   '''
   Samples the prior with N toy experiments
@@ -142,6 +173,7 @@ class Unfolder:
       self.trace = pm.sample(N, step, start = start)
       pm.summary(self.trace)
 
+      self.hnp = H1D(np.zeros(len(self.systematics)))
       self.hunf = H1D(self.truth)
       self.hunf_mode = H1D(self.truth)
       for i in range(0, self.Nt):
@@ -150,18 +182,42 @@ class Unfolder:
         self.hunf_mode.val[i] = stats.mode(self.trace.Truth[:, i])[0][0]
         self.hunf_mode.err[i] = np.std(self.trace.Truth[:, i])**2
 
+      for k in range(0, len(self.systematics)):
+        self.hnp.val[k] = np.mean(self.trace['t_'+self.systematics[k]])
+        self.hnp.err[k] = np.std(self.trace['t_'+self.systematics[k]])**2
+        self.hnp.x[k] = self.systematics[k]
+        self.hnp.x_err[k] = 1
+
   '''
   Plot the distributions for each bin regardless of the other bins
   Marginalizing each bin's PDF
   '''
   def plotMarginal(self, fname):
     fig = plt.figure(figsize=(10, 20))
+    m = np.mean(self.trace.Truth) + 3*np.std(self.trace.Truth)
     for i in range(0, self.Nt):
       ax = fig.add_subplot(self.Nt, 1, i+1, title='Truth')
       sns.distplot(self.trace.Truth[:, i], kde = True, hist = True, label = "Truth bin %d" % i, ax = ax)
       ax.set_title("Bin %d value" % i)
       ax.set_ylabel("Probability")
+      ax.set_xlim([0, m])
     plt.xlabel("Truth bin value")
+    plt.tight_layout()
+    plt.savefig("%s"%fname)
+    plt.close()
+
+  '''
+  Plot the distributions for each nuisance parameter regardless of the other bins
+  '''
+  def plotNPMarginal(self, fname):
+    fig = plt.figure(figsize=(10, 20))
+    for i in range(0, len(self.systematics)):
+      ax = fig.add_subplot(len(self.systematics), 1, i+1, title='Truth')
+      sns.distplot(self.trace['t_'+self.systematics[i]], kde = True, hist = True, label = self.systematics[i], ax = ax)
+      ax.set_title(self.systematics[i])
+      ax.set_ylabel("Probability")
+      ax.set_xlim([-5, 5])
+    plt.xlabel("Nuisance parameter value")
     plt.tight_layout()
     plt.savefig("%s"%fname)
     plt.close()
@@ -199,6 +255,13 @@ class Unfolder:
     sk.val = stats.skew(self.trace.Truth, axis = 0, bias = False)
     sk.err = np.zeros(len(sk.val))
     plotH1D(sk, "Particle-level observable", "Skewness", "Skewness of the distribution after unfolding", fname, extension)
+
+  '''
+  Plot nuisance parameter means and spread.
+  '''
+  def plotNP(self, fname, extension = "png"):
+    fig = plt.figure(figsize=(10, 10))
+    plotH1DWithText(self.hnp, "Nuisance parameter", "Nuisance parameter posteriors mean and width", fname, extension)
 
   '''
   Plot kurtosis.

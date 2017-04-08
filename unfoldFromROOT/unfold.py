@@ -43,6 +43,14 @@ m = Unfolder(bkg, mig, eff, truth)
 m.setUniformPrior()
 #m.setGaussianPrior()
 
+# add uncertainties
+for k in ['sjcalib1030']:
+  struth, srecoWithFakes, sbkg, smig, seff, snrt = getHistograms("out_ttallhad_psrw_Syst.root", k)
+  m.addUncertainty(k, sbkg, smig.project('y'))
+  plotH1D(m.bkg_syst[k], "Reconstructed "+varname, "Events", "Background Uncertainty "+k, "bkg_unc_"+k, extension)
+  plotH1D(m.reco_syst[k], "Reconstructed "+varname, "Events", "Impact in reconstructed distribution due to uncertainty "+k, "recoWithoutFakes_unc_"+k, extension)
+  
+
 # plot response matrix P(r|t)*eff(r)
 plotH2D(m.response.T(), "Particle-level bin", "Reconstructed-level bin", "Response matrix P(r|t)*eff(t)", "responseMatrix", extension)
 # and also the migration probabilities matrix
@@ -61,12 +69,17 @@ m.sample(100000)
 # plot marginal distributions
 m.plotMarginal("plotMarginal.%s" % extension)
 
+m.plotNPMarginal("plotNPMarginal.%s" % extension)
+
 # plot correlations
 #m.plotPairs("pairPlot.%s" % extension)
 m.plotCov("covPlot", extension)
 m.plotCorr("corrPlot", extension)
 m.plotSkewness("skewPlot", extension)
 m.plotKurtosis("kurtosisPlot", extension)
+
+m.plotNP("plotNP", "png")
+
 
 print "Mean of unfolded data:"
 print np.mean(m.trace.Truth, axis = 0)
