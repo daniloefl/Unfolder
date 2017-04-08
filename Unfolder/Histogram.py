@@ -417,6 +417,7 @@ def plotH1DWithText(h, ylabel = "Events", title = "", fname = "plotH1DWithText",
   plt.errorbar(range(0, len(h.val)), h.val, h.err**0.5, [0.5]*len(h.val), fmt = 'r+', markersize=10)
   plt.ylabel(ylabel)
   plt.xlabel("")
+  plt.tight_layout()
   plt.savefig('%s.%s' % (fname, extension))
   plt.close()
 
