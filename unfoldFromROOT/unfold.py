@@ -44,7 +44,9 @@ m.setUniformPrior()
 #m.setGaussianPrior()
 
 # add uncertainties
-for k in ['sjcalib1030']:
+uncList = ['sjcalib1030', 'eup', 'ecup'] + ['lup'+str(x) for x in range(0, 10+1)] + ['cup'+str(x) for x in range(0, 3+1)] + ['bup'+str(x) for x in range(0, 3+1)] + ['ewkup']
+for k in uncList:
+  print "Getting histograms for syst. ", k
   struth, srecoWithFakes, sbkg, smig, seff, snrt = getHistograms("out_ttallhad_psrw_Syst.root", k)
   m.addUncertainty(k, sbkg, smig.project('y'))
   plotH1D(m.bkg_syst[k], "Reconstructed "+varname, "Events", "Background Uncertainty "+k, "bkg_unc_"+k, extension)
@@ -69,7 +71,8 @@ m.sample(100000)
 # plot marginal distributions
 m.plotMarginal("plotMarginal.%s" % extension)
 
-m.plotNPMarginal("plotNPMarginal.%s" % extension)
+for i in uncList:
+  m.plotNPMarginal(i, "plotNPMarginal_%s.%s" % (i, extension))
 
 # plot correlations
 #m.plotPairs("pairPlot.%s" % extension)

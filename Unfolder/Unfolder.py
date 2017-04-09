@@ -209,14 +209,13 @@ class Unfolder:
   '''
   Plot the distributions for each nuisance parameter regardless of the other bins
   '''
-  def plotNPMarginal(self, fname):
-    fig = plt.figure(figsize=(10, 20))
-    for i in range(0, len(self.systematics)):
-      ax = fig.add_subplot(len(self.systematics), 1, i+1, title='Truth')
-      sns.distplot(self.trace['t_'+self.systematics[i]], kde = True, hist = True, label = self.systematics[i], ax = ax)
-      ax.set_title(self.systematics[i])
-      ax.set_ylabel("Probability")
-      ax.set_xlim([-5, 5])
+  def plotNPMarginal(self, syst, fname):
+    i = self.systematics.index(syst)
+    fig = plt.figure(figsize=(10, 10))
+    sns.distplot(self.trace['t_'+self.systematics[i]], kde = True, hist = True, label = self.systematics[i], ax = ax)
+    plt.title(self.systematics[i])
+    plt.ylabel("Probability")
+    plt.xlim([-5, 5])
     plt.xlabel("Nuisance parameter value")
     plt.tight_layout()
     plt.savefig("%s"%fname)
