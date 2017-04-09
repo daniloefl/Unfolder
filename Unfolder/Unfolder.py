@@ -212,7 +212,7 @@ class Unfolder:
   def plotNPMarginal(self, syst, fname):
     i = self.systematics.index(syst)
     fig = plt.figure(figsize=(10, 10))
-    sns.distplot(self.trace['t_'+self.systematics[i]], kde = True, hist = True, label = self.systematics[i], ax = ax)
+    sns.distplot(self.trace['t_'+self.systematics[i]], kde = True, hist = True, label = self.systematics[i])
     plt.title(self.systematics[i])
     plt.ylabel("Probability")
     plt.xlim([-5, 5])
@@ -234,43 +234,43 @@ class Unfolder:
   '''
   Plot the covariance matrix.
   '''
-  def plotCov(self, fname, extension = "png"):
+  def plotCov(self, fname):
     fig = plt.figure(figsize=(10, 10))
-    plotH2D(np.cov(self.trace.Truth, rowvar = False), "Unfolded bin", "Unfolded bin", "Covariance matrix of unfolded bins", fname, extension)
+    plotH2D(np.cov(self.trace.Truth, rowvar = False), "Unfolded bin", "Unfolded bin", "Covariance matrix of unfolded bins", fname)
 
   '''
   Plot the Pearson correlation coefficients.
   '''
-  def plotCorr(self, fname, extension = "png"):
+  def plotCorr(self, fname):
     fig = plt.figure(figsize=(10, 10))
-    plotH2D(np.corrcoef(self.trace.Truth, rowvar = 0), "Unfolded bin", "Unfolded bin", "Pearson correlation coefficients of unfolded bins", fname, extension)
+    plotH2D(np.corrcoef(self.trace.Truth, rowvar = 0), "Unfolded bin", "Unfolded bin", "Pearson correlation coefficients of unfolded bins", fname)
 
   '''
   Plot skewness.
   '''
-  def plotSkewness(self, fname, extension = "png"):
+  def plotSkewness(self, fname):
     fig = plt.figure(figsize=(10, 10))
     sk = H1D(self.recoWithoutFakes)
     sk.val = stats.skew(self.trace.Truth, axis = 0, bias = False)
     sk.err = np.zeros(len(sk.val))
-    plotH1D(sk, "Particle-level observable", "Skewness", "Skewness of the distribution after unfolding", fname, extension)
+    plotH1D(sk, "Particle-level observable", "Skewness", "Skewness of the distribution after unfolding", fname)
 
   '''
   Plot nuisance parameter means and spread.
   '''
-  def plotNP(self, fname, extension = "png"):
+  def plotNP(self, fname):
     fig = plt.figure(figsize=(10, 10))
-    plotH1DWithText(self.hnp, "Nuisance parameter", "Nuisance parameter posteriors mean and width", fname, extension)
+    plotH1DWithText(self.hnp, "Nuisance parameter", "Nuisance parameter posteriors mean and width", fname)
 
   '''
   Plot kurtosis.
   '''
-  def plotKurtosis(self, fname, extension = "png"):
+  def plotKurtosis(self, fname):
     fig = plt.figure(figsize=(10, 10))
     sk = H1D(self.recoWithoutFakes)
     sk.val = stats.kurtosis(self.trace.Truth, axis = 0, fisher = True, bias = False)
     sk.err = np.zeros(len(sk.val))
-    plotH1D(sk, "Particle-level observable", "Fisher kurtosis", "Fisher kurtosis of the distribution after unfolding", fname, extension)
+    plotH1D(sk, "Particle-level observable", "Fisher kurtosis", "Fisher kurtosis of the distribution after unfolding", fname)
 
   '''
   Plot data, truth, reco and unfolded result

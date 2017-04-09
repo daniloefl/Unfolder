@@ -388,7 +388,7 @@ class H2D:
     h.shape = h.val.shape
     return h
 
-def plotH2D(h, xlabel = "x", ylabel = "y", title = "Migration matrix M(t, r)", fname = "plotH2D", extension = "png"):
+def plotH2D(h, xlabel = "x", ylabel = "y", title = "Migration matrix M(t, r)", fname = "plotH2D.png"):
   fig = plt.figure(figsize=(15, 15))
   if isinstance(h, H2D):
     sns.heatmap(h.val, cmap=cm.RdYlGn, annot = True, linewidths=.5, square = True, annot_kws={"size": 20})
@@ -398,19 +398,19 @@ def plotH2D(h, xlabel = "x", ylabel = "y", title = "Migration matrix M(t, r)", f
   plt.ylabel(ylabel)
   plt.xlabel(xlabel)
   plt.tight_layout()
-  plt.savefig('%s.%s' % (fname, extension))
+  plt.savefig(fname)
   plt.close()
 
-def plotH1D(h, xlabel = "x", ylabel = "Events", title = "", fname = "plotH1D", extension = "png"):
+def plotH1D(h, xlabel = "x", ylabel = "Events", title = "", fname = "plotH1D.png"):
   fig = plt.figure()
   plt.title(title)
   plt.errorbar(h.x, h.val, h.err**0.5, h.x_err, fmt = 'ro', markersize=10)
   plt.ylabel(ylabel)
   plt.xlabel(xlabel)
-  plt.savefig('%s.%s' % (fname, extension))
+  plt.savefig(fname)
   plt.close()
 
-def plotH1DWithText(h, ylabel = "Events", title = "", fname = "plotH1DWithText", extension = "png"):
+def plotH1DWithText(h, ylabel = "Events", title = "", fname = "plotH1DWithText.png"):
   fig = plt.figure()
   plt.title(title)
   plt.xticks(range(0, len(h.val)), h.x, rotation = 90)
@@ -418,6 +418,6 @@ def plotH1DWithText(h, ylabel = "Events", title = "", fname = "plotH1DWithText",
   plt.ylabel(ylabel)
   plt.xlabel("")
   plt.tight_layout()
-  plt.savefig('%s.%s' % (fname, extension))
+  plt.savefig(fname)
   plt.close()
 
