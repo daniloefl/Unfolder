@@ -75,9 +75,10 @@ for i in uncList:
   m.plotNPMarginal(i, "plotNPMarginal_%s.%s" % (i, extension))
 
 # plot correlations
-m.plotPairs("pairPlot.%s" % extension)
+#m.plotPairs("pairPlot.%s" % extension) # takes forever
 m.plotCov("covPlot.%s" % extension)
 m.plotCorr("corrPlot.%s" % extension)
+m.plotCorrWithNP("corrPlotWithNP.%s" % extension)
 m.plotSkewness("skewPlot.%s" % extension)
 m.plotKurtosis("kurtosisPlot.%s" % extension)
 

@@ -6,7 +6,7 @@ import seaborn as sns
 import theano
 import theano.tensor
 import matplotlib.pyplot as plt
-from Histogram import H1D, H2D, plotH1D, plotH2D, plotH1DWithText
+from Histogram import H1D, H2D, plotH1D, plotH2D, plotH1DWithText, plotH2DWithText
 from scipy import stats
 
 theano.config.compute_test_value = 'warn'
@@ -167,6 +167,7 @@ class Unfolder:
   the sqrt of the variance in self.hunf_err
   '''
   def sample(self, N = 100000):
+    self.N = N
     with self.model:
       start = pm.find_MAP()
       step = pm.NUTS(state = start)
@@ -244,6 +245,18 @@ class Unfolder:
   def plotCorr(self, fname):
     fig = plt.figure(figsize=(10, 10))
     plotH2D(np.corrcoef(self.trace.Truth, rowvar = 0), "Unfolded bin", "Unfolded bin", "Pearson correlation coefficients of unfolded bins", fname)
+
+  '''
+  Plot the Pearson correlation coefficients including the NPs.
+  '''
+  def plotCorrWithNP(self, fname):
+    tmp = np.zeros((self.Nt+len(self.systematics), self.N))
+    for i in range(0, self.Nt):
+      tmp[i, :] = self.trace.Truth[:, i]
+    for i in range(0, len(self.systematics)):
+      tmp[self.Nt+i, :] = self.trace['t_'+self.systematics[i]]
+    tmplabel = ["Unfolded bin %d" % i for i in range(0, self.Nt)] + self.systematics
+    plotH2DWithText(np.corrcoef(tmp, rowvar = 1), tmplabel, "Variable", "Variable", "Pearson correlation coefficients of posterior", fname)
 
   '''
   Plot skewness.

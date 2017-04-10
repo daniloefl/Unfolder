@@ -401,6 +401,22 @@ def plotH2D(h, xlabel = "x", ylabel = "y", title = "Migration matrix M(t, r)", f
   plt.savefig(fname)
   plt.close()
 
+def plotH2DWithText(h, x, xlabel = "x", ylabel = "y", title = "Migration matrix M(t, r)", fname = "plotH2D.png"):
+  fig = plt.figure(figsize=(35, 35))
+  if isinstance(h, H2D):
+    sns.heatmap(h.val, cmap="YlGnBu", annot = True, linewidths=.5, square = True, annot_kws={"size": 20}, xticklabels = x, yticklabels = x, fmt = "%.2f", square = True)
+    plt.xticks(rotation = 90)
+    plt.yticks(rotation = 0)
+  else:
+    sns.heatmap(h, cmap="YlGnBu", annot = True, linewidths=.5, square = True, annot_kws={"size": 20}, xticklabels = x, yticklabels = x, fmt = "%.2f", square = True)
+    plt.xticks(rotation = 90)
+    plt.yticks(rotation = 0)
+  plt.title(title)
+  plt.ylabel(ylabel)
+  plt.xlabel(xlabel)
+  plt.savefig(fname)
+  plt.close()
+
 def plotH1D(h, xlabel = "x", ylabel = "Events", title = "", fname = "plotH1D.png"):
   fig = plt.figure()
   plt.title(title)
