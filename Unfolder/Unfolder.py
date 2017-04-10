@@ -91,7 +91,7 @@ class Unfolder:
     else:
       self.priorAttributes['mean'] = copy.deepcopy(means)
     if widths == None:
-      self.priorAttributes['sd'] = copy.deepcopy(self.truth.err)
+      self.priorAttributes['sd'] = copy.deepcopy(self.truth.err)**0.5
     else:
       self.priorAttributes['sd'] = copy.deepcopy(widths)
     self.prior = "gaussian"
