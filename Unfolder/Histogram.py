@@ -404,11 +404,11 @@ def plotH2D(h, xlabel = "x", ylabel = "y", title = "Migration matrix M(t, r)", f
 def plotH2DWithText(h, x, xlabel = "x", ylabel = "y", title = "Migration matrix M(t, r)", fname = "plotH2D.png"):
   fig = plt.figure(figsize=(35, 35))
   if isinstance(h, H2D):
-    sns.heatmap(h.val, cmap="YlGnBu", annot = True, linewidths=.5, square = True, annot_kws={"size": 20}, xticklabels = x, yticklabels = x, fmt = "%.2f", square = True)
+    sns.heatmap(h.val, cmap="YlGnBu", annot = True, linewidths=.5, square = True, annot_kws={"size": 20}, xticklabels = x, yticklabels = x, fmt = ".2f")
     plt.xticks(rotation = 90)
     plt.yticks(rotation = 0)
   else:
-    sns.heatmap(h, cmap="YlGnBu", annot = True, linewidths=.5, square = True, annot_kws={"size": 20}, xticklabels = x, yticklabels = x, fmt = "%.2f", square = True)
+    sns.heatmap(h, cmap="YlGnBu", annot = True, linewidths=.5, square = True, annot_kws={"size": 20}, xticklabels = x, yticklabels = x, fmt = ".2f")
     plt.xticks(rotation = 90)
     plt.yticks(rotation = 0)
   plt.title(title)
