@@ -121,5 +121,5 @@ print np.cov(m.trace.Truth, rowvar = False)
 m.plotUnfolded("plotUnfolded.png")
 m.plotOnlyUnfolded(luminosity*1e-3, True, "fb/GeV", "plotOnlyUnfolded.png")
 
-comparePlot([data, truth, tunfold_result, m.hunf], ["Data", "Particle-level", "TUnfold", "FBU"], luminosity*1e-3, True, "fb/GeV", "compareMethods.png")
+comparePlot([data, data - bkg, truth, tunfold_result, m.hunf], ["Data", "Data - background", "Particle-level", "TUnfold", "FBU"], luminosity*1e-3, True, "fb/GeV", "compareMethods.png")
 
