@@ -21,7 +21,7 @@ varname = "m_{tt}"
 extension = "png"
 
 # get histograms from file
-truth, recoWithFakes, bkg, mig, eff, nrt = getHistograms("out_ttallhad_psrw_Syst.root", "nominal")
+truth, recoWithFakes, bkg, mig, eff, nrt = getHistograms("out_ttallhad_psrw_Syst.root", "nominal") #, "mttAsymm")
 
 recoWithoutFakes = mig.project("y")
 
@@ -55,10 +55,10 @@ comparePlot([f_data, f_data - f_bkg, truth, tunfold_result], ["Data", "Data - bk
 
 # Create unfolding class
 m = Unfolder(bkg, mig, eff, truth)
-#m.setUniformPrior()
+m.setUniformPrior()
 #m.setGaussianPrior()
 #m.setCurvaturePrior()
-m.setFirstDerivativePrior()
+#m.setFirstDerivativePrior()
 
 
 # add uncertainties
@@ -84,7 +84,7 @@ plotH1D(m.bkg, "Reconstructed "+varname, "Events", "Background (including fakes)
 plotH1D(m.recoWithoutFakes, "Reconstructed "+varname, "Events", "Reconstructed-level distribution", "recoWithoutFakes_crossCheck.%s" % extension)
 
 m.run(data)
-m.sample(500000)
+m.sample(100000)
 
 # plot marginal distributions
 m.plotMarginal("plotMarginal.%s" % extension)
