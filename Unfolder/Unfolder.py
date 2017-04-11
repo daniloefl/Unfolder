@@ -99,14 +99,16 @@ class Unfolder:
   '''
   Use a curvature-based prior.
   '''
-  def setCurvaturePrior(self):
+  def setCurvaturePrior(self, alpha = 0.1):
     self.prior = "curvature"
+    self.alpha = alpha
 
-  #'''
-  #Use a first derivative-based prior.
-  #'''
-  #def setFirstDerivativePrior(self):
-  #  self.prior = "first derivative"
+  '''
+  Use a first derivative-based prior.
+  '''
+  def setFirstDerivativePrior(self, alpha = 0.1):
+    self.prior = "first derivative"
+    self.alpha = alpha
 
   '''
   Add systematic uncertainty.
@@ -147,7 +149,9 @@ class Unfolder:
       if self.prior == "gaussian":
         self.T = pm.Normal('Truth', mu = self.priorAttributes['mean'], sd = self.priorAttributes['sd'], shape = (self.Nt))
       elif self.prior == "curvature":
-        self.T = pm.DensityDist('Truth', logp = lambda val: theano.tensor.pow(theano.tensor.sqr(theano.tensor.extra_ops.diff(theano.tensor.extra_ops.diff(val))).sum(), -1), shape = (self.Nt), testval = self.truth.val)
+        self.T = pm.DensityDist('Truth', logp = lambda val: theano.tensor.pow(theano.tensor.sqr(theano.tensor.extra_ops.diff(theano.tensor.extra_ops.diff(val))).sum(), -self.alpha), shape = (self.Nt), testval = self.truth.val)
+      elif self.prior == "first derivative":
+        self.T = pm.DensityDist('Truth', logp = lambda val: theano.tensor.pow(theano.tensor.abs_(theano.tensor.extra_ops.diff(theano.tensor.extra_ops.diff(val/(self.truth.x_err*2))/np.diff(self.truth.x))/(2*theano.tensor.mean(theano.tensor.extra_ops.diff(val/(self.truth.x_err*2))/np.diff(self.truth.x)))).sum(), -self.alpha), shape = (self.Nt), testval = self.truth.val)
       else: # if none of the names above matched, assume it is uniform
         self.T = pm.Uniform('Truth', 0.0, 10*max(self.truth.val), shape = (self.Nt))
 
