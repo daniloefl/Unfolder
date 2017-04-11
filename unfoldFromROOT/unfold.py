@@ -57,6 +57,7 @@ comparePlot([f_data, f_data - f_bkg, truth, tunfold_result], ["Data", "Data - bk
 m = Unfolder(bkg, mig, eff, truth)
 m.setUniformPrior()
 #m.setGaussianPrior()
+#m.setCurvaturePrior()
 
 
 # add uncertainties

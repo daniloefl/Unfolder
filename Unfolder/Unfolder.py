@@ -97,6 +97,18 @@ class Unfolder:
     self.prior = "gaussian"
 
   '''
+  Use a curvature-based prior.
+  '''
+  def setCurvaturePrior(self):
+    self.prior = "curvature"
+
+  #'''
+  #Use a first derivative-based prior.
+  #'''
+  #def setFirstDerivativePrior(self):
+  #  self.prior = "first derivative"
+
+  '''
   Add systematic uncertainty.
   '''
   def addUncertainty(self, name, bkg, reco):
@@ -134,6 +146,8 @@ class Unfolder:
       # Define the prior
       if self.prior == "gaussian":
         self.T = pm.Normal('Truth', mu = self.priorAttributes['mean'], sd = self.priorAttributes['sd'], shape = (self.Nt))
+      elif self.prior == "curvature":
+        self.T = pm.DensityDist('Truth', logp = lambda val: theano.tensor.pow(theano.tensor.sqr(theano.tensor.extra_ops.diff(theano.tensor.extra_ops.diff(val))).sum(), -1), shape = (self.Nt), testval = self.truth.val)
       else: # if none of the names above matched, assume it is uniform
         self.T = pm.Uniform('Truth', 0.0, 10*max(self.truth.val), shape = (self.Nt))
 
