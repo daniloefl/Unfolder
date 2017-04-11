@@ -9,6 +9,7 @@ import pymc3 as pm
 import matplotlib.cm as cm
 import scipy
 
+from Unfolder.ComparisonHelpers import *
 from Unfolder.Unfolder import Unfolder
 from Unfolder.Histogram import H1D, H2D, plotH1D, plotH2D
 from readHistograms import *
@@ -38,13 +39,28 @@ plotH1D(eff, "Particle-level "+varname, "Efficiency", "Efficiency of particle-le
 # generate fake data
 data = recoWithFakes
 
+# Try alternative
+# Create alternative method for unfolding
+f_truth, f_recoWithFakes, f_bkg, f_mig, f_eff, f_nrt = getHistograms("out_ttallhad_psrw_Syst.root", "nominal", "mttAsymm")
+f_data = f_recoWithFakes
+#tunfolder = getTUnfolder(f_bkg, f_mig, f_data, regMode = ROOT.TUnfold.kRegModeDerivative)
+tunfolder = getTUnfolder(f_bkg, f_mig, f_data, regMode = ROOT.TUnfold.kRegModeNone)
+# no regularization
+#printLcurve(tunfolder, "tunfold_lcurve.png")
+tunfolder.DoUnfold(0)
+tunfold_mig = H1D(tunfolder.GetOutput("tunfold_result"))
+tunfold_result = tunfold_mig/eff
+
+comparePlot([f_data, f_data - f_bkg, truth, tunfold_result], ["Data", "Data - bkg", "Particle-level", "TUnfold"], luminosity*1e-3, True, "fb/GeV", "plotTUnfold.png")
+
 # Create unfolding class
 m = Unfolder(bkg, mig, eff, truth)
 m.setUniformPrior()
 #m.setGaussianPrior()
 
+
 # add uncertainties
-uncList = ['sjcalib1030', 'eup', 'ecup'] + ['lup'+str(x) for x in range(0, 10+1)] + ['cup'+str(x) for x in range(0, 3+1)] + ['bup'+str(x) for x in range(0, 3+1)] + ['ewkup']
+uncList = [] #'sjcalib1030', 'eup', 'ecup'] + ['lup'+str(x) for x in range(0, 10+1)] + ['cup'+str(x) for x in range(0, 3+1)] + ['bup'+str(x) for x in range(0, 3+1)] + ['ewkup']
 for k in uncList:
   print "Getting histograms for syst. ", k
   struth, srecoWithFakes, sbkg, smig, seff, snrt = getHistograms("out_ttallhad_psrw_Syst.root", k)
@@ -104,4 +120,6 @@ print np.cov(m.trace.Truth, rowvar = False)
 # plot unfolded spectrum
 m.plotUnfolded("plotUnfolded.png")
 m.plotOnlyUnfolded(luminosity*1e-3, True, "fb/GeV", "plotOnlyUnfolded.png")
+
+comparePlot([data, truth, tunfold_result, m.hunf], ["Data", "Particle-level", "TUnfold", "FBU"], luminosity*1e-3, True, "fb/GeV", "compareMethods.png")
 

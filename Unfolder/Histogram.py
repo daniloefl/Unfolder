@@ -1,4 +1,5 @@
 
+import array
 import copy
 import numbers
 import itertools
@@ -53,6 +54,18 @@ class H1D:
         self.val[i]+= rootObj.GetBinContent(rootObj.GetNbinsX()+1)
         self.err[i]+= rootObj.GetBinError(rootObj.GetNbinsX()+1)**2
     self.shape = self.val.shape
+
+  '''
+  Export a 1D histogram to ROOT.
+  '''
+  def toROOT(self, name):
+    out = ROOT.TH1D(name, name, len(self.x), array.array('d', np.append(self.x-self.x_err, self.x[-1]+self.x_err[-1])))
+    out.SetDirectory(0)
+    out.Sumw2()
+    for i in range(0, len(self.val)):
+      out.SetBinContent(i+1, self.val[i])
+      out.SetBinError(i+1, self.err[i]**0.5)
+    return out
 
 
   '''
@@ -272,6 +285,18 @@ class H2D:
       self.y_err[j]   = rootObj.GetYaxis().GetBinWidth(j+1)*0.5
     self.shape = self.val.shape
 
+  '''
+  Export a 2D histogram to ROOT.
+  '''
+  def toROOT(self, name):
+    out = ROOT.TH2D(name, name, len(self.x), array.array('d', np.append(self.x-self.x_err, self.x[-1]+self.x_err[-1])), len(self.y), array.array('d', np.append(self.y-self.y_err, self.y[-1]+self.y_err[-1])))
+    out.SetDirectory(0)
+    out.Sumw2()
+    for i in range(0, len(self.x)):
+      for j in range(0, len(self.y)):
+        out.SetBinContent(i+1, j+1, self.val[i, j])
+        out.SetBinError(i+1, j+1, self.err[i, j]**0.5)
+    return out
 
 
   '''
