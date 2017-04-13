@@ -53,6 +53,18 @@ tunfold_result = tunfold_mig/eff
 
 comparePlot([f_data, f_data - f_bkg, truth, tunfold_result], ["Data", "Data - bkg", "Particle-level", "TUnfold"], luminosity*1e-3, True, "fb/GeV", "plotTUnfold.png")
 
+# now use D'Agostini
+useDAgostini = False
+try:
+  dagostini = getDAgostini(bkg, mig, data)
+  dagostini_mig = H1D(dagostini.Hreco())
+  dagostini_result = dagostini_mig/eff
+
+  comparePlot([data, data - bkg, truth, dagostini_result], ["Data", "Data - bkg", "Particle-level", "D'Agostini"], luminosity*1e-3, True, "fb/GeV", "plotDAgostini.png")
+  useDAgostini = True
+except:
+  print "Could not use D'Agostini method. Continuing."
+
 # Create unfolding class
 m = Unfolder(bkg, mig, eff, truth)
 m.setUniformPrior()
@@ -123,5 +135,8 @@ print np.cov(m.trace.Truth, rowvar = False)
 m.plotUnfolded("plotUnfolded.png")
 m.plotOnlyUnfolded(luminosity*1e-3, True, "fb/GeV", "plotOnlyUnfolded.png")
 
-comparePlot([data, data - bkg, truth, tunfold_result, m.hunf], ["Data", "Data - background", "Particle-level", "TUnfold", "FBU"], luminosity*1e-3, True, "fb/GeV", "compareMethods.png")
+if useDAgostini:
+  comparePlot([data, data - bkg, truth, tunfold_result, dagostini_result, m.hunf], ["Data", "Data - background", "Particle-level", "TUnfold", "D'Agostini", "FBU"], luminosity*1e-3, True, "fb/GeV", "compareMethods.png")
+else:
+  comparePlot([data, data - bkg, truth, tunfold_result, m.hunf], ["Data", "Data - background", "Particle-level", "TUnfold", "FBU"], luminosity*1e-3, True, "fb/GeV", "compareMethods.png")
 
