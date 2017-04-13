@@ -77,16 +77,24 @@ def comparePlot(listHist, listLegend, f = 1.0, normaliseByBinWidth = True, units
   plt.close()
 
 '''
-This returns an object from RooUnfold that runs the D'Agostini unfolding procedure.
+This returns a migration-corrected object from RooUnfold using the D'Agostini unfolding procedure.
 Here is an example of how to use it:
-dagostini = getDAgostini(bkg, mig, data)
-dagostini_mig = H1D(dagostini.Hreco())
+dagostini_mig = getDAgostini(bkg, mig, data)
 dagostini_result = dagostini_mig/eff
 comparePlot([data, data - bkg, truth, dagostini_result], ["Data", "Data - bkg", "Particle-level", "D'Agostini"], luminosity*1e-3, True, "fb/GeV", "plotDAgostini.png")
 '''
-def getDAgostini(bkg, mig, data):
-  unf_response = ROOT.RooUnfoldResponse(mig.project('y').toROOT("reco_rp"), 0, mig.T().toROOT("mig_dago"), "unf_response", "System response object")
+def getDAgostini(bkg, mig, data, nIter = 5):
+  reco = mig.project('y').toROOT("reco_rp")
+  reco.SetDirectory(0)
+  truth = mig.project('x').toROOT("truth_rp")
+  truth.SetDirectory(0)
+  m = mig.toROOT("m")
+  m.SetDirectory(0)
+  unf_response = ROOT.RooUnfoldResponse(reco, truth, m)
   dataBkgSub = data - bkg
-  dagostini = ROOT.RooUnfoldBayes(unf_response, dataBkgSub.toROOT("dataBkgSub_dagostini"), 5)
-  return dagostini
+  dd = dataBkgSub.toROOT("dataBkgSub_dagostini")
+  dd.SetDirectory(0)
+  dagostini = ROOT.RooUnfoldBayes(unf_response, dd, nIter)
+  dagostini_hreco = dagostini.Hreco()
+  return H1D(dagostini_hreco)
 
