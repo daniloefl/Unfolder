@@ -86,11 +86,11 @@ comparePlot([data, data - bkg, truth, dagostini_result], ["Data", "Data - bkg", 
 def getDAgostini(bkg, mig, data, nIter = 5):
   reco = mig.project('y').toROOT("reco_rp")
   reco.SetDirectory(0)
-  truth = mig.project('x').toROOT("truth_rp")
-  truth.SetDirectory(0)
-  m = mig.toROOT("m")
+  #truth = mig.project('x').toROOT("truth_rp")
+  #truth.SetDirectory(0)
+  m = mig.T().toROOT("m")
   m.SetDirectory(0)
-  unf_response = ROOT.RooUnfoldResponse(reco, truth, m)
+  unf_response = ROOT.RooUnfoldResponse(reco, 0, m)
   dataBkgSub = data - bkg
   dd = dataBkgSub.toROOT("dataBkgSub_dagostini")
   dd.SetDirectory(0)

@@ -56,7 +56,7 @@ comparePlot([f_data, f_data - f_bkg, truth, tunfold_result], ["Data", "Data - bk
 # now use D'Agostini
 useDAgostini = False
 try:
-  dagostini_mig = getDAgostini(bkg, mig, data)
+  dagostini_mig = getDAgostini(bkg, mig, data, nIter = 1)
   dagostini_result = dagostini_mig/eff
 
   comparePlot([data, data - bkg, truth, dagostini_result], ["Data", "Data - bkg", "Particle-level", "D'Agostini"], luminosity*1e-3, True, "fb/GeV", "plotDAgostini.png")
