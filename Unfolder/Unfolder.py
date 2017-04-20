@@ -145,13 +145,14 @@ class Unfolder:
     self.datasubbkg = self.data - self.bkg   # For monitoring: data - bkg
     self.model = pm.Model()                  # create the model
     with self.model:                         # all in this scope is in the model's context
+      self.var_alpha = theano.shared(value = float(self.alpha))
       # Define the prior
       if self.prior == "gaussian":
         self.T = pm.Normal('Truth', mu = self.priorAttributes['mean'], sd = self.priorAttributes['sd'], shape = (self.Nt))
       elif self.prior == "curvature":
-        self.T = pm.DensityDist('Truth', logp = lambda val: theano.tensor.pow(theano.tensor.sqr(theano.tensor.extra_ops.diff(theano.tensor.extra_ops.diff(val))).sum(), -self.alpha), shape = (self.Nt), testval = self.truth.val)
+        self.T = pm.DensityDist('Truth', logp = lambda val: theano.tensor.pow(theano.tensor.sqr(theano.tensor.extra_ops.diff(theano.tensor.extra_ops.diff(val))).sum(), -self.var_alpha), shape = (self.Nt), testval = self.truth.val)
       elif self.prior == "first derivative":
-        self.T = pm.DensityDist('Truth', logp = lambda val: theano.tensor.pow(theano.tensor.abs_(theano.tensor.extra_ops.diff(theano.tensor.extra_ops.diff(val/(self.truth.x_err*2))/np.diff(self.truth.x))/(2*theano.tensor.mean(theano.tensor.extra_ops.diff(val/(self.truth.x_err*2))/np.diff(self.truth.x)))).sum(), -self.alpha), shape = (self.Nt), testval = self.truth.val)
+        self.T = pm.DensityDist('Truth', logp = lambda val: theano.tensor.pow(theano.tensor.abs_(theano.tensor.extra_ops.diff(theano.tensor.extra_ops.diff(val/(self.truth.x_err*2))/np.diff(self.truth.x))/(2*theano.tensor.mean(theano.tensor.extra_ops.diff(val/(self.truth.x_err*2))/np.diff(self.truth.x)))).sum(), -self.var_alpha), shape = (self.Nt), testval = self.truth.val)
       else: # if none of the names above matched, assume it is uniform
         self.T = pm.Uniform('Truth', 0.0, 10*max(self.truth.val), shape = (self.Nt))
 
@@ -177,6 +178,54 @@ class Unfolder:
         # add it to the total reco result
         self.R_full += self.theta[name]*self.R_syst[name]
       self.U = pm.Poisson('U', mu = self.R_full, observed = self.data.val, shape = (self.Nr, 1))
+
+  '''
+  Calculate the sum of the bias.
+  '''
+  def getBias(self):
+    return np.sum(np.abs(self.truth.val - self.hunf.val))/np.sum(self.truth.val)
+
+  '''
+  Calculate the sum of the bias using only the expected values.
+  '''
+  def getBiasFromMAP(self):
+    fitted = np.zeros(len(self.truth.val))
+    with self.model:
+      start = pm.find_MAP()
+      fitted = start['Truth']
+    return np.sum(np.abs(self.truth.val - fitted))/np.sum(self.truth.val)
+
+  '''
+  Scan alpha values to minimise bias.
+  '''
+  def scanAlpha(self, N = 10000, rangeAlpha = np.arange(0, 0.1, 0.01), fname = "scanAlpha.png"):
+    bias = np.zeros(len(rangeAlpha))
+    minBias = 1e10
+    bestAlpha = 0
+    for i in range(0, len(rangeAlpha)):
+      self.var_alpha.set_value(rangeAlpha[i])
+      #self.sample(N)
+      #bias[i] = self.getBias()
+      bias[i] = self.getBiasFromMAP() # only take mean values for speed
+      if bias[i] < minBias:
+        minBias = bias[i]
+        bestAlpha = rangeAlpha[i]
+    fig = plt.figure(figsize=(10, 10))
+    plt_bias = H1D(bias)
+    plt_bias.val = bias
+    plt_bias.err = np.zeros(len(rangeAlpha))
+    plt_bias.x = rangeAlpha
+    plt_bias.x_err = np.zeros(len(rangeAlpha))
+    plotH1D(plt_bias, "alpha", "sum of bias per bin", "Effect of alpha in the bias", fname)
+    return bestAlpha
+    
+  '''
+  Set value of alpha.
+  '''
+  def setAlpha(self, alpha):
+    self.alpha = alpha
+    self.var_alpha.set_value(alpha)
+  
 
   '''
   Samples the prior with N toy experiments

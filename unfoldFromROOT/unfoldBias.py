@@ -52,18 +52,19 @@ comparePlot([data, pseudo_data, data - bkg, pseudo_data - bkg],
 f_truth, f_recoWithFakes, f_bkg, f_mig, f_eff, f_nrt = getHistograms("out_ttallhad_psrw_Syst.root", "nominal", "mttAsymm")
 f_data = f_recoWithFakes
 pseudo_f_data = getDataFromModel(f_bkg, f_mig, f_eff, f_truth)
-#tunfolder = getTUnfolder(f_bkg, f_mig, f_data, regMode = ROOT.TUnfold.kRegModeDerivative)
-tunfolder = getTUnfolder(f_bkg, f_mig, f_data, regMode = ROOT.TUnfold.kRegModeNone)
+tunfolder = getTUnfolder(f_bkg, f_mig, f_data, regMode = ROOT.TUnfold.kRegModeDerivative)
+#tunfolder = getTUnfolder(f_bkg, f_mig, f_data, regMode = ROOT.TUnfold.kRegModeNone)
 # no regularization
-#printLcurve(tunfolder, "tunfold_lcurve.png")
-tunfolder.DoUnfold(0)
+tau = printLcurve(tunfolder, "tunfold_lcurve.png")
+tunfolder.DoUnfold(tau)
 tunfold_mig = H1D(tunfolder.GetOutput("tunfold_result"))
 tunfold_result = tunfold_mig/eff
 
-pseudo_tunfolder = getTUnfolder(f_bkg, f_mig, pseudo_f_data, regMode = ROOT.TUnfold.kRegModeNone)
+pseudo_tunfolder = getTUnfolder(f_bkg, f_mig, pseudo_f_data, regMode = ROOT.TUnfold.kRegModeDerivative)
+#pseudo_tunfolder = getTUnfolder(f_bkg, f_mig, pseudo_f_data, regMode = ROOT.TUnfold.kRegModeNone)
 # no regularization
-#printLcurve(tunfolder, "tunfold_lcurve.png")
-pseudo_tunfolder.DoUnfold(0)
+tau_pseudo = printLcurve(tunfolder, "tunfold_lcurve_pseudo.png")
+pseudo_tunfolder.DoUnfold(tau_pseudo)
 pseudo_tunfold_mig = H1D(pseudo_tunfolder.GetOutput("tunfold_pseudo_result"))
 pseudo_tunfold_result = pseudo_tunfold_mig/eff
 
@@ -112,12 +113,15 @@ plotH2D(m.response_noeff.T(), "Particle-level bin", "Reconstructed-level bin", "
 #plotH1D(m.bkg, "Reconstructed "+varname, "Events", "Background (including fakes)", "bkg_crossCheck.%s" % extension)
 #plotH1D(m.recoWithoutFakes, "Reconstructed "+varname, "Events", "Reconstructed-level distribution", "recoWithoutFakes_crossCheck.%s" % extension)
 
-m.run(data)
-m.sample(100000)
-
 # does the same for the pseudo-data
 m_pseudo.run(pseudo_data)
+alpha = m_pseudo.scanAlpha(10000, np.arange(0.0, 2.0, 0.01), "scanAlpha_pseudo.%s" % extension)
+print "Found alpha = ", alpha
+m_pseudo.setAlpha(alpha)
 m_pseudo.sample(100000)
+
+m.run(data)
+m.sample(100000)
 
 # plot marginal distributions
 m.plotMarginal("plotMarginal.%s" % extension)
