@@ -183,7 +183,7 @@ class Unfolder:
   Calculate the sum of the bias.
   '''
   def getBias(self):
-    return np.sum(np.abs(self.truth.val - self.hunf.val))/np.sum(self.truth.val)
+    return np.sum(np.abs(self.truth.val - self.hunf.val)/self.truth.val)
 
   '''
   Calculate the sum of the bias using only the expected values.
@@ -193,7 +193,7 @@ class Unfolder:
     with self.model:
       start = pm.find_MAP()
       fitted = start['Truth']
-    return np.sum(np.abs(self.truth.val - fitted))/np.sum(self.truth.val)
+    return np.sum(np.abs(self.truth.val - fitted)/self.truth.val)
 
   '''
   Scan alpha values to minimise bias.
@@ -217,7 +217,7 @@ class Unfolder:
     plt_bias.x = rangeAlpha
     plt_bias.x_err = np.zeros(len(rangeAlpha))
     plotH1D(plt_bias, "alpha", "sum of bias per bin", "Effect of alpha in the bias", fname)
-    return bestAlpha
+    return [bestAlpha, minBias]
     
   '''
   Set value of alpha.

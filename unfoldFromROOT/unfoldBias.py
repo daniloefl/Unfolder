@@ -115,8 +115,8 @@ plotH2D(m.response_noeff.T(), "Particle-level bin", "Reconstructed-level bin", "
 
 # does the same for the pseudo-data
 m_pseudo.run(pseudo_data)
-alpha = m_pseudo.scanAlpha(10000, np.arange(0.0, 2.0, 0.01), "scanAlpha_pseudo.%s" % extension)
-print "Found alpha = ", alpha
+alpha, minBias = m_pseudo.scanAlpha(10000, np.arange(0.0, 2.0, 0.01), "scanAlpha_pseudo.%s" % extension)
+print "Found alpha = ", alpha, " with bias = ", minBias
 m_pseudo.setAlpha(alpha)
 m_pseudo.sample(100000)
 
