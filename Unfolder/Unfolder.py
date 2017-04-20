@@ -99,14 +99,14 @@ class Unfolder:
   '''
   Use a curvature-based prior.
   '''
-  def setCurvaturePrior(self, alpha = 0.1):
+  def setCurvaturePrior(self, alpha = 1):
     self.prior = "curvature"
     self.alpha = alpha
 
   '''
   Use a first derivative-based prior.
   '''
-  def setFirstDerivativePrior(self, alpha = 0.1):
+  def setFirstDerivativePrior(self, alpha = 1):
     self.prior = "first derivative"
     self.alpha = alpha
 

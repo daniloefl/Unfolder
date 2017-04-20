@@ -98,3 +98,56 @@ def getDAgostini(bkg, mig, data, nIter = 5):
   dagostini_hreco = dagostini.Hreco()
   return H1D(dagostini_hreco)
 
+'''
+Use model to get pseudo-data from toy experiments.
+'''
+def getDataFromModel(bkg, mig, eff, truth):
+  response_noeff = H2D(mig) # = P(r|t) = Mtr/sum_k=1^Nr Mtk
+  for i in range(0, mig.shape[0]): # for each truth bin
+    rsum = 0.0
+    for j in range(0, mig.shape[1]): # for each reco bin
+      rsum += mig.val[i, j]    # calculate the sum of all reco bins in the same truth bin
+    for j in range(0, mig.shape[1]): # for each reco bin
+      response_noeff.val[i, j] = mig.val[i, j]/rsum
+
+  data = H1D(bkg) # original bkg histogram is ignored: only used to clone X axis
+  # simulate background
+  for j in range(0, len(bkg.val)): # j is the reco bin
+    bkgCount = np.random.poisson(bkg.val[j]) # this simulates a counting experiment for the bkg
+    data.val[j] = bkgCount # overwrite background so that we use a Poisson
+    data.err[j] = bkgCount
+
+  # for each truth bin
+  for i in range(0, len(truth.val)): # i is the truth bin
+    trueCount = np.random.poisson(truth.val[i]) # this simulates a counting experiment for the truth
+    # calculate cumulative response for bin i
+    # C(k|i) = sum_l=0^k P(r=l|t=i)
+    C = np.zeros(len(bkg.val))
+    for k in range(0, len(bkg.val)):
+      for l in range(0, k+1):
+        C[k] += response_noeff.val[i, l]
+    # a uniform random number is between 0 and C[0] with prob. response_noeff.val[i, 0]
+    # it is between C[0] and C[1] with prob. response_noeff.val[i, 1], etc.
+    for n in range(0, trueCount): # number of experiments is the count in the truth bin
+      # simulate efficiency by rejecting events with efficiency eff.val[i]
+      if np.random.uniform(0, 1) > eff.val[i]:
+        continue
+
+      # find the reco bin using the migration matrix mig
+      # we know that the probability of getting reco bin j given that we are in truth bin i is:
+      # P(r=j|t=i) = response_noeff.val[i, j]
+      # first throw a random number between 0 and 1
+      rn = np.random.uniform(0, 1)
+      recoBin = len(bkg.val) - 1 # set it to the last bin
+      for k in range(0, len(bkg.val)): # loop over reco bins and get where the random number is in the cum. distribution
+        if rn >= C[k]: # if the random number is bigger than the cum. distribution boundary
+          # keep going as we are not yet at the boundary
+          continue
+        # if the random number is smaller than the cum. dist., we have already crossed the boundary
+        # stop and set the reco bin
+        recoBin = k
+        break
+      data.val[recoBin] += 1
+      data.err[recoBin] += 1
+  return data
+
