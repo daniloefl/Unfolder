@@ -78,16 +78,11 @@ comparePlot([f_data, pseudo_f_data, f_truth,
 
 # Create unfolding class
 m = Unfolder(bkg, mig, eff, truth)
-#m.setUniformPrior()
+m.setUniformPrior()
 #m.setGaussianPrior()
 #m.setCurvaturePrior()
-m.setFirstDerivativePrior()
-
-m_pseudo = Unfolder(bkg, mig, eff, truth)
-#m_pseudo.setUniformPrior()
-#m_pseudo.setGaussianPrior()
-#m_pseudo.setCurvaturePrior()
-m_pseudo.setFirstDerivativePrior()
+#m.setEntropyPrior()
+#m.setFirstDerivativePrior()
 
 # add uncertainties
 uncList = [] #'sjcalib1030', 'eup', 'ecup'] + ['lup'+str(x) for x in range(0, 10+1)] + ['cup'+str(x) for x in range(0, 3+1)] + ['bup'+str(x) for x in range(0, 3+1)] + ['ewkup']
@@ -97,7 +92,6 @@ for k in uncList:
   m.addUncertainty(k, sbkg, smig.project('y'))
   plotH1D(m.bkg_syst[k], "Reconstructed "+varname, "Events", "Background Uncertainty "+k, "bkg_unc_%s.%s" % (k, extension))
   plotH1D(m.reco_syst[k], "Reconstructed "+varname, "Events", "Impact in reconstructed distribution due to uncertainty "+k, "recoWithoutFakes_unc_%s.%s" % (k, extension))
-  m_pseudo.addUncertainty(k, sbkg, smig.project('y'))
   
 
 # plot response matrix P(r|t)*eff(r)
@@ -113,22 +107,51 @@ plotH2D(m.response_noeff.T(), "Particle-level bin", "Reconstructed-level bin", "
 #plotH1D(m.bkg, "Reconstructed "+varname, "Events", "Background (including fakes)", "bkg_crossCheck.%s" % extension)
 #plotH1D(m.recoWithoutFakes, "Reconstructed "+varname, "Events", "Reconstructed-level distribution", "recoWithoutFakes_crossCheck.%s" % extension)
 
-# does the same for the pseudo-data
-m_pseudo.run(pseudo_data)
-alpha, minBias = m_pseudo.scanAlpha(10000, np.arange(0.0, 2.0, 0.01), "scanAlpha_pseudo.%s" % extension)
-print "Found alpha = ", alpha, " with bias = ", minBias
-m_pseudo.setAlpha(alpha)
-m_pseudo.sample(100000)
-
 m.run(data)
-m.sample(100000)
+m.sample(10000)
 
 # plot marginal distributions
 m.plotMarginal("plotMarginal.%s" % extension)
-m_pseudo.plotMarginal("plotMarginal_pseudo.%s" % extension)
 for i in uncList:
   m.plotNPMarginal(i, "plotNPMarginal_%s.%s" % (i, extension))
-  m_pseudo.plotNPMarginal(i, "plotNPMarginal_pseudo_%s.%s" % (i, extension))
+
+m.plotUnfolded("plotUnfolded.png")
+m.plotOnlyUnfolded(luminosity*1e-3, True, "fb/GeV", "plotOnlyUnfolded.png")
+
+suf = ""
+m.plotCov("covPlot%s.%s" % (suf, extension))
+m.plotCorr("corrPlot%s.%s" % (suf, extension))
+m.plotCorrWithNP("corrPlotWithNP%s.%s" % (suf, extension))
+m.plotSkewness("skewPlot%s.%s" % (suf, extension))
+m.plotKurtosis("kurtosisPlot%s.%s" % (suf, extension))
+m.plotNP("plotNP%s.%s" % (suf, extension))
+
+fbu_result = m.hunf
+
+# now try a curvature-based prior
+# first choose alpha using only a MAP estimate
+m.setEntropyPrior()
+#m.setCurvaturePrior()
+#m.setFirstDerivativePrior()
+#m.setGaussianPrior()
+m.run(data)
+# does the same for the pseudo-data
+alpha, minBias = m.scanAlpha(np.arange(0.0, 20.0, 0.5), "scanAlpha.%s" % extension, "scanAlpha_chi2.%s" % extension)
+print "Found alpha = ", alpha, " with bias = ", minBias
+m.setAlpha(alpha)
+
+m.run(pseudo_data)
+m.setData(pseudo_data)
+m.sample(10000)
+
+# plot marginal distributions
+m.plotMarginal("plotMarginal_pseudo.%s" % extension)
+for i in uncList:
+  m.plotNPMarginal(i, "plotNPMarginal_pseudo_%s.%s" % (i, extension))
+
+# plot unfolded spectrum
+m.plotUnfolded("plotUnfolded_pseudo.png")
+m.plotOnlyUnfolded(luminosity*1e-3, True, "fb/GeV", "plotOnlyUnfolded_pseudo.png")
 
 # plot correlations graphically
 # it takes forever and it is just pretty
@@ -136,13 +159,13 @@ for i in uncList:
 # I just get annoyed waiting for it ...
 #m.plotPairs("pairPlot.%s" % extension) # takes forever!
 
-for k in [ [m, ""], [m_pseudo, "_pseudo"]]:
-  k[0].plotCov("covPlot%s.%s" % (k[1], extension))
-  k[0].plotCorr("corrPlot%s.%s" % (k[1], extension))
-  k[0].plotCorrWithNP("corrPlotWithNP%s.%s" % (k[1], extension))
-  k[0].plotSkewness("skewPlot%s.%s" % (k[1], extension))
-  k[0].plotKurtosis("kurtosisPlot%s.%s" % (k[1], extension))
-  k[0].plotNP("plotNP%s.%s" % (k[1], extension))
+suf = "_pseudo"
+m.plotCov("covPlot%s.%s" % (suf, extension))
+m.plotCorr("corrPlot%s.%s" % (suf, extension))
+m.plotCorrWithNP("corrPlotWithNP%s.%s" % (suf, extension))
+m.plotSkewness("skewPlot%s.%s" % (suf, extension))
+m.plotKurtosis("kurtosisPlot%s.%s" % (suf, extension))
+m.plotNP("plotNP%s.%s" % (suf, extension))
 
 # for debugging
 #print "Mean of unfolded data:"
@@ -156,15 +179,13 @@ for k in [ [m, ""], [m_pseudo, "_pseudo"]]:
 #print "Print out of the covariance matrix follows:"
 #print np.cov(m.trace.Truth, rowvar = False)
 
-# plot unfolded spectrum
-m.plotUnfolded("plotUnfolded.png")
-m.plotOnlyUnfolded(luminosity*1e-3, True, "fb/GeV", "plotOnlyUnfolded.png")
+m.plotUnfolded("plotUnfolded_pseudo.png")
+m.plotOnlyUnfolded(luminosity*1e-3, True, "fb/GeV", "plotOnlyUnfolded_pseudo.png")
 
-m_pseudo.plotUnfolded("plotUnfolded_pseudo.png")
-m_pseudo.plotOnlyUnfolded(luminosity*1e-3, True, "fb/GeV", "plotOnlyUnfolded_pseudo.png")
+pseudo_fbu_result = m.hunf
 
 comparePlot([data, pseudo_data, truth,
-             m.hunf, m_pseudo.hunf,
+             fbu_result, pseudo_fbu_result,
              tunfold_result, pseudo_tunfold_result],
             ["Reco. projected from unfolding factors", "Reco. simulated with toy experiments", "Particle-level",
              "Unfolded (FBU) from projected reco.", "Unfolded (FBU) from independently simulated reco.",

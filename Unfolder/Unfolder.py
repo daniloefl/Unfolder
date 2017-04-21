@@ -7,6 +7,7 @@ import theano
 import theano.tensor
 import matplotlib.pyplot as plt
 from Histogram import H1D, H2D, plotH1D, plotH2D, plotH1DWithText, plotH2DWithText
+from ComparisonHelpers import getDataFromModel
 from scipy import stats
 
 theano.config.compute_test_value = 'warn'
@@ -97,18 +98,22 @@ class Unfolder:
     self.prior = "gaussian"
 
   '''
+  Use an entropy-based prior.
+  '''
+  def setEntropyPrior(self):
+    self.prior = "entropy"
+
+  '''
   Use a curvature-based prior.
   '''
-  def setCurvaturePrior(self, alpha = 1):
+  def setCurvaturePrior(self):
     self.prior = "curvature"
-    self.alpha = alpha
 
   '''
   Use a first derivative-based prior.
   '''
-  def setFirstDerivativePrior(self, alpha = 1):
+  def setFirstDerivativePrior(self):
     self.prior = "first derivative"
-    self.alpha = alpha
 
   '''
   Add systematic uncertainty.
@@ -143,16 +148,22 @@ class Unfolder:
   def run(self, data):
     self.data = H1D(data)                    # copy data
     self.datasubbkg = self.data - self.bkg   # For monitoring: data - bkg
+
     self.model = pm.Model()                  # create the model
     with self.model:                         # all in this scope is in the model's context
-      self.var_alpha = theano.shared(value = float(self.alpha))
+      self.var_alpha = theano.shared(value = 0.0001, borrow = False)
+      self.var_data = theano.shared(value = self.data.val, borrow = False) # in case one wants to change data
+
       # Define the prior
       if self.prior == "gaussian":
-        self.T = pm.Normal('Truth', mu = self.priorAttributes['mean'], sd = self.priorAttributes['sd'], shape = (self.Nt))
+        #self.T = pm.Normal('Truth', mu = self.priorAttributes['mean'], sd = self.priorAttributes['sd'], shape = (self.Nt))
+        self.T = pm.DensityDist('Truth', logp = lambda val: -self.var_alpha*0.5*theano.tensor.sqr((val - self.priorAttributes['mean'])/self.priorAttributes['sd']).sum(), shape = (self.Nt), testval = self.truth.val)
+      elif self.prior == "entropy":
+        self.T = pm.DensityDist('Truth', logp = lambda val: self.var_alpha*((val/val.sum())*theano.tensor.log(val/val.sum())).sum(), shape = (self.Nt), testval = self.truth.val)
       elif self.prior == "curvature":
-        self.T = pm.DensityDist('Truth', logp = lambda val: theano.tensor.pow(theano.tensor.sqr(theano.tensor.extra_ops.diff(theano.tensor.extra_ops.diff(val))).sum(), -self.var_alpha), shape = (self.Nt), testval = self.truth.val)
+        self.T = pm.DensityDist('Truth', logp = lambda val: -self.var_alpha*theano.tensor.sqr(theano.tensor.extra_ops.diff(theano.tensor.extra_ops.diff(val))).sum(), shape = (self.Nt), testval = self.truth.val)
       elif self.prior == "first derivative":
-        self.T = pm.DensityDist('Truth', logp = lambda val: theano.tensor.pow(theano.tensor.abs_(theano.tensor.extra_ops.diff(theano.tensor.extra_ops.diff(val/(self.truth.x_err*2))/np.diff(self.truth.x))/(2*theano.tensor.mean(theano.tensor.extra_ops.diff(val/(self.truth.x_err*2))/np.diff(self.truth.x)))).sum(), -self.var_alpha), shape = (self.Nt), testval = self.truth.val)
+        self.T = pm.DensityDist('Truth', logp = lambda val: -self.var_alpha*theano.tensor.abs_(theano.tensor.extra_ops.diff(theano.tensor.extra_ops.diff(val/(self.truth.x_err*2))/np.diff(self.truth.x))/(2*theano.tensor.mean(theano.tensor.extra_ops.diff(val/(self.truth.x_err*2))/np.diff(self.truth.x)))).sum(), shape = (self.Nt), testval = self.truth.val)
       else: # if none of the names above matched, assume it is uniform
         self.T = pm.Uniform('Truth', 0.0, 10*max(self.truth.val), shape = (self.Nt))
 
@@ -177,54 +188,76 @@ class Unfolder:
         self.R_syst[name] = self.var_reco_syst[name] + self.var_bkg_syst[name]
         # add it to the total reco result
         self.R_full += self.theta[name]*self.R_syst[name]
-      self.U = pm.Poisson('U', mu = self.R_full, observed = self.data.val, shape = (self.Nr, 1))
-
-  '''
-  Calculate the sum of the bias.
-  '''
-  def getBias(self):
-    return np.sum(np.abs(self.truth.val - self.hunf.val)/self.truth.val)
+      self.U = pm.Poisson('U', mu = self.R_full, observed = self.var_data, shape = (self.Nr, 1))
 
   '''
   Calculate the sum of the bias using only the expected values.
   '''
-  def getBiasFromMAP(self):
-    fitted = np.zeros(len(self.truth.val))
-    with self.model:
-      start = pm.find_MAP()
-      fitted = start['Truth']
-    return np.sum(np.abs(self.truth.val - fitted)/self.truth.val)
+  def getBiasFromMAP(self, N = 100):
+    fitted = np.zeros((N, len(self.truth.val)))
+    bias = np.zeros(len(self.truth.val))
+    bias_variance = np.zeros(len(self.truth.val))
+    for k in range(0, N):
+      pseudo_data = getDataFromModel(self.bkg, self.mig, self.eff, self.truth)
+      self.setData(pseudo_data)
+      #self.run(pseudo_data)
+      with self.model:
+        res = pm.find_MAP()
+        fitted[k, :] = res['Truth'] - self.truth.val
+    bias = np.mean(fitted, axis = 0)
+    bias_std = np.std(fitted, axis = 0)
+    print "getBiasFromMAP with N = ", N, ", mean, std = ", bias, bias_std
+    bias_binsum = np.sum(np.abs(bias))
+    bias_std_binsum = np.sum(bias_std)
+    bias_chi2 = np.sum(np.power(bias/bias_std, 2))
+    return [bias_binsum, bias_std_binsum, bias_chi2]
 
   '''
   Scan alpha values to minimise bias.
   '''
-  def scanAlpha(self, N = 10000, rangeAlpha = np.arange(0, 0.1, 0.01), fname = "scanAlpha.png"):
+  def scanAlpha(self, rangeAlpha = np.arange(0.0, 10.0, 0.5), fname = "scanAlpha.png", fname_chi2 = "scanAlpha_chi2.png"):
+    bkp_alpha = self.var_alpha.get_value()
     bias = np.zeros(len(rangeAlpha))
+    bias_std = np.zeros(len(rangeAlpha))
+    bias_chi2 = np.zeros(len(rangeAlpha))
     minBias = 1e10
     bestAlpha = 0
     for i in range(0, len(rangeAlpha)):
-      self.var_alpha.set_value(rangeAlpha[i])
-      #self.sample(N)
-      #bias[i] = self.getBias()
-      bias[i] = self.getBiasFromMAP() # only take mean values for speed
-      if bias[i] < minBias:
-        minBias = bias[i]
+      self.setAlpha(rangeAlpha[i])
+      bias[i], bias_std[i], bias_chi2[i] = self.getBiasFromMAP() # only take mean values for speed
+      if np.abs(bias_chi2[i] - len(self.truth.val)) < minBias:
+        minBias = np.abs(bias_chi2[i] - len(self.truth.val))
         bestAlpha = rangeAlpha[i]
     fig = plt.figure(figsize=(10, 10))
     plt_bias = H1D(bias)
     plt_bias.val = bias
-    plt_bias.err = np.zeros(len(rangeAlpha))
+    plt_bias.err = np.power(bias_std, 2)
     plt_bias.x = rangeAlpha
     plt_bias.x_err = np.zeros(len(rangeAlpha))
-    plotH1D(plt_bias, "alpha", "sum of bias per bin", "Effect of alpha in the bias", fname)
+    plotH1D(plt_bias, "alpha", "sum of |bias| per bin", "Effect of alpha in the bias - Y errors are bias sqrt(variances)", fname)
+    plt_bias_chi2 = H1D(bias_chi2)
+    plt_bias_chi2.val = bias_chi2
+    plt_bias_chi2.err = np.zeros(len(rangeAlpha))
+    plt_bias_chi2.x = rangeAlpha
+    plt_bias_chi2.x_err = np.zeros(len(rangeAlpha))
+    plotH1D(plt_bias_chi2, "alpha", "|sum(bias^2/Var(bias)) per bin - number of bins|", "Effect of alpha in the bias", fname_chi2)
+    self.setAlpha(bkp_alpha)
     return [bestAlpha, minBias]
     
   '''
   Set value of alpha.
   '''
   def setAlpha(self, alpha):
-    self.alpha = alpha
-    self.var_alpha.set_value(alpha)
+    with self.model:
+      self.var_alpha.set_value(float(alpha), borrow = False)
+
+  '''
+  Update input data.
+  '''
+  def setData(self, data):
+    self.data = H1D(data)
+    with self.model:
+      self.var_data.set_value(self.data.val, borrow = False)
   
 
   '''
