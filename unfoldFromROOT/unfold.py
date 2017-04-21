@@ -73,10 +73,11 @@ m.setUniformPrior()
 
 
 # add uncertainties
-uncList = [] #'sjcalib1030', 'eup', 'ecup'] + ['lup'+str(x) for x in range(0, 10+1)] + ['cup'+str(x) for x in range(0, 3+1)] + ['bup'+str(x) for x in range(0, 3+1)] + ['ewkup']
+#uncList = ['sjcalib1030', 'eup', 'ecup'] + ['lup'+str(x) for x in range(0, 10+1)] + ['cup'+str(x) for x in range(0, 3+1)] + ['bup'+str(x) for x in range(0, 3+1)] + ['ewkup']
+uncList = []
 for k in uncList:
   print "Getting histograms for syst. ", k
-  struth, srecoWithFakes, sbkg, smig, seff, snrt = getHistograms("out_ttallhad_psrw_Syst.root", k)
+  struth, srecoWithFakes, sbkg, smig, seff, snrt = getHistograms("out_ttallhad_psrw_Syst.root", k, "mttAsymm")
   m.addUncertainty(k, sbkg, smig.project('y'))
   plotH1D(m.bkg_syst[k], "Reconstructed "+varname, "Events", "Background Uncertainty "+k, "bkg_unc_%s.%s" % (k, extension))
   plotH1D(m.reco_syst[k], "Reconstructed "+varname, "Events", "Impact in reconstructed distribution due to uncertainty "+k, "recoWithoutFakes_unc_%s.%s" % (k, extension))
@@ -95,6 +96,7 @@ plotH1D(m.bkg, "Reconstructed "+varname, "Events", "Background (including fakes)
 plotH1D(m.recoWithoutFakes, "Reconstructed "+varname, "Events", "Reconstructed-level distribution", "recoWithoutFakes_crossCheck.%s" % extension)
 
 m.run(data)
+m.setAlpha(1.0)
 m.sample(100000)
 
 # plot marginal distributions
@@ -104,7 +106,7 @@ for i in uncList:
   m.plotNPMarginal(i, "plotNPMarginal_%s.%s" % (i, extension))
 
 # plot correlations
-#m.plotPairs("pairPlot.%s" % extension) # takes forever
+m.plotPairs("pairPlot.%s" % extension) # takes forever
 m.plotCov("covPlot.%s" % extension)
 m.plotCorr("corrPlot.%s" % extension)
 m.plotCorrWithNP("corrPlotWithNP.%s" % extension)
