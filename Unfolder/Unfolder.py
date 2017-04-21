@@ -207,7 +207,7 @@ class Unfolder:
     bias = np.mean(fitted, axis = 0)
     bias_std = np.std(fitted, axis = 0)
     #print "getBiasFromMAP with alpha = ", self.var_alpha.get_value(), " N = ", N, ", mean, std = ", bias, bias_std
-    bias_binsum = np.sum(bias/np.sqrt(self.truth.err))
+    bias_binsum = np.sum(np.abs(bias)/np.sqrt(self.truth.err))
     bias_std_binsum = np.sum(bias_std/np.sqrt(self.truth.err))
     bias_chi2 = np.sum(np.power(bias/bias_std, 2))
     return [bias_binsum, bias_std_binsum, bias_chi2]
