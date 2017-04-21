@@ -21,7 +21,7 @@ varname = "m_{tt}"
 extension = "png"
 
 # get histograms from file
-truth, recoWithFakes, bkg, mig, eff, nrt = getHistograms("out_ttallhad_psrw_Syst.root", "nominal") #, "mttAsymm")
+truth, recoWithFakes, bkg, mig, eff, nrt = getHistograms("out_ttallhad_psrw_Syst.root", "nominal", "mttAsymm")
 
 recoWithoutFakes = mig.project("y")
 
@@ -130,13 +130,13 @@ fbu_result = m.hunf
 
 # now try a curvature-based prior
 # first choose alpha using only a MAP estimate
-m.setEntropyPrior()
+#m.setEntropyPrior()
 #m.setCurvaturePrior()
-#m.setFirstDerivativePrior()
+m.setFirstDerivativePrior()
 #m.setGaussianPrior()
 m.run(data)
 # does the same for the pseudo-data
-alpha, minBias = m.scanAlpha(np.arange(0.0, 20.0, 0.5), "scanAlpha.%s" % extension, "scanAlpha_chi2.%s" % extension)
+alpha, minBias = m.scanAlpha(1000, np.arange(0.0, 10.0, 1.0), "scanAlpha.%s" % extension, "scanAlpha_chi2.%s" % extension)
 print "Found alpha = ", alpha, " with bias = ", minBias
 m.setAlpha(alpha)
 

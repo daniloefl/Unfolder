@@ -193,7 +193,7 @@ class Unfolder:
   '''
   Calculate the sum of the bias using only the expected values.
   '''
-  def getBiasFromMAP(self, N = 100):
+  def getBiasFromMAP(self, N):
     fitted = np.zeros((N, len(self.truth.val)))
     bias = np.zeros(len(self.truth.val))
     bias_variance = np.zeros(len(self.truth.val))
@@ -206,16 +206,16 @@ class Unfolder:
         fitted[k, :] = res['Truth'] - self.truth.val
     bias = np.mean(fitted, axis = 0)
     bias_std = np.std(fitted, axis = 0)
-    print "getBiasFromMAP with N = ", N, ", mean, std = ", bias, bias_std
-    bias_binsum = np.sum(np.abs(bias))
-    bias_std_binsum = np.sum(bias_std)
+    #print "getBiasFromMAP with alpha = ", self.var_alpha.get_value(), " N = ", N, ", mean, std = ", bias, bias_std
+    bias_binsum = np.sum(bias/np.sqrt(self.truth.err))
+    bias_std_binsum = np.sum(bias_std/np.sqrt(self.truth.err))
     bias_chi2 = np.sum(np.power(bias/bias_std, 2))
     return [bias_binsum, bias_std_binsum, bias_chi2]
 
   '''
   Scan alpha values to minimise bias.
   '''
-  def scanAlpha(self, rangeAlpha = np.arange(0.0, 10.0, 0.5), fname = "scanAlpha.png", fname_chi2 = "scanAlpha_chi2.png"):
+  def scanAlpha(self, N = 1000, rangeAlpha = np.arange(0.0, 50.0, 1.0), fname = "scanAlpha.png", fname_chi2 = "scanAlpha_chi2.png"):
     bkp_alpha = self.var_alpha.get_value()
     bias = np.zeros(len(rangeAlpha))
     bias_std = np.zeros(len(rangeAlpha))
@@ -224,7 +224,7 @@ class Unfolder:
     bestAlpha = 0
     for i in range(0, len(rangeAlpha)):
       self.setAlpha(rangeAlpha[i])
-      bias[i], bias_std[i], bias_chi2[i] = self.getBiasFromMAP() # only take mean values for speed
+      bias[i], bias_std[i], bias_chi2[i] = self.getBiasFromMAP(N) # only take mean values for speed
       if np.abs(bias_chi2[i] - len(self.truth.val)) < minBias:
         minBias = np.abs(bias_chi2[i] - len(self.truth.val))
         bestAlpha = rangeAlpha[i]
@@ -234,9 +234,9 @@ class Unfolder:
     plt_bias.err = np.power(bias_std, 2)
     plt_bias.x = rangeAlpha
     plt_bias.x_err = np.zeros(len(rangeAlpha))
-    plotH1D(plt_bias, "alpha", "sum of |bias| per bin", "Effect of alpha in the bias - Y errors are bias sqrt(variances)", fname)
+    plotH1D(plt_bias, "alpha", "sum(bias/truth error) per bin", "Effect of alpha in the bias - Y errors are sum(sqrt(var)/truth errors)", fname)
     plt_bias_chi2 = H1D(bias_chi2)
-    plt_bias_chi2.val = bias_chi2
+    plt_bias_chi2.val = np.abs(bias_chi2 - len(self.truth.val))
     plt_bias_chi2.err = np.zeros(len(rangeAlpha))
     plt_bias_chi2.x = rangeAlpha
     plt_bias_chi2.x_err = np.zeros(len(rangeAlpha))
