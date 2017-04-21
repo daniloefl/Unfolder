@@ -215,7 +215,7 @@ class Unfolder:
   '''
   Scan alpha values to minimise bias.
   '''
-  def scanAlpha(self, N = 1000, rangeAlpha = np.arange(0.0, 50.0, 1.0), fname = "scanAlpha.png", fname_chi2 = "scanAlpha_chi2.png"):
+  def scanAlpha(self, N = 1000, rangeAlpha = np.arange(0.0, 10.0, 1.0), fname = "scanAlpha.png", fname_chi2 = "scanAlpha_chi2.png"):
     bkp_alpha = self.var_alpha.get_value()
     bias = np.zeros(len(rangeAlpha))
     bias_std = np.zeros(len(rangeAlpha))

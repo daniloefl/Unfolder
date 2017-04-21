@@ -107,28 +107,7 @@ plotH2D(m.response_noeff.T(), "Particle-level bin", "Reconstructed-level bin", "
 #plotH1D(m.bkg, "Reconstructed "+varname, "Events", "Background (including fakes)", "bkg_crossCheck.%s" % extension)
 #plotH1D(m.recoWithoutFakes, "Reconstructed "+varname, "Events", "Reconstructed-level distribution", "recoWithoutFakes_crossCheck.%s" % extension)
 
-m.run(data)
-m.sample(10000)
-
-# plot marginal distributions
-m.plotMarginal("plotMarginal.%s" % extension)
-for i in uncList:
-  m.plotNPMarginal(i, "plotNPMarginal_%s.%s" % (i, extension))
-
-m.plotUnfolded("plotUnfolded.png")
-m.plotOnlyUnfolded(luminosity*1e-3, True, "fb/GeV", "plotOnlyUnfolded.png")
-
-suf = ""
-m.plotCov("covPlot%s.%s" % (suf, extension))
-m.plotCorr("corrPlot%s.%s" % (suf, extension))
-m.plotCorrWithNP("corrPlotWithNP%s.%s" % (suf, extension))
-m.plotSkewness("skewPlot%s.%s" % (suf, extension))
-m.plotKurtosis("kurtosisPlot%s.%s" % (suf, extension))
-m.plotNP("plotNP%s.%s" % (suf, extension))
-
-fbu_result = m.hunf
-
-# now try a curvature-based prior
+# try a curvature-based prior
 # first choose alpha using only a MAP estimate
 #m.setEntropyPrior()
 #m.setCurvaturePrior()
@@ -140,9 +119,9 @@ alpha, minBias = m.scanAlpha(1000, np.arange(0.0, 10.0, 1.0), "scanAlpha.%s" % e
 print "Found alpha = ", alpha, " with bias = ", minBias
 m.setAlpha(alpha)
 
-m.run(pseudo_data)
+#m.run(pseudo_data)
 m.setData(pseudo_data)
-m.sample(10000)
+m.sample(100000)
 
 # plot marginal distributions
 m.plotMarginal("plotMarginal_pseudo.%s" % extension)
@@ -184,12 +163,36 @@ m.plotOnlyUnfolded(luminosity*1e-3, True, "fb/GeV", "plotOnlyUnfolded_pseudo.png
 
 pseudo_fbu_result = m.hunf
 
+# keep alpha and prior, but now unfold the original distribution
+m.setData(data)
+m.sample(100000)
+
+# plot marginal distributions
+m.plotMarginal("plotMarginal.%s" % extension)
+for i in uncList:
+  m.plotNPMarginal(i, "plotNPMarginal_%s.%s" % (i, extension))
+
+m.plotUnfolded("plotUnfolded.png")
+m.plotOnlyUnfolded(luminosity*1e-3, True, "fb/GeV", "plotOnlyUnfolded.png")
+
+suf = ""
+m.plotCov("covPlot%s.%s" % (suf, extension))
+m.plotCorr("corrPlot%s.%s" % (suf, extension))
+m.plotCorrWithNP("corrPlotWithNP%s.%s" % (suf, extension))
+m.plotSkewness("skewPlot%s.%s" % (suf, extension))
+m.plotKurtosis("kurtosisPlot%s.%s" % (suf, extension))
+m.plotNP("plotNP%s.%s" % (suf, extension))
+
+fbu_result = m.hunf
+
 comparePlot([data, pseudo_data, truth,
-             fbu_result, pseudo_fbu_result,
-             tunfold_result, pseudo_tunfold_result],
+             fbu_result, tunfold_result,
+             pseudo_fbu_result, pseudo_tunfold_result],
             ["Reco. projected from unfolding factors", "Reco. simulated with toy experiments", "Particle-level",
-             "Unfolded (FBU) from projected reco.", "Unfolded (FBU) from independently simulated reco.",
-             "Unfolded (TUnfold) from projected reco.", "Unfolded (TUnfold) from independently simulated reco.",
+             "Unfolded (FBU) from projected reco.",
+             "Unfolded (TUnfold) from projected reco.",
+             "Unfolded (FBU) from independently simulated reco.",
+             "Unfolded (TUnfold) from independently simulated reco.",
             ],
             luminosity*1e-3, True, "fb/GeV", "biasTest.png")
 

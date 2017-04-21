@@ -21,7 +21,7 @@ varname = "m_{tt}"
 extension = "png"
 
 # get histograms from file
-truth, recoWithFakes, bkg, mig, eff, nrt = getHistograms("out_ttallhad_psrw_Syst.root", "nominal") #, "mttAsymm")
+truth, recoWithFakes, bkg, mig, eff, nrt = getHistograms("out_ttallhad_psrw_Syst.root", "nominal", "mttAsymm")
 
 recoWithoutFakes = mig.project("y")
 
@@ -114,20 +114,16 @@ m.plotKurtosis("kurtosisPlot.%s" % extension)
 m.plotNP("plotNP.%s" % extension)
 
 
-print "Mean of unfolded data:"
-print np.mean(m.trace.Truth, axis = 0)
-
-print "Sqrt of variance of unfolded data:"
-print np.std(m.trace.Truth, axis = 0)
-
-print "Skewness of unfolded data:"
-print scipy.stats.skew(m.trace.Truth, bias = False)
-
-print "Kurtosis of unfolded data:"
-print scipy.stats.kurtosis(m.trace.Truth, bias = False)
-
-print "Print out of the covariance matrix follows:"
-print np.cov(m.trace.Truth, rowvar = False)
+#print "Mean of unfolded data:"
+#print np.mean(m.trace.Truth, axis = 0)
+#print "Sqrt of variance of unfolded data:"
+#print np.std(m.trace.Truth, axis = 0)
+#print "Skewness of unfolded data:"
+#print scipy.stats.skew(m.trace.Truth, bias = False)
+#print "Kurtosis of unfolded data:"
+#print scipy.stats.kurtosis(m.trace.Truth, bias = False)
+#print "Print out of the covariance matrix follows:"
+#print np.cov(m.trace.Truth, rowvar = False)
 
 
 # plot unfolded spectrum
