@@ -119,7 +119,7 @@ alpha, minBias = m.scanAlpha(1000, np.arange(0.0, 10.0, 1.0), "scanAlpha.%s" % e
 print "Found alpha = ", alpha, " with bias = ", minBias
 m.setAlpha(alpha)
 
-#m.run(pseudo_data)
+m.run(pseudo_data)
 m.setData(pseudo_data)
 m.sample(100000)
 
@@ -164,6 +164,7 @@ m.plotOnlyUnfolded(luminosity*1e-3, True, "fb/GeV", "plotOnlyUnfolded_pseudo.png
 pseudo_fbu_result = m.hunf
 
 # keep alpha and prior, but now unfold the original distribution
+m.run(data)
 m.setData(data)
 m.sample(100000)
 
