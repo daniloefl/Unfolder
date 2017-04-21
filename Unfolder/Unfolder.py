@@ -151,7 +151,7 @@ class Unfolder:
 
     self.model = pm.Model()                  # create the model
     with self.model:                         # all in this scope is in the model's context
-      self.var_alpha = theano.shared(value = 1, borrow = False)
+      self.var_alpha = theano.shared(value = 1.0, borrow = False)
       self.var_data = theano.shared(value = self.data.val, borrow = False) # in case one wants to change data
 
       # Define the prior
