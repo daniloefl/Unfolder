@@ -238,7 +238,7 @@ class Unfolder:
     plt_bias.err = np.power(bias_std, 2)
     plt_bias.x = rangeAlpha
     plt_bias.x_err = np.zeros(len(rangeAlpha))
-    plotH1DLines(plt_bias, "alpha", "sum(bias/truth error) per bin", "Effect of alpha in the bias - Y errors are sum(sqrt(var)/truth errors)", fname)
+    plotH1DLines(plt_bias, "alpha", "mean(bias/truth error)", "Effect of alpha in the bias - Y errors are sum(sqrt(var)/truth errors)", fname)
     plt_bias_chi2 = H1D(bias_chi2)
     plt_bias_chi2.val = bias_chi2
     plt_bias_chi2.err = np.zeros(len(rangeAlpha))
