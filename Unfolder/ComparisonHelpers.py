@@ -165,8 +165,8 @@ def getBiasFromToys(unfoldFunction, alpha, N, bkg, mig, eff, truth):
     fitted[k, :] = unfolded.val - truth.val
   bias = np.mean(fitted, axis = 0)
   bias_std = np.std(fitted, axis = 0)
-  bias_binsum = np.sum(np.abs(bias)/np.sqrt(truth.err))
-  bias_std_binsum = np.sum(bias_std/np.sqrt(truth.err))
+  bias_binsum = np.sum(np.abs(bias)/np.sqrt(truth.err))/len(truth.val)
+  bias_std_binsum = np.sum(bias_std/np.sqrt(truth.err))/len(truth.val)
   bias_chi2 = np.sum(np.power(bias/bias_std, 2))
   return [bias_binsum, bias_std_binsum, bias_chi2]
 
@@ -181,6 +181,7 @@ def scanRegParameter(unfoldFunction, bkg, mig, eff, truth, N = 1000, rangeAlpha 
   minBias = 1e10
   bestAlpha = 0
   bestChi2 = 0
+  bestI = 0
   for i in range(0, len(rangeAlpha)):
     #if i % 100 == 0:
     print "scanRegParameter: parameter = ", rangeAlpha[i], " / ", rangeAlpha[-1]
@@ -189,6 +190,7 @@ def scanRegParameter(unfoldFunction, bkg, mig, eff, truth, N = 1000, rangeAlpha 
       minBias = np.abs(bias_chi2[i] - len(truth.val))
       bestAlpha = rangeAlpha[i]
       bestChi2 = bias_chi2[i]
+      bestI = i
   fig = plt.figure(figsize=(10, 10))
   plt_bias = H1D(bias)
   plt_bias.val = bias
@@ -202,4 +204,4 @@ def scanRegParameter(unfoldFunction, bkg, mig, eff, truth, N = 1000, rangeAlpha 
   plt_bias_chi2.x = rangeAlpha
   plt_bias_chi2.x_err = np.zeros(len(rangeAlpha))
   plotH1DLines(plt_bias_chi2, "Regularization parameter", "sum(bias^2/Var(bias)) per bin", "", fname_chi2)
-  return [bestAlpha, bestChi2]
+  return [bestAlpha, bestChi2, bias[bestI], bias_std[bestI]]

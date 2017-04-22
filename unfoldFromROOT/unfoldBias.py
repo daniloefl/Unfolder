@@ -74,8 +74,8 @@ class TUnfoldForRegularizationTest:
     del dataMinusBkg
     return tunfold_result
 
-bestTau, bestTauBias = scanRegParameter(TUnfoldForRegularizationTest(f_bkg, f_mig, f_data), f_bkg, f_mig, f_eff, f_truth, 1000, np.arange(0.0, 20e-3, 1e-3), "scanTau_TUnfold.png", "scanTau_chi2_TUnfold.png")
-print "Found optimal tau:", bestTau, bestTauBias
+bestTau, bestTauChi2 bestTauBias, bestTauStd = scanRegParameter(TUnfoldForRegularizationTest(f_bkg, f_mig, f_data), f_bkg, f_mig, f_eff, f_truth, 1000, np.arange(0.0, 20e-3, 1e-3), "scanTau_TUnfold.png", "scanTau_chi2_TUnfold.png")
+print "Found optimal tau:", bestTau, bestTauChi2, bestTauBias, bestTauStd
 
 pseudo_tunfolder = getTUnfolder(f_bkg, f_mig, pseudo_f_data, regMode = ROOT.TUnfold.kRegModeDerivative)
 #pseudo_tunfolder = getTUnfolder(f_bkg, f_mig, pseudo_f_data, regMode = ROOT.TUnfold.kRegModeNone)
@@ -140,8 +140,8 @@ m.setFirstDerivativePrior()
 #m.setGaussianPrior()
 m.run(data)
 # does the same for the pseudo-data
-alpha, minBias = m.scanAlpha(1000, np.arange(0.0, 5.0, 0.5), "scanAlpha.%s" % extension, "scanAlpha_chi2.%s" % extension)
-print "Found alpha = ", alpha, " with bias = ", minBias
+alpha, alphaChi2, bestAlphaBias, bestAlphaStd = m.scanAlpha(1000, np.arange(0.0, 5.0, 0.5), "scanAlpha.%s" % extension, "scanAlpha_chi2.%s" % extension)
+print "Found alpha = ", alpha, " with bias chi2 = ", alphaChi2, ", bias = ", bestAlphabias, ", std = ", bestAlphaStd
 m.setAlpha(alpha)
 
 m.run(pseudo_data)
@@ -222,4 +222,6 @@ comparePlot([data, pseudo_data, truth,
             ],
             luminosity*1e-3, True, "fb/GeV", "biasTest.png")
 
+print "FBU     -- alpha = ",     alpha, " with bias = ", bestAlphaBias, ", std = ", bestAlphaStd 
+print "TUnfold -- tau   = ",   bestTau, " with bias = ", bestTauBias, ", std = ", bestTauStd
 
