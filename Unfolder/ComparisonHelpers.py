@@ -165,8 +165,8 @@ def getBiasFromToys(unfoldFunction, alpha, N, bkg, mig, eff, truth):
     fitted[k, :] = unfolded.val - truth.val
   bias = np.mean(fitted, axis = 0)
   bias_std = np.std(fitted, axis = 0)
-  bias_binsum = np.mean(np.abs(bias)/np.sqrt(truth.err))
-  bias_std_binsum = np.mean(bias_std/np.sqrt(truth.err))
+  bias_binsum = np.mean(np.abs(bias)/truth.val)
+  bias_std_binsum = np.mean(bias_std/truth.val)
   bias_chi2 = np.mean(np.power(bias/bias_std, 2))
   return [bias_binsum, bias_std_binsum, bias_chi2]
 
@@ -197,7 +197,7 @@ def scanRegParameter(unfoldFunction, bkg, mig, eff, truth, N = 1000, rangeAlpha 
   plt_bias.err = np.power(bias_std, 2)
   plt_bias.x = rangeAlpha
   plt_bias.x_err = np.zeros(len(rangeAlpha))
-  plotH1DLines({plt_bias: "bias/truth error"}, "Regularization parameter", "mean over bins(bias/truth error)", "Y errors are mean over bins(sqrt(var)/truth errors)", fname)
+  plotH1DLines({plt_bias: "rel. bias"}, "Regularization parameter", "mean over bins(rel. bias)", "Y errors are mean over bins(sqrt(var))", fname)
   plt_bias_chi2 = H1D(bias_chi2)
   plt_bias_chi2.val = bias_chi2
   plt_bias_chi2.err = np.zeros(len(rangeAlpha))
@@ -205,5 +205,5 @@ def scanRegParameter(unfoldFunction, bkg, mig, eff, truth, N = 1000, rangeAlpha 
   plt_bias_chi2.x_err = np.zeros(len(rangeAlpha))
   plt_cte = H1D(plt_bias_chi2)
   plt_cte.val = [1]*len(rangeAlpha)
-  plotH1DLines({plt_bias_chi2: "Mean over bins(Mean(bias)^2/Var(bias))", plt_cte: "1"}, "Regularization parameter", "chi^2", "", fname_chi2)
+  plotH1DLines({plt_bias_chi2: "Mean over bins(Mean(rel. bias)^2/Var(rel. bias))", plt_cte: "1"}, "Regularization parameter", "chi^2/# bins", "", fname_chi2)
   return [bestAlpha, bestChi2, bias[bestI], bias_std[bestI]]
