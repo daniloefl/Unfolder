@@ -454,6 +454,7 @@ def plotH1D(h, xlabel = "x", ylabel = "Events", title = "", fname = "plotH1D.png
     i += 1
   plt.ylabel(ylabel)
   plt.xlabel(xlabel)
+  plt.legend(loc = "upper left")
   plt.savefig(fname)
   plt.close()
 
@@ -469,6 +470,7 @@ def plotH1DLines(h, xlabel = "x", ylabel = "Events", title = "", fname = "plotH1
     i += 1
   plt.ylabel(ylabel)
   plt.xlabel(xlabel)
+  plt.legend(loc = "upper left")
   plt.savefig(fname)
   plt.close()
 
