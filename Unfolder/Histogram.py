@@ -446,10 +446,12 @@ def plotH1D(h, xlabel = "x", ylabel = "Events", title = "", fname = "plotH1D.png
   fig = plt.figure()
   plt.title(title)
   if isinstance(h, H1D):
-    h = [h]
+    h = {h: xlabel}
   sty = ['ro', 'bv', 'g^', 'm*']
-  for i in range(0, len(h)):
-    plt.errorbar(h[i].x, h[i].val, h[i].err**0.5, h[i].x_err, fmt = sty[i], markersize=10)
+  i = 0
+  for k in h:
+    plt.errorbar(k.x, k.val, k.err**0.5, k.x_err, fmt = sty[i], markersize=10, label = h[k])
+    i += 1
   plt.ylabel(ylabel)
   plt.xlabel(xlabel)
   plt.savefig(fname)
@@ -459,10 +461,12 @@ def plotH1DLines(h, xlabel = "x", ylabel = "Events", title = "", fname = "plotH1
   fig = plt.figure()
   plt.title(title)
   if isinstance(h, H1D):
-    h = [h]
+    h = {h: xlabel}
   sty = ['ro-', 'bv-', 'g^-', 'm*-']
-  for i in range(0, len(h)):
-    plt.errorbar(h[i].x, h[i].val, h[i].err**0.5, h[i].x_err, fmt = sty[i], markersize=10)
+  i = 0
+  for k in h:
+    plt.errorbar(k.x, k.val, k.err**0.5, k.x_err, fmt = sty[i], markersize=10, label = h[k])
+    i += 1
   plt.ylabel(ylabel)
   plt.xlabel(xlabel)
   plt.savefig(fname)

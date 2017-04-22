@@ -207,9 +207,9 @@ class Unfolder:
     bias = np.mean(fitted, axis = 0)
     bias_std = np.std(fitted, axis = 0)
     #print "getBiasFromMAP with alpha = ", self.var_alpha.get_value(), " N = ", N, ", mean, std = ", bias, bias_std
-    bias_binsum = np.sum(np.abs(bias)/np.sqrt(self.truth.err))/len(self.truth.val)
-    bias_std_binsum = np.sum(bias_std/np.sqrt(self.truth.err))/len(self.truth.val)
-    bias_chi2 = np.sum(np.power(bias/bias_std, 2))
+    bias_binsum = np.mean(np.abs(bias)/np.sqrt(self.truth.err))
+    bias_std_binsum = np.mean(bias_std/np.sqrt(self.truth.err))
+    bias_chi2 = np.mean(np.power(bias/bias_std, 2))
     return [bias_binsum, bias_std_binsum, bias_chi2]
 
   '''
@@ -227,8 +227,8 @@ class Unfolder:
     for i in range(0, len(rangeAlpha)):
       self.setAlpha(rangeAlpha[i])
       bias[i], bias_std[i], bias_chi2[i] = self.getBiasFromMAP(N) # only take mean values for speed
-      if np.abs(bias_chi2[i] - len(self.truth.val)) < minBias:
-        minBias = np.abs(bias_chi2[i] - len(self.truth.val))
+      if np.abs(bias_chi2[i] - 1) < minBias:
+        minBias = np.abs(bias_chi2[i] - 1)
         bestChi2 = bias_chi2[i]
         bestAlpha = rangeAlpha[i]
         bestI = i
@@ -238,15 +238,15 @@ class Unfolder:
     plt_bias.err = np.power(bias_std, 2)
     plt_bias.x = rangeAlpha
     plt_bias.x_err = np.zeros(len(rangeAlpha))
-    plotH1DLines(plt_bias, "alpha", "mean(bias/truth error)", "Effect of alpha in the bias - Y errors are sum(sqrt(var)/truth errors)", fname)
+    plotH1DLines({plt_bias: "bias/truth error"}, "alpha", "mean over bins(bias/truth error)", "Y errors are mean over bins(sqrt(var)/truth errors)", fname)
     plt_bias_chi2 = H1D(bias_chi2)
     plt_bias_chi2.val = bias_chi2
     plt_bias_chi2.err = np.zeros(len(rangeAlpha))
     plt_bias_chi2.x = rangeAlpha
     plt_bias_chi2.x_err = np.zeros(len(rangeAlpha))
     plt_cte = H1D(plt_bias_chi2)
-    plt_cte.val = [len(self.truth.val)]*len(rangeAlpha)
-    plotH1DLines([plt_bias_chi2, plt_cte], "alpha", "sum(bias^2/Var(bias)) per bin", "Effect of alpha in the bias", fname_chi2)
+    plt_cte.val = [1]*len(rangeAlpha)
+    plotH1DLines({plt_bias_chi2: "Mean over bins(Mean(bias)^2/Var(bias))", plt_cte: "1"}, "alpha", "chi^2/#bins", "", fname_chi2)
     self.setAlpha(bkp_alpha)
     return [bestAlpha, bestChi2, bias[bestI], bias_std[bestI]]
     
