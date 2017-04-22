@@ -74,7 +74,7 @@ class TUnfoldForRegularizationTest:
     del dataMinusBkg
     return tunfold_result
 
-bestTau, bestTauChi2 bestTauBias, bestTauStd = scanRegParameter(TUnfoldForRegularizationTest(f_bkg, f_mig, f_data), f_bkg, f_mig, f_eff, f_truth, 1000, np.arange(0.0, 20e-3, 1e-3), "scanTau_TUnfold.png", "scanTau_chi2_TUnfold.png")
+bestTau, bestTauChi2, bestTauBias, bestTauStd = scanRegParameter(TUnfoldForRegularizationTest(f_bkg, f_mig, f_data), f_bkg, f_mig, f_eff, f_truth, 1000, np.arange(0.0, 20e-3, 1e-3), "scanTau_TUnfold.png", "scanTau_chi2_TUnfold.png")
 print "Found optimal tau:", bestTau, bestTauChi2, bestTauBias, bestTauStd
 
 pseudo_tunfolder = getTUnfolder(f_bkg, f_mig, pseudo_f_data, regMode = ROOT.TUnfold.kRegModeDerivative)
