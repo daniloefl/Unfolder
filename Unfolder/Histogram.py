@@ -445,7 +445,11 @@ def plotH2DWithText(h, x, xlabel = "x", ylabel = "y", title = "Migration matrix 
 def plotH1D(h, xlabel = "x", ylabel = "Events", title = "", fname = "plotH1D.png"):
   fig = plt.figure()
   plt.title(title)
-  plt.errorbar(h.x, h.val, h.err**0.5, h.x_err, fmt = 'ro', markersize=10)
+  if isinstance(h, H1D):
+    h = [h]
+  sty = ['ro', 'bv', 'g^', 'm*']
+  for i in range(0, len(h)):
+    plt.errorbar(h[i].x, h[i].val, h[i].err**0.5, h[i].x_err, fmt = sty[i], markersize=10)
   plt.ylabel(ylabel)
   plt.xlabel(xlabel)
   plt.savefig(fname)
@@ -454,7 +458,11 @@ def plotH1D(h, xlabel = "x", ylabel = "Events", title = "", fname = "plotH1D.png
 def plotH1DLines(h, xlabel = "x", ylabel = "Events", title = "", fname = "plotH1D.png"):
   fig = plt.figure()
   plt.title(title)
-  plt.errorbar(h.x, h.val, h.err**0.5, h.x_err, fmt = 'ro-', markersize=10)
+  if isinstance(h, H1D):
+    h = [h]
+  sty = ['ro-', 'bv-', 'g^-', 'm*-']
+  for i in range(0, len(h)):
+    plt.errorbar(h[i].x, h[i].val, h[i].err**0.5, h[i].x_err, fmt = sty[i], markersize=10)
   plt.ylabel(ylabel)
   plt.xlabel(xlabel)
   plt.savefig(fname)

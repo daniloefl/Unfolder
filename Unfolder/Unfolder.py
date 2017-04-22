@@ -244,7 +244,9 @@ class Unfolder:
     plt_bias_chi2.err = np.zeros(len(rangeAlpha))
     plt_bias_chi2.x = rangeAlpha
     plt_bias_chi2.x_err = np.zeros(len(rangeAlpha))
-    plotH1DLines(plt_bias_chi2, "alpha", "sum(bias^2/Var(bias)) per bin", "Effect of alpha in the bias", fname_chi2)
+    plt_cte = H1D(plt_bias_chi2)
+    plt_cte.val = [len(self.truth.val)]*len(rangeAlpha)
+    plotH1DLines([plt_bias_chi2, plt_cte], "alpha", "sum(bias^2/Var(bias)) per bin", "Effect of alpha in the bias", fname_chi2)
     self.setAlpha(bkp_alpha)
     return [bestAlpha, bestChi2, bias[bestI], bias_std[bestI]]
     

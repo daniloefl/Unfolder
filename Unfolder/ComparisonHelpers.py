@@ -203,5 +203,7 @@ def scanRegParameter(unfoldFunction, bkg, mig, eff, truth, N = 1000, rangeAlpha 
   plt_bias_chi2.err = np.zeros(len(rangeAlpha))
   plt_bias_chi2.x = rangeAlpha
   plt_bias_chi2.x_err = np.zeros(len(rangeAlpha))
-  plotH1DLines(plt_bias_chi2, "Regularization parameter", "sum(bias^2/Var(bias)) per bin", "", fname_chi2)
+  plt_cte = H1D(plt_bias_chi2)
+  plt_cte.val = [len(truth.val)]*len(rangeAlpha)
+  plotH1DLines([plt_bias_chi2, plt_cte], "Regularization parameter", "sum(bias^2/Var(bias)) per bin", "", fname_chi2)
   return [bestAlpha, bestChi2, bias[bestI], bias_std[bestI]]
