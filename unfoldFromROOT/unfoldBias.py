@@ -52,21 +52,46 @@ comparePlot([data, pseudo_data, data - bkg, pseudo_data - bkg],
 f_truth, f_recoWithFakes, f_bkg, f_mig, f_eff, f_nrt = getHistograms("out_ttallhad_psrw_Syst.root", "nominal", "mttAsymm")
 f_data = f_recoWithFakes
 pseudo_f_data = getDataFromModel(f_bkg, f_mig, f_eff, f_truth)
-tunfolder = getTUnfolder(f_bkg, f_mig, f_data, regMode = ROOT.TUnfold.kRegModeDerivative)
-#tunfolder = getTUnfolder(f_bkg, f_mig, f_data, regMode = ROOT.TUnfold.kRegModeNone)
-# no regularization
-tau = printLcurve(tunfolder, "tunfold_lcurve.png")
-tunfolder.DoUnfold(tau)
-tunfold_mig = H1D(tunfolder.GetOutput("tunfold_result"))
-tunfold_result = tunfold_mig/eff
+
+# functor to unfold
+class TUnfoldForRegularizationTest:
+  def __init__(self, f_bkg, f_mig, f_data):
+    self.f_bkg = f_bkg
+    self.tunfolder_reg = getTUnfolder(f_bkg, f_mig, f_data, regMode = ROOT.TUnfold.kRegModeDerivative)
+
+  def __call__(self, tau, data):
+    #f_truth, f_recoWithFakes, f_bkg, f_mig, f_eff, f_nrt = getHistograms("out_ttallhad_psrw_Syst.root", "nominal", "mttAsymm")
+    #tunfolder_reg = getTUnfolder(f_bkg, f_mig, data, regMode = ROOT.TUnfold.kRegModeDerivative)
+    dataMinusBkg = (data - self.f_bkg).toROOT("data_minus_bkg_tmp")
+    dataMinusBkg.SetDirectory(0)
+    self.tunfolder_reg.SetInput(dataMinusBkg)
+    self.tunfolder_reg.DoUnfold(tau)
+    tmp = self.tunfolder_reg.GetOutput("tunfold_result_tmp")
+    tmp.SetDirectory(0)
+    tunfold_mig = H1D(tmp)
+    tunfold_result = tunfold_mig/eff
+    del tmp
+    del dataMinusBkg
+    return tunfold_result
+
+bestTau, bestTauBias = scanRegParameter(TUnfoldForRegularizationTest(f_bkg, f_mig, f_data), f_bkg, f_mig, f_eff, f_truth, 1000, np.arange(0.0, 20e-3, 1e-3), "scanTau_TUnfold.png", "scanTau_chi2_TUnfold.png")
+print "Found optimal tau:", bestTau, bestTauBias
 
 pseudo_tunfolder = getTUnfolder(f_bkg, f_mig, pseudo_f_data, regMode = ROOT.TUnfold.kRegModeDerivative)
 #pseudo_tunfolder = getTUnfolder(f_bkg, f_mig, pseudo_f_data, regMode = ROOT.TUnfold.kRegModeNone)
-# no regularization
-tau_pseudo = printLcurve(tunfolder, "tunfold_lcurve_pseudo.png")
-pseudo_tunfolder.DoUnfold(tau_pseudo)
+
+#tau_pseudo = printLcurve(pseudo_tunfolder, "tunfold_lcurve_pseudo.png")
+pseudo_tunfolder.DoUnfold(bestTau)
 pseudo_tunfold_mig = H1D(pseudo_tunfolder.GetOutput("tunfold_pseudo_result"))
 pseudo_tunfold_result = pseudo_tunfold_mig/eff
+
+tunfolder = getTUnfolder(f_bkg, f_mig, f_data, regMode = ROOT.TUnfold.kRegModeDerivative)
+#tunfolder = getTUnfolder(f_bkg, f_mig, f_data, regMode = ROOT.TUnfold.kRegModeNone)
+# no regularization
+#tau = printLcurve(tunfolder, "tunfold_lcurve.png")
+tunfolder.DoUnfold(bestTau)
+tunfold_mig = H1D(tunfolder.GetOutput("tunfold_result"))
+tunfold_result = tunfold_mig/eff
 
 comparePlot([f_data, pseudo_f_data, f_truth,
              tunfold_result,
@@ -115,7 +140,7 @@ m.setFirstDerivativePrior()
 #m.setGaussianPrior()
 m.run(data)
 # does the same for the pseudo-data
-alpha, minBias = m.scanAlpha(1000, np.arange(0.0, 10.0, 1.0), "scanAlpha.%s" % extension, "scanAlpha_chi2.%s" % extension)
+alpha, minBias = m.scanAlpha(1000, np.arange(0.0, 5.0, 0.5), "scanAlpha.%s" % extension, "scanAlpha_chi2.%s" % extension)
 print "Found alpha = ", alpha, " with bias = ", minBias
 m.setAlpha(alpha)
 

@@ -6,7 +6,7 @@ import seaborn as sns
 import theano
 import theano.tensor
 import matplotlib.pyplot as plt
-from Histogram import H1D, H2D, plotH1D, plotH2D, plotH1DWithText, plotH2DWithText
+from Histogram import H1D, H2D, plotH1D, plotH2D, plotH1DWithText, plotH2DWithText, plotH1DLines
 from ComparisonHelpers import getDataFromModel
 from scipy import stats
 
@@ -213,7 +213,7 @@ class Unfolder:
     return [bias_binsum, bias_std_binsum, bias_chi2]
 
   '''
-  Scan alpha values to minimise bias.
+  Scan alpha values to minimise bias^2 over variance.
   '''
   def scanAlpha(self, N = 1000, rangeAlpha = np.arange(0.0, 10.0, 1.0), fname = "scanAlpha.png", fname_chi2 = "scanAlpha_chi2.png"):
     bkp_alpha = self.var_alpha.get_value()
@@ -222,11 +222,13 @@ class Unfolder:
     bias_chi2 = np.zeros(len(rangeAlpha))
     minBias = 1e10
     bestAlpha = 0
+    bestChi2 = 0
     for i in range(0, len(rangeAlpha)):
       self.setAlpha(rangeAlpha[i])
       bias[i], bias_std[i], bias_chi2[i] = self.getBiasFromMAP(N) # only take mean values for speed
       if np.abs(bias_chi2[i] - len(self.truth.val)) < minBias:
         minBias = np.abs(bias_chi2[i] - len(self.truth.val))
+        bestChi2 = bias_chi2[i]
         bestAlpha = rangeAlpha[i]
     fig = plt.figure(figsize=(10, 10))
     plt_bias = H1D(bias)
@@ -234,15 +236,15 @@ class Unfolder:
     plt_bias.err = np.power(bias_std, 2)
     plt_bias.x = rangeAlpha
     plt_bias.x_err = np.zeros(len(rangeAlpha))
-    plotH1D(plt_bias, "alpha", "sum(bias/truth error) per bin", "Effect of alpha in the bias - Y errors are sum(sqrt(var)/truth errors)", fname)
+    plotH1DLines(plt_bias, "alpha", "sum(bias/truth error) per bin", "Effect of alpha in the bias - Y errors are sum(sqrt(var)/truth errors)", fname)
     plt_bias_chi2 = H1D(bias_chi2)
-    plt_bias_chi2.val = np.abs(bias_chi2 - len(self.truth.val))
+    plt_bias_chi2.val = bias_chi2
     plt_bias_chi2.err = np.zeros(len(rangeAlpha))
     plt_bias_chi2.x = rangeAlpha
     plt_bias_chi2.x_err = np.zeros(len(rangeAlpha))
-    plotH1D(plt_bias_chi2, "alpha", "|sum(bias^2/Var(bias)) per bin - number of bins|", "Effect of alpha in the bias", fname_chi2)
+    plotH1DLines(plt_bias_chi2, "alpha", "sum(bias^2/Var(bias)) per bin", "Effect of alpha in the bias", fname_chi2)
     self.setAlpha(bkp_alpha)
-    return [bestAlpha, minBias]
+    return [bestAlpha, bestChi2]
     
   '''
   Set value of alpha.

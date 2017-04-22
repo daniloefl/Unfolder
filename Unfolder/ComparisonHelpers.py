@@ -4,7 +4,7 @@ import array
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns 
-from Histogram import H1D, H2D, plotH1D, plotH2D, plotH1DWithText, plotH2DWithText
+from Histogram import H1D, H2D, plotH1D, plotH2D, plotH1DWithText, plotH2DWithText, plotH1DLines
 
 '''
 To be used to scan TUnfold's object to find the optimal tau value for
@@ -12,8 +12,8 @@ the regularisation.
 '''
 def printLcurve(tunfolder, fname):
   nScan   = 30
-  tauMin  = 0.
-  tauMax  = 0.
+  tauMin  = 0
+  tauMax  = 0
   iBest   = -1
   logTauX = ROOT.TSpline3()
   logTauY = ROOT.TSpline3()
@@ -152,3 +152,54 @@ def getDataFromModel(bkg, mig, eff, truth):
       data.err[recoBin] += 1
   return data
 
+'''
+Calculate the sum of the bias using only the expected values.
+'''
+def getBiasFromToys(unfoldFunction, alpha, N, bkg, mig, eff, truth):
+  fitted = np.zeros((N, len(truth.val)))
+  bias = np.zeros(len(truth.val))
+  bias_variance = np.zeros(len(truth.val))
+  for k in range(0, N):
+    pseudo_data = getDataFromModel(bkg, mig, eff, truth)
+    unfolded = unfoldFunction(alpha, pseudo_data)
+    fitted[k, :] = unfolded.val - truth.val
+  bias = np.mean(fitted, axis = 0)
+  bias_std = np.std(fitted, axis = 0)
+  bias_binsum = np.sum(np.abs(bias)/np.sqrt(truth.err))
+  bias_std_binsum = np.sum(bias_std/np.sqrt(truth.err))
+  bias_chi2 = np.sum(np.power(bias/bias_std, 2))
+  return [bias_binsum, bias_std_binsum, bias_chi2]
+
+'''
+Scan general regularization parameter to minimize bias^2 over variance.
+unfoldFunction receives the reg. parameter and a data vector to unfold and returns the unfolded spectrum.
+'''
+def scanRegParameter(unfoldFunction, bkg, mig, eff, truth, N = 1000, rangeAlpha = np.arange(0.0, 1.0, 1e-3), fname = "scanRegParameter.png", fname_chi2 = "scanRegParameter_chi2.png"):
+  bias = np.zeros(len(rangeAlpha))
+  bias_std = np.zeros(len(rangeAlpha))
+  bias_chi2 = np.zeros(len(rangeAlpha))
+  minBias = 1e10
+  bestAlpha = 0
+  bestChi2 = 0
+  for i in range(0, len(rangeAlpha)):
+    #if i % 100 == 0:
+    print "scanRegParameter: parameter = ", rangeAlpha[i], " / ", rangeAlpha[-1]
+    bias[i], bias_std[i], bias_chi2[i] = getBiasFromToys(unfoldFunction, rangeAlpha[i], N, bkg, mig, eff, truth)
+    if np.abs(bias_chi2[i] - len(truth.val)) < minBias:
+      minBias = np.abs(bias_chi2[i] - len(truth.val))
+      bestAlpha = rangeAlpha[i]
+      bestChi2 = bias_chi2[i]
+  fig = plt.figure(figsize=(10, 10))
+  plt_bias = H1D(bias)
+  plt_bias.val = bias
+  plt_bias.err = np.power(bias_std, 2)
+  plt_bias.x = rangeAlpha
+  plt_bias.x_err = np.zeros(len(rangeAlpha))
+  plotH1DLines(plt_bias, "Regularization parameter", "sum(bias/truth error) per bin", "Y errors are sum(sqrt(var)/truth errors)", fname)
+  plt_bias_chi2 = H1D(bias_chi2)
+  plt_bias_chi2.val = bias_chi2
+  plt_bias_chi2.err = np.zeros(len(rangeAlpha))
+  plt_bias_chi2.x = rangeAlpha
+  plt_bias_chi2.x_err = np.zeros(len(rangeAlpha))
+  plotH1DLines(plt_bias_chi2, "Regularization parameter", "sum(bias^2/Var(bias)) per bin", "", fname_chi2)
+  return [bestAlpha, bestChi2]
