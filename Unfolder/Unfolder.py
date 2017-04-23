@@ -227,8 +227,8 @@ class Unfolder:
     for i in range(0, len(rangeAlpha)):
       self.setAlpha(rangeAlpha[i])
       bias[i], bias_std[i], bias_chi2[i] = self.getBiasFromMAP(N) # only take mean values for speed
-      if np.abs(bias_chi2[i] - 1) < minBias:
-        minBias = np.abs(bias_chi2[i] - 1)
+      if np.abs(bias_chi2[i] - 0.5) < minBias:
+        minBias = np.abs(bias_chi2[i] - 0.5)
         bestChi2 = bias_chi2[i]
         bestAlpha = rangeAlpha[i]
         bestI = i
@@ -245,7 +245,7 @@ class Unfolder:
     plt_bias_chi2.x = rangeAlpha
     plt_bias_chi2.x_err = np.zeros(len(rangeAlpha))
     plt_cte = H1D(plt_bias_chi2)
-    plt_cte.val = [1]*len(rangeAlpha)
+    plt_cte.val = [0.5]*len(rangeAlpha)
     plotH1DLines({plt_bias_chi2: "Mean over bins(Mean(rel. bias)^2/Var(rel. bias))", plt_cte: "1"}, "alpha", "chi^2/#bins", "", fname_chi2)
     self.setAlpha(bkp_alpha)
     return [bestAlpha, bestChi2, bias[bestI], bias_std[bestI]]
