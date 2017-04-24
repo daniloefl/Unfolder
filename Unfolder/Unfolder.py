@@ -189,6 +189,7 @@ class Unfolder:
         # add it to the total reco result
         self.R_full += self.theta[name]*self.R_syst[name]
       self.U = pm.Poisson('U', mu = self.R_full, observed = self.var_data, shape = (self.Nr, 1))
+      #self.U = pm.Normal('U', mu = self.R_full, sd = theano.tensor.sqrt(self.R_full), observed = self.var_data, shape = (self.Nr, 1))
 
   '''
   Calculate the sum of the bias using only the expected values.

@@ -55,9 +55,9 @@ pseudo_f_data = getDataFromModel(f_bkg, f_mig, f_eff, f_truth)
 
 # functor to unfold
 class TUnfoldForRegularizationTest:
-  def __init__(self, f_bkg, f_mig, f_data):
+  def __init__(self, f_bkg, f_mig, f_data, regMode = ROOT.TUnfold.kRegModeDerivative):
     self.f_bkg = f_bkg
-    self.tunfolder_reg = getTUnfolder(f_bkg, f_mig, f_data, regMode = ROOT.TUnfold.kRegModeDerivative)
+    self.tunfolder_reg = getTUnfolder(f_bkg, f_mig, f_data, regMode = regMode)
 
   def __call__(self, tau, data):
     #f_truth, f_recoWithFakes, f_bkg, f_mig, f_eff, f_nrt = getHistograms("out_ttallhad_psrw_Syst.root", "nominal", "mttAsymm")
@@ -74,10 +74,11 @@ class TUnfoldForRegularizationTest:
     del dataMinusBkg
     return tunfold_result
 
-bestTau, bestTauChi2, bestTauBias, bestTauStd = scanRegParameter(TUnfoldForRegularizationTest(f_bkg, f_mig, f_data), f_bkg, f_mig, f_eff, f_truth, 1000, np.arange(0.0, 10e-3, 0.125e-3), "scanTau_TUnfold.png", "scanTau_chi2_TUnfold.png")
+bestTau, bestTauChi2, bestTauBias, bestTauStd = scanRegParameter(TUnfoldForRegularizationTest(f_bkg, f_mig, f_data, ROOT.TUnfold.kRegModeCurvature), f_bkg, f_mig, f_eff, f_truth, 1000, np.arange(0.0, 10e-3, 0.125e-3), "scanTau_TUnfold.png", "scanTau_chi2_TUnfold.png")
 print "Found optimal tau:", bestTau, bestTauChi2, bestTauBias, bestTauStd
 
 pseudo_tunfolder = getTUnfolder(f_bkg, f_mig, pseudo_f_data, regMode = ROOT.TUnfold.kRegModeDerivative)
+#pseudo_tunfolder = getTUnfolder(f_bkg, f_mig, pseudo_f_data, regMode = ROOT.TUnfold.kRegModeCurvature)
 #pseudo_tunfolder = getTUnfolder(f_bkg, f_mig, pseudo_f_data, regMode = ROOT.TUnfold.kRegModeNone)
 
 #tau_pseudo = printLcurve(pseudo_tunfolder, "tunfold_lcurve_pseudo.png")
@@ -86,6 +87,7 @@ pseudo_tunfold_mig = H1D(pseudo_tunfolder.GetOutput("tunfold_pseudo_result"))
 pseudo_tunfold_result = pseudo_tunfold_mig/eff
 
 tunfolder = getTUnfolder(f_bkg, f_mig, f_data, regMode = ROOT.TUnfold.kRegModeDerivative)
+#tunfolder = getTUnfolder(f_bkg, f_mig, f_data, regMode = ROOT.TUnfold.kRegModeCurvature)
 #tunfolder = getTUnfolder(f_bkg, f_mig, f_data, regMode = ROOT.TUnfold.kRegModeNone)
 # no regularization
 #tau = printLcurve(tunfolder, "tunfold_lcurve.png")
@@ -140,7 +142,9 @@ m.setFirstDerivativePrior()
 #m.setGaussianPrior()
 m.run(data)
 # does the same for the pseudo-data
+# for first deriv:
 alpha, alphaChi2, bestAlphaBias, bestAlphaStd = m.scanAlpha(1000, np.arange(0.0, 5.0, 0.125), "scanAlpha.%s" % extension, "scanAlpha_chi2.%s" % extension)
+#alpha, alphaChi2, bestAlphaBias, bestAlphaStd = m.scanAlpha(1000, np.arange(0.0, 4e-8, 1e-9), "scanAlpha.%s" % extension, "scanAlpha_chi2.%s" % extension)
 print "Found alpha = ", alpha, " with bias chi2 = ", alphaChi2, ", bias = ", bestAlphaBias, ", std = ", bestAlphaStd
 m.setAlpha(alpha)
 
