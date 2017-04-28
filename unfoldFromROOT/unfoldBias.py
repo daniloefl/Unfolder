@@ -47,62 +47,6 @@ comparePlot([data, pseudo_data, data - bkg, pseudo_data - bkg],
              "Reco. projected from unfolding factors - bkg", "Reco. simulated with toy experiments - bkg"],
             luminosity*1e-3, True, "fb/GeV", "pseudoData.png")
 
-# Try alternative
-# Create alternative method for unfolding
-f_truth, f_recoWithFakes, f_bkg, f_mig, f_eff, f_nrt = getHistograms("out_ttallhad_psrw_Syst.root", "nominal", "mttAsymm")
-f_data = f_recoWithFakes
-pseudo_f_data = getDataFromModel(f_bkg, f_mig, f_eff, f_truth)
-
-# functor to unfold
-class TUnfoldForRegularizationTest:
-  def __init__(self, f_bkg, f_mig, f_data, regMode = ROOT.TUnfold.kRegModeDerivative):
-    self.f_bkg = f_bkg
-    self.tunfolder_reg = getTUnfolder(f_bkg, f_mig, f_data, regMode = regMode)
-
-  def __call__(self, tau, data):
-    #f_truth, f_recoWithFakes, f_bkg, f_mig, f_eff, f_nrt = getHistograms("out_ttallhad_psrw_Syst.root", "nominal", "mttAsymm")
-    #tunfolder_reg = getTUnfolder(f_bkg, f_mig, data, regMode = ROOT.TUnfold.kRegModeDerivative)
-    dataMinusBkg = (data - self.f_bkg).toROOT("data_minus_bkg_tmp")
-    dataMinusBkg.SetDirectory(0)
-    self.tunfolder_reg.SetInput(dataMinusBkg)
-    self.tunfolder_reg.DoUnfold(tau)
-    tmp = self.tunfolder_reg.GetOutput("tunfold_result_tmp")
-    tmp.SetDirectory(0)
-    tunfold_mig = H1D(tmp)
-    tunfold_result = tunfold_mig/eff
-    del tmp
-    del dataMinusBkg
-    return tunfold_result
-
-bestTau, bestTauChi2, bestTauBias, bestTauStd = scanRegParameter(TUnfoldForRegularizationTest(f_bkg, f_mig, f_data, ROOT.TUnfold.kRegModeCurvature), f_bkg, f_mig, f_eff, f_truth, 1000, np.arange(0.0, 10e-3, 0.125e-3), "scanTau_TUnfold.png", "scanTau_chi2_TUnfold.png")
-print "Found optimal tau:", bestTau, bestTauChi2, bestTauBias, bestTauStd
-
-pseudo_tunfolder = getTUnfolder(f_bkg, f_mig, pseudo_f_data, regMode = ROOT.TUnfold.kRegModeDerivative)
-#pseudo_tunfolder = getTUnfolder(f_bkg, f_mig, pseudo_f_data, regMode = ROOT.TUnfold.kRegModeCurvature)
-#pseudo_tunfolder = getTUnfolder(f_bkg, f_mig, pseudo_f_data, regMode = ROOT.TUnfold.kRegModeNone)
-
-#tau_pseudo = printLcurve(pseudo_tunfolder, "tunfold_lcurve_pseudo.png")
-pseudo_tunfolder.DoUnfold(bestTau)
-pseudo_tunfold_mig = H1D(pseudo_tunfolder.GetOutput("tunfold_pseudo_result"))
-pseudo_tunfold_result = pseudo_tunfold_mig/eff
-
-tunfolder = getTUnfolder(f_bkg, f_mig, f_data, regMode = ROOT.TUnfold.kRegModeDerivative)
-#tunfolder = getTUnfolder(f_bkg, f_mig, f_data, regMode = ROOT.TUnfold.kRegModeCurvature)
-#tunfolder = getTUnfolder(f_bkg, f_mig, f_data, regMode = ROOT.TUnfold.kRegModeNone)
-# no regularization
-#tau = printLcurve(tunfolder, "tunfold_lcurve.png")
-tunfolder.DoUnfold(bestTau)
-tunfold_mig = H1D(tunfolder.GetOutput("tunfold_result"))
-tunfold_result = tunfold_mig/eff
-
-comparePlot([f_data, pseudo_f_data, f_truth,
-             tunfold_result,
-             pseudo_tunfold_result],
-            ["Reco. projected from unfolding factors", "Reco. simulated with toy experiments", "Particle-level",
-             "Unfolded (TUnfold) from projected reco.",
-             "Unfolded (TUnfold) from independently simulated reco."],
-            luminosity*1e-3, True, "fb/GeV", "biasTest_TUnfold.png")
-
 # Create unfolding class
 m = Unfolder(bkg, mig, eff, truth)
 m.setUniformPrior()
@@ -144,7 +88,10 @@ m.run(data)
 # does the same for the pseudo-data
 # for first deriv:
 alpha, alphaChi2, bestAlphaBias, bestAlphaStd = m.scanAlpha(1000, np.arange(0.0, 5.0, 0.125), "scanAlpha.%s" % extension, "scanAlpha_chi2.%s" % extension)
+# for curvature
 #alpha, alphaChi2, bestAlphaBias, bestAlphaStd = m.scanAlpha(1000, np.arange(0.0, 4e-8, 1e-9), "scanAlpha.%s" % extension, "scanAlpha_chi2.%s" % extension)
+# for entropy
+#alpha, alphaChi2, bestAlphaBias, bestAlphaStd = m.scanAlpha(1000, np.arange(0.0, 100.0, 2.0), "scanAlpha.%s" % extension, "scanAlpha_chi2.%s" % extension)
 print "Found alpha = ", alpha, " with bias chi2 = ", alphaChi2, ", bias = ", bestAlphaBias, ", std = ", bestAlphaStd
 m.setAlpha(alpha)
 
@@ -216,16 +163,13 @@ m.plotNP("plotNP%s.%s" % (suf, extension))
 fbu_result = m.hunf
 
 comparePlot([data, pseudo_data, truth,
-             fbu_result, tunfold_result,
-             pseudo_fbu_result, pseudo_tunfold_result],
+             fbu_result,
+             pseudo_fbu_result],
             ["Reco. projected from unfolding factors", "Reco. simulated with toy experiments", "Particle-level",
              "Unfolded (FBU) from projected reco.",
-             "Unfolded (TUnfold) from projected reco.",
              "Unfolded (FBU) from independently simulated reco.",
-             "Unfolded (TUnfold) from independently simulated reco.",
             ],
             luminosity*1e-3, True, "fb/GeV", "biasTest.png")
 
 print "FBU     -- alpha = ",     alpha, " with bias = ", bestAlphaBias, ", std = ", bestAlphaStd 
-print "TUnfold -- tau   = ",   bestTau, " with bias = ", bestTauBias, ", std = ", bestTauStd
 

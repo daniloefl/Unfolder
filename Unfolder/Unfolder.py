@@ -159,7 +159,7 @@ class Unfolder:
         #self.T = pm.Normal('Truth', mu = self.priorAttributes['mean'], sd = self.priorAttributes['sd'], shape = (self.Nt))
         self.T = pm.DensityDist('Truth', logp = lambda val: -self.var_alpha*0.5*theano.tensor.sqr((val - self.priorAttributes['mean'])/self.priorAttributes['sd']).sum(), shape = (self.Nt), testval = self.truth.val)
       elif self.prior == "entropy":
-        self.T = pm.DensityDist('Truth', logp = lambda val: self.var_alpha*((val/val.sum())*theano.tensor.log(val/val.sum())).sum(), shape = (self.Nt), testval = self.truth.val)
+        self.T = pm.DensityDist('Truth', logp = lambda val: -self.var_alpha*((val/val.sum())*theano.tensor.log(val/val.sum())).sum(), shape = (self.Nt), testval = self.truth.val)
       elif self.prior == "curvature":
         self.T = pm.DensityDist('Truth', logp = lambda val: -self.var_alpha*theano.tensor.sqr(theano.tensor.extra_ops.diff(theano.tensor.extra_ops.diff(val))).sum(), shape = (self.Nt), testval = self.truth.val)
       elif self.prior == "first derivative":
@@ -208,8 +208,8 @@ class Unfolder:
     bias = np.mean(fitted, axis = 0)
     bias_std = np.std(fitted, axis = 0)
     #print "getBiasFromMAP with alpha = ", self.var_alpha.get_value(), " N = ", N, ", mean, std = ", bias, bias_std
-    bias_binsum = np.mean(np.abs(bias)/self.truth.val)
-    bias_std_binsum = np.mean(bias_std/self.truth.val)
+    bias_binsum = np.mean(bias)
+    bias_std_binsum = np.mean(bias_std)
     bias_chi2 = np.mean(np.power(bias/bias_std, 2))
     return [bias_binsum, bias_std_binsum, bias_chi2]
 
@@ -287,8 +287,13 @@ class Unfolder:
       for i in range(0, self.Nt):
         self.hunf.val[i] = np.mean(self.trace.Truth[:, i])
         self.hunf.err[i] = np.std(self.trace.Truth[:, i])**2
-        self.hunf_mode.val[i] = stats.mode(self.trace.Truth[:, i])[0][0]
-        self.hunf_mode.err[i] = np.std(self.trace.Truth[:, i])**2
+        m = self.hunf.val[i]
+        s = 3*np.sqrt(self.hunf.err[i])
+        pdf = scipy.stats.gaussian_kde(self.trace.Truth[:, i])
+        g = np.linspace(m-3*s, m+3*s, 1000)
+        mode = g[np.argmax(pdf(g))]
+        self.hunf_mode.val[i] = mode
+        self.hunf_mode.err[i] = self.hunf.err[i]
 
       for k in range(0, len(self.systematics)):
         self.hnp.val[k] = np.mean(self.trace['t_'+self.systematics[k]])
@@ -400,7 +405,7 @@ class Unfolder:
     plt.errorbar(self.data.x, self.data.val, self.data.err**0.5, self.data.x_err, fmt = 'bs', linewidth=2, label = "Pseudo-data", markersize=10)
     plt.errorbar(self.datasubbkg.x, self.datasubbkg.val, self.datasubbkg.err**0.5, self.datasubbkg.x_err, fmt = 'co', linewidth=2, label = "Background subtracted", markersize=10)
     plt.errorbar(self.recoWithoutFakes.x, self.recoWithoutFakes.val, self.recoWithoutFakes.err**0.5, self.recoWithoutFakes.x_err, fmt = 'mv', linewidth=2, label = "Expected signal (no fakes) distribution", markersize=5)
-    plt.errorbar(self.hunf_mode.x, self.hunf_mode.val, self.hunf_mode.err**0.5, self.hunf_mode.x_err, fmt = 'r^', linewidth=2, label = "Unfolded mode", markersize = 5)
+    plt.errorbar(self.hunf_mode.x, self.hunf_mode.val, self.hunf_mode.err**0.5, self.hunf_mode.x_err, fmt = 'm^', linewidth=2, label = "Unfolded mode", markersize = 5)
     plt.errorbar(self.truth.x, self.truth.val, self.truth.err**0.5, self.truth.x_err, fmt = 'g^', linewidth=2, label = "Truth", markersize=10)
     plt.errorbar(self.hunf.x, self.hunf.val, self.hunf.err**0.5, self.hunf.x_err, fmt = 'rv', linewidth=2, label = "Unfolded mean", markersize=5)
     plt.legend()

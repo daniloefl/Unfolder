@@ -47,9 +47,9 @@ tunfold_result = tunfold_mig/eff
 
 comparePlot([f_data, f_data - f_bkg, truth, tunfold_result], ["Data", "Data - bkg", "Particle-level", "TUnfold"], luminosity*1e-3, True, "fb/GeV", "plotTUnfold.png")
 '''
-def getTUnfolder(bkg, mig, data, regMode = ROOT.TUnfold.kRegModeDerivative):
+def getTUnfolder(bkg, mig, data, regMode = ROOT.TUnfold.kRegModeDerivative, normMode = ROOT.TUnfold.kEConstraintArea):
   regularisationMode = 0
-  tunfolder = ROOT.TUnfoldDensity(mig.T().toROOT("tunfold_mig"), ROOT.TUnfold.kHistMapOutputVert, regMode, ROOT.TUnfold.kEConstraintArea, ROOT.TUnfoldDensity.kDensityModeeNone)
+  tunfolder = ROOT.TUnfoldDensity(mig.T().toROOT("tunfold_mig"), ROOT.TUnfold.kHistMapOutputVert, regMode, normMode, ROOT.TUnfoldDensity.kDensityModeeNone)
   dataBkgSub = data - bkg
   tunfolder.SetInput(dataBkgSub.toROOT("data_minus_bkg"))
   return tunfolder
@@ -80,24 +80,30 @@ def comparePlot(listHist, listLegend, f = 1.0, normaliseByBinWidth = True, units
 '''
 This returns a migration-corrected object from RooUnfold using the D'Agostini unfolding procedure.
 Here is an example of how to use it:
-dagostini_mig = getDAgostini(bkg, mig, data)
-dagostini_result = dagostini_mig/eff
+dagostini_mig = getDAgostini(bkg, mig, eff, data)
 comparePlot([data, data - bkg, truth, dagostini_result], ["Data", "Data - bkg", "Particle-level", "D'Agostini"], luminosity*1e-3, True, "fb/GeV", "plotDAgostini.png")
 '''
-def getDAgostini(bkg, mig, data, nIter = 5):
+def getDAgostini(bkg, mig, eff, data, nIter = 1):
   reco = mig.project('y').toROOT("reco_rp")
   reco.SetDirectory(0)
-  #truth = mig.project('x').toROOT("truth_rp")
-  #truth.SetDirectory(0)
+  truth = (mig.project('x')/eff).toROOT("truth_p")
+  truth.SetDirectory(0)
   m = mig.T().toROOT("m")
   m.SetDirectory(0)
-  unf_response = ROOT.RooUnfoldResponse(reco, 0, m)
+  unf_response = ROOT.RooUnfoldResponse(reco, truth, m)
   dataBkgSub = data - bkg
   dd = dataBkgSub.toROOT("dataBkgSub_dagostini")
   dd.SetDirectory(0)
-  dagostini = ROOT.RooUnfoldBayes(unf_response, dd, nIter)
+  dagostini = ROOT.RooUnfoldBayes(unf_response, dd, int(nIter))
+  dagostini.SetVerbose(0)
   dagostini_hreco = dagostini.Hreco()
-  return H1D(dagostini_hreco)
+  dagostini_hreco.SetDirectory(0)
+  del dagostini
+  del unf_response
+  del m
+  r = H1D(dagostini_hreco)
+  del dagostini_hreco
+  return r
 
 '''
 Use model to get pseudo-data from toy experiments.
@@ -120,7 +126,8 @@ def getDataFromModel(bkg, mig, eff, truth):
 
   # for each truth bin
   for i in range(0, len(truth.val)): # i is the truth bin
-    trueCount = np.random.poisson(truth.val[i]) # this simulates a counting experiment for the truth
+    #trueCount = np.random.poisson(truth.val[i]) # this simulates a counting experiment for the truth
+    trueCount = truth.val[i] # dirac delta pdf for the truth distribution
     # calculate cumulative response for bin i
     # C(k|i) = sum_l=0^k P(r=l|t=i)
     C = np.zeros(len(bkg.val))
@@ -157,17 +164,28 @@ Calculate the sum of the bias using only the expected values.
 '''
 def getBiasFromToys(unfoldFunction, alpha, N, bkg, mig, eff, truth):
   fitted = np.zeros((N, len(truth.val)))
+  #fitted2 = np.zeros((N, len(truth.val)))
   bias = np.zeros(len(truth.val))
   bias_variance = np.zeros(len(truth.val))
   for k in range(0, N):
     pseudo_data = getDataFromModel(bkg, mig, eff, truth)
     unfolded = unfoldFunction(alpha, pseudo_data)
-    fitted[k, :] = unfolded.val - truth.val
+    fitted[k, :] = (unfolded.val - truth.val)
+    #fitted2[k, :] = unfolded.val
+    #if k % 500 == 0 and k > 0:
+    #  f = plt.figure()
+    #  plt.errorbar(truth.x, truth.val, np.sqrt(truth.val), truth.x_err, fmt = "ro", markersize = 10, label = "Truth")
+    #  for l in range(k-10, k):
+    #    plt.errorbar(unfolded.x, fitted2[l, :], np.sqrt(fitted2[l, :]),  truth.x_err, fmt = "bv", markersize = 10, label = "Unfolded test %d" % l)
+    #  plt.legend(loc = "upper right")
+    #  plt.show()
+    #  plt.close()
   bias = np.mean(fitted, axis = 0)
   bias_std = np.std(fitted, axis = 0)
-  bias_binsum = np.mean(np.abs(bias)/truth.val)
-  bias_std_binsum = np.mean(bias_std/truth.val)
+  bias_binsum = np.mean(bias)
+  bias_std_binsum = np.mean(bias_std)
   bias_chi2 = np.mean(np.power(bias/bias_std, 2))
+  #print "bias mean = ", np.mean(fitted, axis = 0), ", bias std = ", np.std(fitted, axis = 0)
   return [bias_binsum, bias_std_binsum, bias_chi2]
 
 '''
@@ -207,3 +225,4 @@ def scanRegParameter(unfoldFunction, bkg, mig, eff, truth, N = 1000, rangeAlpha 
   plt_cte.val = [0.5]*len(rangeAlpha)
   plotH1DLines({plt_bias_chi2: "Mean over bins(Mean(rel. bias)^2/Var(rel. bias))", plt_cte: "0.5"}, "Regularization parameter", "chi^2/# bins", "", fname_chi2)
   return [bestAlpha, bestChi2, bias[bestI], bias_std[bestI]]
+
