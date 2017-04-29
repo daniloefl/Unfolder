@@ -51,7 +51,7 @@ for i in recoWithFakes:
 data = recoWithFakes[""]
 
 # generate fake data from model
-pseudo_data = getDataFromModel(bkg[""], mig[""], eff[""], truth[""])
+pseudo_data = getDataFromModel(bkg[""], mig[""], eff[""])
 
 comparePlot([data, pseudo_data, data - bkg, pseudo_data - bkg],
             ["Reco. projected from unfolding factors", "Reco. simulated with toy experiments",
