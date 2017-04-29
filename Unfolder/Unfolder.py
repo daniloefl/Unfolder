@@ -296,7 +296,7 @@ class Unfolder:
     plotH1DLines({plt_bias_norm: "mean normalisation bias"}, "alpha", "mean over toys(norm. bias)", "Y errors are the sqrt(var)", fname_norm)
     plt_bias_chi2 = H1D(bias_chi2)
     plt_bias_chi2.val = bias_chi2
-    plt_bias_chi2.err = np.ones(len(rangeAlpha))*np.sqrt(float(len(truth.val))/float(N)) # error in chi^2 considering errors in the mean of std/sqrt(N)
+    plt_bias_chi2.err = np.ones(len(rangeAlpha))*np.sqrt(float(len(self.truth.val))/float(N)) # error in chi^2 considering errors in the mean of std/sqrt(N)
     plt_bias_chi2.x = rangeAlpha
     plt_bias_chi2.x_err = np.zeros(len(rangeAlpha))
     plt_cte = H1D(plt_bias_chi2)
