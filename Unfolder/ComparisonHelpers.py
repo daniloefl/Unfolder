@@ -169,7 +169,7 @@ def getBiasFromToys(unfoldFunction, alpha, N, bkg, mig, eff, truth):
   fitted = np.zeros((N, len(truth.val)))
   #fitted2 = np.zeros((N, len(truth.val)))
   bias = np.zeros(len(truth.val))
-  bias_variance = np.zeros(len(truth.val))
+  bias_norm = np.zeros(N)
   import sys
   for k in range(0, N):
     if k % 100 == 0:
@@ -178,6 +178,7 @@ def getBiasFromToys(unfoldFunction, alpha, N, bkg, mig, eff, truth):
     pseudo_data = getDataFromModel(bkg, mig, eff)
     unfolded = unfoldFunction(alpha, pseudo_data)
     fitted[k, :] = (unfolded.val - truth.val)
+    bias_norm[k] = np.sum(unfolded.val - truth.val)
     #fitted2[k, :] = unfolded.val
     #if k % 500 == 0 and k > 0:
     #  f = plt.figure()
@@ -190,20 +191,24 @@ def getBiasFromToys(unfoldFunction, alpha, N, bkg, mig, eff, truth):
   print
   bias = np.mean(fitted, axis = 0)
   bias_std = np.std(fitted, axis = 0)
+  bias_norm_mean = np.mean(bias_norm)
+  bias_norm_std = np.std(bias_norm)
   bias_binsum = np.mean(bias)
   bias_std_binsum = np.mean(bias_std)
   bias_chi2 = np.mean(np.power(bias/bias_std, 2))
   #print "bias mean = ", np.mean(fitted, axis = 0), ", bias std = ", np.std(fitted, axis = 0)
-  return [bias_binsum, bias_std_binsum, bias_chi2]
+  return [bias_binsum, bias_std_binsum, bias_chi2, bias_norm_mean, bias_norm_std]
 
 '''
 Scan general regularization parameter to minimize bias^2 over variance.
 unfoldFunction receives the reg. parameter and a data vector to unfold and returns the unfolded spectrum.
 '''
-def scanRegParameter(unfoldFunction, bkg, mig, eff, truth, N = 1000, rangeAlpha = np.arange(0.0, 1.0, 1e-3), fname = "scanRegParameter.png", fname_chi2 = "scanRegParameter_chi2.png"):
+def scanRegParameter(unfoldFunction, bkg, mig, eff, truth, N = 1000, rangeAlpha = np.arange(0.0, 1.0, 1e-3), fname = "scanRegParameter.png", fname_chi2 = "scanRegParameter_chi2.png", fname_norm = "scanRegParameter_norm.png"):
   bias = np.zeros(len(rangeAlpha))
   bias_std = np.zeros(len(rangeAlpha))
   bias_chi2 = np.zeros(len(rangeAlpha))
+  bias_norm = np.zeros(len(rangeAlpha))
+  bias_norm_std = np.zeros(len(rangeAlpha))
   minBias = 1e10
   bestAlpha = 0
   bestChi2 = 0
@@ -213,7 +218,7 @@ def scanRegParameter(unfoldFunction, bkg, mig, eff, truth, N = 1000, rangeAlpha 
     #if i % 100 == 0:
     print "scanRegParameter: parameter = ", rangeAlpha[i], " / ", rangeAlpha[-1]
     sys.stdout.flush()
-    bias[i], bias_std[i], bias_chi2[i] = getBiasFromToys(unfoldFunction, rangeAlpha[i], N, bkg, mig, eff, truth)
+    bias[i], bias_std[i], bias_chi2[i], bias_norm[i], bias_norm_std[i] = getBiasFromToys(unfoldFunction, rangeAlpha[i], N, bkg, mig, eff, truth)
     print " -- --> scanRegParameter: parameter = ", rangeAlpha[i], " / ", rangeAlpha[-1], " with chi2 = ", bias_chi2[i], ", mean and std = ", bias[i], bias_std[i]
     if np.abs(bias_chi2[i] - 0.5) < minBias:
       minBias = np.abs(bias_chi2[i] - 0.5)
@@ -227,6 +232,12 @@ def scanRegParameter(unfoldFunction, bkg, mig, eff, truth, N = 1000, rangeAlpha 
   plt_bias.x = rangeAlpha
   plt_bias.x_err = np.zeros(len(rangeAlpha))
   plotH1DLines({plt_bias: "Mean over bins(Mean over toys(bias))"}, "Regularization parameter", "mean over bins(mean over toys(bias))", "Y errors are mean over bins(sqrt(var))", fname)
+  plt_bias_norm = H1D(bias)
+  plt_bias_norm.val = bias_norm
+  plt_bias_norm.err = np.power(bias_norm_std, 2)
+  plt_bias_norm.x = rangeAlpha
+  plt_bias_norm.x_err = np.zeros(len(rangeAlpha))
+  plotH1DLines({plt_bias_norm: "mean normalisation bias"}, "Regularization parameter", "mean over toys(norm. bias)", "Y errors are the sqrt(var)", fname_norm)
   plt_bias_chi2 = H1D(bias_chi2)
   plt_bias_chi2.val = bias_chi2
   plt_bias_chi2.err = np.zeros(len(rangeAlpha))
@@ -235,5 +246,5 @@ def scanRegParameter(unfoldFunction, bkg, mig, eff, truth, N = 1000, rangeAlpha 
   plt_cte = H1D(plt_bias_chi2)
   plt_cte.val = [0.5]*len(rangeAlpha)
   plotH1DLines({plt_bias_chi2: "Mean over bins(Mean(bias)^2/Var(bias))", plt_cte: "0.5"}, "Regularization parameter", "chi^2/# bins", "", fname_chi2)
-  return [bestAlpha, bestChi2, bias[bestI], bias_std[bestI]]
+  return [bestAlpha, bestChi2, bias[bestI], bias_std[bestI], bias_norm[bestI], bias_norm_std[bestI]]
 

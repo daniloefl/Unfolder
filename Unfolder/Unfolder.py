@@ -202,7 +202,7 @@ class Unfolder:
     t = mig.project('x')/eff
     fitted = np.zeros((N, len(self.truth.val)))
     bias = np.zeros(len(self.truth.val))
-    bias_variance = np.zeros(len(self.truth.val))
+    bias_norm = np.zeros(N)
     import sys
     for k in range(0, N):
       if k % 100 == 0:
@@ -214,23 +214,28 @@ class Unfolder:
       with self.model:
         res = pm.find_MAP(disp = False)
         fitted[k, :] = res['Truth'] - t.val
+        bias_norm[k] = np.sum(res['Truth'] - t.val)
     print
     bias = np.mean(fitted, axis = 0)
     bias_std = np.std(fitted, axis = 0)
+    bias_norm_mean = np.mean(bias_norm)
+    bias_norm_std = np.std(bias_norm)
     #print "getBiasFromMAP with alpha = ", self.var_alpha.get_value(), " N = ", N, ", mean, std = ", bias, bias_std
     bias_binsum = np.mean(bias)
     bias_std_binsum = np.mean(bias_std)
     bias_chi2 = np.mean(np.power(bias/bias_std, 2))
-    return [bias_binsum, bias_std_binsum, bias_chi2]
+    return [bias_binsum, bias_std_binsum, bias_chi2, bias_norm_mean, bias_norm_std]
 
   '''
   Scan alpha values to minimise bias^2 over variance.
   '''
-  def scanAlpha(self, bkg, mig, eff, N = 1000, rangeAlpha = np.arange(0.0, 10.0, 1.0), fname = "scanAlpha.png", fname_chi2 = "scanAlpha_chi2.png"):
+  def scanAlpha(self, bkg, mig, eff, N = 1000, rangeAlpha = np.arange(0.0, 10.0, 1.0), fname = "scanAlpha.png", fname_chi2 = "scanAlpha_chi2.png", fname_norm = "scanAlpha_norm.png"):
     bkp_alpha = self.var_alpha.get_value()
     bias = np.zeros(len(rangeAlpha))
     bias_std = np.zeros(len(rangeAlpha))
     bias_chi2 = np.zeros(len(rangeAlpha))
+    bias_norm = np.zeros(len(rangeAlpha))
+    bias_norm_std = np.zeros(len(rangeAlpha))
     minBias = 1e10
     bestAlpha = 0
     bestChi2 = 0
@@ -240,7 +245,7 @@ class Unfolder:
       print "scanAlpha: parameter = ", rangeAlpha[i], " / ", rangeAlpha[-1]
       sys.stdout.flush()
       self.setAlpha(rangeAlpha[i])
-      bias[i], bias_std[i], bias_chi2[i] = self.getBiasFromMAP(N, bkg, mig, eff) # only take mean values for speed
+      bias[i], bias_std[i], bias_chi2[i], bias_norm[i], bias_norm_std[i] = self.getBiasFromMAP(N, bkg, mig, eff) # only take mean values for speed
       print " -- --> scanAlpha: parameter = ", rangeAlpha[i], " / ", rangeAlpha[-1], " with chi2 = ", bias_chi2[i], ", mean and std = ", bias[i], bias_std[i]
       if np.abs(bias_chi2[i] - 0.5) < minBias:
         minBias = np.abs(bias_chi2[i] - 0.5)
@@ -254,6 +259,12 @@ class Unfolder:
     plt_bias.x = rangeAlpha
     plt_bias.x_err = np.zeros(len(rangeAlpha))
     plotH1DLines({plt_bias: "mean per bin(mean bias)"}, "alpha", "mean over bins(mean over toys(bias))", "Y errors are mean over bins(sqrt(var))", fname)
+    plt_bias_norm = H1D(bias)
+    plt_bias_norm.val = bias_norm
+    plt_bias_norm.err = np.power(bias_norm_std, 2)
+    plt_bias_norm.x = rangeAlpha
+    plt_bias_norm.x_err = np.zeros(len(rangeAlpha))
+    plotH1DLines({plt_bias_norm: "mean normalisation bias"}, "alpha", "mean over toys(norm. bias)", "Y errors are the sqrt(var)", fname_norm)
     plt_bias_chi2 = H1D(bias_chi2)
     plt_bias_chi2.val = bias_chi2
     plt_bias_chi2.err = np.zeros(len(rangeAlpha))
@@ -263,7 +274,7 @@ class Unfolder:
     plt_cte.val = [0.5]*len(rangeAlpha)
     plotH1DLines({plt_bias_chi2: "Mean over bins(Mean(bias)^2/Var(bias))", plt_cte: "0.5"}, "alpha", "chi^2/# bins", "", fname_chi2)
     self.setAlpha(bkp_alpha)
-    return [bestAlpha, bestChi2, bias[bestI], bias_std[bestI]]
+    return [bestAlpha, bestChi2, bias[bestI], bias_std[bestI], bias_norm[bestI], bias_norm_std[bestI]]
     
   '''
   Set value of alpha.

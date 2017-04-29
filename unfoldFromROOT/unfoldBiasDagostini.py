@@ -73,6 +73,8 @@ alpha = {}
 alphaChi2 = {}
 bestAlphaBias = {}
 bestAlphaBiasStd = {}
+bestAlphaNormBias = {}
+bestAlphaNormBiasStd = {}
 
 for i in ["", "me", "ps"]:
   print "Checking bias due to configuration '%s'" % i
@@ -80,8 +82,10 @@ for i in ["", "me", "ps"]:
   alphaChi2[i] = -1
   bestAlphaBias[i] = -1
   bestAlphaBiasStd[i] = -1
-  alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i] = scanRegParameter(DAgostiniForRegularizationTest(bkg[""], mig[""], eff[""]), bkg[i], mig[i], eff[i], truth[i], 1000, np.arange(1.0, 21.0, 1.0), "scanIter_%s_DAgostini.png" % i, "scanIter_%s_chi2_DAgostini.png" % i)
-  print "For configuration '%s': Found iter = %d with bias chi2 = %f, bias mean = %f, bias std = %f" % (i, alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i])
+  bestAlphaNormBias[i] = -1
+  bestAlphaNormBiasStd[i] = -1
+  alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i] = scanRegParameter(DAgostiniForRegularizationTest(bkg[""], mig[""], eff[""]), bkg[i], mig[i], eff[i], truth[i], 1000, np.arange(1.0, 21.0, 1.0), "scanIter_%s_DAgostini.png" % i, "scanIter_%s_chi2_DAgostini.png" % i, "scanIter_%s_norm_DAgostini.png" % i)
+  print "For configuration '%s': Found iter = %d with bias chi2 = %f, bias mean = %f, bias std = %f, norm bias = %f, norm bias std = %f" % (i, alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i])
 
 pseudo_dagostini_mig = getDAgostini(bkg[i], mig[i], eff[i], pseudo_data, nIter = alpha[""])
 pseudo_dagostini_result = pseudo_dagostini_mig
@@ -97,5 +101,5 @@ comparePlot([data, pseudo_data, truth[""],
              "Unfolded (d'Agostini) from independently simulated reco."],
             luminosity*1e-3, True, "fb/GeV", "biasTest_DAgostini.png")
 
-print "DAgostini -- it.  = ",   alpha, " with bias = ", bestAlphaBias, ", std = ", bestAlphaBiasStd
+print "DAgostini -- it.  = ",   alpha, " with bias = ", bestAlphaBias, ", std = ", bestAlphaBiasStd, ", norm bias = ", bestAlphaNormBias, ", norm bias std = ", bestAlphaNormBiasStd
 
