@@ -247,7 +247,7 @@ class Unfolder:
     self.setData(mig.project('y') + bkg)
     with self.model:
       res = pm.find_MAP(disp = False)
-      bias_syst = np.mean(res["Truth"] - t.val)
+      bias_syst = np.mean(res["Truth"] - truth.val)
     bias = np.mean(fitted, axis = 0)
     bias_std = np.std(fitted, axis = 0)
     bias_norm_mean = np.mean(bias_norm)
