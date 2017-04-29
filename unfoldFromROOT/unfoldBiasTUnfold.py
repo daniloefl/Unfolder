@@ -98,7 +98,7 @@ for i in ["", "me", "ps"]:
   bestAlphaBiasStd[i] = -1
   bestAlphaNormBias[i] = -1
   bestAlphaNormBiasStd[i] = -1
-  bestAlpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i] = scanRegParameter(TUnfoldForRegularizationTest(bkg[""], mig[""], eff[""], data, ROOT.TUnfold.kRegModeCurvature, normMode), bkg[i], mig[i], eff[i], truth[i], 1000, np.arange(0.0, 10e-3, 0.25e-3), "scanTau_%s_TUnfold.png" % i, "scanTau_%s_chi2_TUnfold.png" % i, "scanTau_%s_norm_TUnfold.png" % i)
+  alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i] = scanRegParameter(TUnfoldForRegularizationTest(bkg[""], mig[""], eff[""], data, ROOT.TUnfold.kRegModeCurvature, normMode), bkg[i], mig[i], eff[i], truth[i], 1000, np.arange(0.0, 10e-3, 0.25e-3), "scanTau_%s_TUnfold.png" % i, "scanTau_%s_chi2_TUnfold.png" % i, "scanTau_%s_norm_TUnfold.png" % i)
   print "For configuration '%s': Found tau = %f with bias chi2 = %f, bias mean = %f, bias std = %f, norm bias = %f, norm bias std = %f" % (i, alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i])
 
 pseudo_tunfolder = getTUnfolder(bkg[""], mig[""], pseudo_data, regMode = ROOT.TUnfold.kRegModeDerivative, normMode = normMode)
