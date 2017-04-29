@@ -83,10 +83,10 @@ for i in ["", "me", "ps"]:
   alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i] = scanRegParameter(DAgostiniForRegularizationTest(bkg[""], mig[""], eff[""]), bkg[i], mig[i], eff[i], truth[i], 1000, np.arange(1.0, 21.0, 1.0), "scanIter_DAgostini.png", "scanIter_chi2_DAgostini.png")
   print "For configuration '%s': Found iter = %d with bias chi2 = %f, bias mean = %f, bias std = %f" % (i, alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i])
 
-pseudo_dagostini_mig = getDAgostini(bkg[i], mig[i], eff[i], pseudo_data, nIter = bestI[""])
+pseudo_dagostini_mig = getDAgostini(bkg[i], mig[i], eff[i], pseudo_data, nIter = alpha[""])
 pseudo_dagostini_result = pseudo_dagostini_mig
 
-dagostini_mig = getDAgostini(bkg[""], mig[""], eff[""], data, nIter = bestI[""])
+dagostini_mig = getDAgostini(bkg[""], mig[""], eff[""], data, nIter = alpha[""])
 dagostini_result = dagostini_mig
 
 comparePlot([data, pseudo_data, truth[""],
