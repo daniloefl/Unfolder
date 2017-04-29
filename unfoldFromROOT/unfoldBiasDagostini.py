@@ -53,7 +53,7 @@ data = recoWithFakes[""]
 # generate fake data from model
 pseudo_data = getDataFromModel(bkg[""], mig[""], eff[""])
 
-comparePlot([data, pseudo_data, data - bkg, pseudo_data - bkg],
+comparePlot([data, pseudo_data, data - bkg[""], pseudo_data - bkg[""]],
             ["Reco. projected from unfolding factors", "Reco. simulated with toy experiments",
              "Reco. projected from unfolding factors - bkg", "Reco. simulated with toy experiments - bkg"],
             luminosity*1e-3, True, "fb/GeV", "pseudoData.png")
