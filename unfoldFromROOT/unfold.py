@@ -43,8 +43,8 @@ data = recoWithFakes
 # Create alternative method for unfolding
 f_truth, f_recoWithFakes, f_bkg, f_mig, f_eff, f_nrt = getHistograms("out_ttallhad_psrw_Syst.root", "nominal", "mttAsymm")
 f_data = f_recoWithFakes
-#tunfolder = getTUnfolder(f_bkg, f_mig, f_data, regMode = ROOT.TUnfold.kRegModeDerivative)
-tunfolder = getTUnfolder(f_bkg, f_mig, f_data, regMode = ROOT.TUnfold.kRegModeNone)
+#tunfolder = getTUnfolder(f_bkg, f_mig, f_eff, f_data, regMode = ROOT.TUnfold.kRegModeDerivative)
+tunfolder = getTUnfolder(f_bkg, f_mig, f_eff, f_data, regMode = ROOT.TUnfold.kRegModeNone)
 # no regularization
 #printLcurve(tunfolder, "tunfold_lcurve.png")
 tunfolder.DoUnfold(0)
