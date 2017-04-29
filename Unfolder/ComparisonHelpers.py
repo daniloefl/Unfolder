@@ -190,7 +190,7 @@ def getBiasFromToys(unfoldFunction, alpha, N, bkg, mig, eff, truth):
     #  plt.close()
   print
   # systematic bias
-  bias_syst = np.mean(unfoldFunction(alpha, mig.project('y') + bkg) - truth.val)
+  bias_syst = np.mean(unfoldFunction(alpha, mig.project('y') + bkg).val - truth.val)
   bias = np.mean(fitted, axis = 0)
   bias_std = np.std(fitted, axis = 0)
   bias_norm_mean = np.mean(bias_norm)
