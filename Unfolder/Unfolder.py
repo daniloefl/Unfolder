@@ -176,7 +176,7 @@ class Unfolder:
       elif self.prior == "curvature":
         self.T = pm.DensityDist('Truth', logp = lambda val: -self.var_alpha*theano.tensor.sqr(theano.tensor.extra_ops.diff(theano.tensor.extra_ops.diff((val - self.fb*self.priorAttributes['bias'])))).sum(), shape = (self.Nt), testval = self.truth.val)
       elif self.prior == "first derivative":
-        self.T = pm.DensityDist('Truth', logp = lambda val: -self.var_alpha*theano.tensor.abs_(theano.tensor.extra_ops.diff(theano.tensor.extra_ops.diff((val - self.fb*self.priorAttributes['bias'])/(self.truth.x_err*2))/np.diff(self.truth.x))/(2*theano.tensor.mean(theano.tensor.extra_ops.diff((val - self.fb*self.priorAttributes['bias'])/(self.truth.x_err*2))/np.diff(self.truth.x)))).sum(), shape = (self.Nt), testval = self.truth.val)
+        self.T = pm.DensityDist('Truth', logp = lambda val: -self.var_alpha*theano.tensor.abs_(theano.tensor.extra_ops.diff(theano.tensor.extra_ops.diff((val - self.fb*self.priorAttributes['bias'])/(self.truth.x_err*2))/np.diff(self.truth.x))/(2*theano.tensor.mean(theano.tensor.extra_ops.diff(val/(self.truth.x_err*2))/np.diff(self.truth.x)))).sum(), shape = (self.Nt), testval = self.truth.val)
       else: # if none of the names above matched, assume it is uniform
         self.T = pm.Uniform('Truth', 0.0, 10*max(self.truth.val), shape = (self.Nt))
 
@@ -212,7 +212,7 @@ class Unfolder:
     if mig == None: mig = self.mig
     if eff == None: eff = self.eff
 
-    t = mig.project('x')/eff
+    truth = mig.project('x')/eff
     fitted = np.zeros((N, len(self.truth.val)))
     bias = np.zeros(len(self.truth.val))
     bias_norm = np.zeros(N)
@@ -226,8 +226,8 @@ class Unfolder:
       #self.run(pseudo_data)
       with self.model:
         res = pm.find_MAP(disp = False)
-        fitted[k, :] = res['Truth'] - t.val
-        bias_norm[k] = np.sum(res['Truth'] - t.val)
+        fitted[k, :] = res['Truth'] - truth.val
+        bias_norm[k] = np.sum(res['Truth'] - truth.val)
     print
     # systematic bias
     self.setData(mig.project('y') + bkg)
