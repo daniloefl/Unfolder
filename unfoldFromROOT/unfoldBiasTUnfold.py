@@ -103,7 +103,7 @@ for i in ["", "me", "ps"]:
   #alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i] = scanRegParameter(TUnfoldForRegularizationTest(bkg[""], mig[""], eff[""], data, 1.0, ROOT.TUnfold.kRegModeDerivative, normMode), bkg[i], mig[i], eff[i], truth[i], 1000, np.arange(0.0, 20e-3, 1e-3), "scanTau_%s_TUnfold.png" % i, "scanTau_%s_chi2_TUnfold.png" % i, "scanTau_%s_norm_TUnfold.png" % i)
   print "For configuration '%s': Found tau = %f with bias chi2 = %f, bias mean = %f, bias std = %f, norm bias = %f, norm bias std = %f" % (i, alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i])
 
-pseudo_tunfolder = getTUnfolder(bkg[""], mig[""], pseudo_data, 0.0, regMode = ROOT.TUnfold.kRegModeDerivative, normMode = normMode)
+pseudo_tunfolder = getTUnfolder(bkg[""], mig[""], eff[""], pseudo_data, 0.0, regMode = ROOT.TUnfold.kRegModeDerivative, normMode = normMode)
 #pseudo_tunfolder = getTUnfolder(bkg[""], mig[""], pseudo_data, 0.0, regMode = ROOT.TUnfold.kRegModeCurvature)
 #pseudo_tunfolder = getTUnfolder(bkg[""], mig[""], pseudo_data, 0.0, regMode = ROOT.TUnfold.kRegModeNone)
 
@@ -112,9 +112,9 @@ pseudo_tunfolder.DoUnfold(alpha[""])
 pseudo_tunfold_mig = H1D(pseudo_tunfolder.GetOutput("tunfold_pseudo_result"))
 pseudo_tunfold_result = pseudo_tunfold_mig/eff
 
-tunfolder = getTUnfolder(bkg[i], mig[i], data, 0.0, regMode = ROOT.TUnfold.kRegModeDerivative, normMode = normMode)
-#tunfolder = getTUnfolder(bkg[i], mig[i], data, 0.0, regMode = ROOT.TUnfold.kRegModeCurvature)
-#tunfolder = getTUnfolder(bkg[i], mig[i], data, 0.0, regMode = ROOT.TUnfold.kRegModeNone)
+tunfolder = getTUnfolder(bkg[""], mig[""], eff[""], data, 0.0, regMode = ROOT.TUnfold.kRegModeDerivative, normMode = normMode)
+#tunfolder = getTUnfolder(bkg[""], mig[""], eff[""], data, 0.0, regMode = ROOT.TUnfold.kRegModeCurvature)
+#tunfolder = getTUnfolder(bkg[""], mig[""], eff[""], data, 0.0, regMode = ROOT.TUnfold.kRegModeNone)
 # no regularization
 #tau = printLcurve(tunfolder, "tunfold_lcurve.png")
 tunfolder.DoUnfold(alpha[""])
