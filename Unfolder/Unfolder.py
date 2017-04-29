@@ -80,6 +80,9 @@ class Unfolder:
     self.reco_syst = {}
     self.systematics = []
     self.fb = 0
+    self.constrainArea = False
+    self.tot_bkg = self.bkg.integral()[0]
+    self.ave_eff = self.recoWithoutFakes.integral()[0]/self.truth.integral()[0]
 
 
   '''
@@ -126,6 +129,12 @@ class Unfolder:
     else:
       self.priorAttributes['bias'] = copy.deepcopy(means)
     self.fb = fb
+
+  '''
+  Whether to constrain normalisation.
+  '''
+  def setConstrainArea(self, value = True):
+    self.constrainArea = value
 
   '''
   Add systematic uncertainty.
@@ -201,7 +210,12 @@ class Unfolder:
         self.R_syst[name] = self.var_reco_syst[name] + self.var_bkg_syst[name]
         # add it to the total reco result
         self.R_full += self.theta[name]*self.R_syst[name]
+      if self.constrainArea:
+        self.theta["norm"] = pm.Normal('norm', mu = 0, sd = 1) # nuisance parameter
+        self.RecoNorm = self.theta["norm"]*(self.T.sum()*self.ave_eff + self.tot_bkg)
       self.U = pm.Poisson('U', mu = self.R_full, observed = self.var_data, shape = (self.Nr, 1))
+      if self.constrainArea:
+        self.Norm = pm.Poisson('Norm', mu = self.RecoNorm, observed = self.var_data.sum(), shape = (1))
       #self.U = pm.Normal('U', mu = self.R_full, sd = theano.tensor.sqrt(self.R_full), observed = self.var_data, shape = (self.Nr, 1))
 
   '''
