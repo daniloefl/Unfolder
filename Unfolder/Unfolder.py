@@ -203,8 +203,11 @@ class Unfolder:
     fitted = np.zeros((N, len(self.truth.val)))
     bias = np.zeros(len(self.truth.val))
     bias_variance = np.zeros(len(self.truth.val))
+    import sys
     for k in range(0, N):
-      print "getBiasFromMAP: Throwing toy experiment {0}/{1}\r".format(k, N),
+      if k % 100 == 0:
+        print "getBiasFromMAP: Throwing toy experiment {0}/{1}\r".format(k, N),
+        sys.stdout.flush()
       pseudo_data = getDataFromModel(bkg, mig, eff)
       self.setData(pseudo_data)
       #self.run(pseudo_data)

@@ -170,8 +170,11 @@ def getBiasFromToys(unfoldFunction, alpha, N, bkg, mig, eff, truth):
   #fitted2 = np.zeros((N, len(truth.val)))
   bias = np.zeros(len(truth.val))
   bias_variance = np.zeros(len(truth.val))
+  import sys
   for k in range(0, N):
-    print "getBiasFromToys: Throwing toy experiment {0}/{1}\r".format(k, N),
+    if k % 100 == 0:
+      print "getBiasFromToys: Throwing toy experiment {0}/{1}\r".format(k, N),
+      sys.stdout.flush()
     pseudo_data = getDataFromModel(bkg, mig, eff)
     unfolded = unfoldFunction(alpha, pseudo_data)
     fitted[k, :] = (unfolded.val - truth.val)
