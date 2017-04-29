@@ -62,17 +62,18 @@ comparePlot([data, pseudo_data, data - bkg[""], pseudo_data - bkg[""]],
 
 # functor to unfold
 class TUnfoldForRegularizationTest:
-  def __init__(self, f_bkg, f_mig, f_eff, f_data, regMode = ROOT.TUnfold.kRegModeDerivative, normMode = 0):
+  def __init__(self, f_bkg, f_mig, f_eff, f_data, fb = 1, regMode = ROOT.TUnfold.kRegModeDerivative, normMode = 0):
     self.f_bkg = f_bkg
     self.tunfolder_reg = getTUnfolder(f_bkg, f_mig, f_data, regMode = regMode, normMode = normMode)
     self.f_eff = f_eff
+    self.fb = fb
 
   def __call__(self, tau, data):
     #f_truth, f_recoWithFakes, f_bkg, f_mig, f_eff, f_nrt = getHistograms("out_ttallhad_psrw_Syst.root", "nominal", "mttAsymm")
     #tunfolder_reg = getTUnfolder(f_bkg, f_mig, data, regMode = ROOT.TUnfold.kRegModeDerivative)
     dataMinusBkg = (data - self.f_bkg).toROOT("data_minus_bkg_tmp")
     dataMinusBkg.SetDirectory(0)
-    self.tunfolder_reg.SetInput(dataMinusBkg)
+    self.tunfolder_reg.SetInput(dataMinusBkg, self.fb)
     self.tunfolder_reg.DoUnfold(tau)
     tmp = self.tunfolder_reg.GetOutput("tunfold_result_tmp")
     tmp.SetDirectory(0)
@@ -97,7 +98,7 @@ for i in ["", "me", "ps"]:
   bestAlphaBiasStd[i] = -1
   bestAlphaNormBias[i] = -1
   bestAlphaNormBiasStd[i] = -1
-  bestAlpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i] = scanRegParameter(TUnfoldForRegularizationTest(bkg[""], mig[""], eff[""], data, ROOT.TUnfold.kRegModeCurvature, normMode), bkg[i], mig[i], eff[i], truth[i], 1000, np.arange(0.0, 10e-3, 0.125e-3), "scanTau_%s_TUnfold.png" % i, "scanTau_%s_chi2_TUnfold.png" % i, "scanTau_%s_norm_TUnfold.png" % i)
+  bestAlpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i] = scanRegParameter(TUnfoldForRegularizationTest(bkg[""], mig[""], eff[""], data, ROOT.TUnfold.kRegModeCurvature, normMode), bkg[i], mig[i], eff[i], truth[i], 1000, np.arange(0.0, 10e-3, 0.25e-3), "scanTau_%s_TUnfold.png" % i, "scanTau_%s_chi2_TUnfold.png" % i, "scanTau_%s_norm_TUnfold.png" % i)
   print "For configuration '%s': Found tau = %f with bias chi2 = %f, bias mean = %f, bias std = %f, norm bias = %f, norm bias std = %f" % (i, alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i])
 
 pseudo_tunfolder = getTUnfolder(bkg[""], mig[""], pseudo_data, regMode = ROOT.TUnfold.kRegModeDerivative, normMode = normMode)

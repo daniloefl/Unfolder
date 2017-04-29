@@ -79,6 +79,7 @@ class Unfolder:
     self.bkg_syst = {}
     self.reco_syst = {}
     self.systematics = []
+    self.fb = 0
 
 
   '''
@@ -88,14 +89,15 @@ class Unfolder:
   '''
   def setGaussianPrior(self, widths = None, means = None):
     if means == None:
-      self.priorAttributes['mean'] = copy.deepcopy(self.truth.val)
+      self.priorAttributes['bias'] = copy.deepcopy(self.truth.val)
     else:
-      self.priorAttributes['mean'] = copy.deepcopy(means)
+      self.priorAttributes['bias'] = copy.deepcopy(means)
     if widths == None:
       self.priorAttributes['sd'] = copy.deepcopy(self.truth.err)**0.5
     else:
       self.priorAttributes['sd'] = copy.deepcopy(widths)
     self.prior = "gaussian"
+    self.fb = 0
 
   '''
   Use an entropy-based prior.
@@ -106,14 +108,24 @@ class Unfolder:
   '''
   Use a curvature-based prior.
   '''
-  def setCurvaturePrior(self):
+  def setCurvaturePrior(self, fb = 1, means = None):
     self.prior = "curvature"
+    if means == None:
+      self.priorAttributes['bias'] = copy.deepcopy(self.truth.val)
+    else:
+      self.priorAttributes['bias'] = copy.deepcopy(means)
+    self.fb = fb
 
   '''
   Use a first derivative-based prior.
   '''
-  def setFirstDerivativePrior(self):
+  def setFirstDerivativePrior(self, fb = 1, means = None):
     self.prior = "first derivative"
+    if means == None:
+      self.priorAttributes['bias'] = copy.deepcopy(self.truth.val)
+    else:
+      self.priorAttributes['bias'] = copy.deepcopy(means)
+    self.fb = fb
 
   '''
   Add systematic uncertainty.
@@ -128,6 +140,7 @@ class Unfolder:
   '''
   def setUniformPrior(self):
     self.prior = "uniform"
+    self.fb = 0
 
   '''
   Transforms an array of doubles into a Theano-type array
@@ -157,13 +170,13 @@ class Unfolder:
       # Define the prior
       if self.prior == "gaussian":
         #self.T = pm.Normal('Truth', mu = self.priorAttributes['mean'], sd = self.priorAttributes['sd'], shape = (self.Nt))
-        self.T = pm.DensityDist('Truth', logp = lambda val: -self.var_alpha*0.5*theano.tensor.sqr((val - self.priorAttributes['mean'])/self.priorAttributes['sd']).sum(), shape = (self.Nt), testval = self.truth.val)
+        self.T = pm.DensityDist('Truth', logp = lambda val: -self.var_alpha*0.5*theano.tensor.sqr((val - self.priorAttributes['bias'])/self.priorAttributes['sd']).sum(), shape = (self.Nt), testval = self.truth.val)
       elif self.prior == "entropy":
         self.T = pm.DensityDist('Truth', logp = lambda val: -self.var_alpha*((val/val.sum())*theano.tensor.log(val/val.sum())).sum(), shape = (self.Nt), testval = self.truth.val)
       elif self.prior == "curvature":
-        self.T = pm.DensityDist('Truth', logp = lambda val: -self.var_alpha*theano.tensor.sqr(theano.tensor.extra_ops.diff(theano.tensor.extra_ops.diff(val))).sum(), shape = (self.Nt), testval = self.truth.val)
+        self.T = pm.DensityDist('Truth', logp = lambda val: -self.var_alpha*theano.tensor.sqr(theano.tensor.extra_ops.diff(theano.tensor.extra_ops.diff((val - self.fb*self.priorAttributes['bias'])))).sum(), shape = (self.Nt), testval = self.truth.val)
       elif self.prior == "first derivative":
-        self.T = pm.DensityDist('Truth', logp = lambda val: -self.var_alpha*theano.tensor.abs_(theano.tensor.extra_ops.diff(theano.tensor.extra_ops.diff(val/(self.truth.x_err*2))/np.diff(self.truth.x))/(2*theano.tensor.mean(theano.tensor.extra_ops.diff(val/(self.truth.x_err*2))/np.diff(self.truth.x)))).sum(), shape = (self.Nt), testval = self.truth.val)
+        self.T = pm.DensityDist('Truth', logp = lambda val: -self.var_alpha*theano.tensor.abs_(theano.tensor.extra_ops.diff(theano.tensor.extra_ops.diff((val - self.fb*self.priorAttributes['bias'])/(self.truth.x_err*2))/np.diff(self.truth.x))/(2*theano.tensor.mean(theano.tensor.extra_ops.diff((val - self.fb*self.priorAttributes['bias'])/(self.truth.x_err*2))/np.diff(self.truth.x)))).sum(), shape = (self.Nt), testval = self.truth.val)
       else: # if none of the names above matched, assume it is uniform
         self.T = pm.Uniform('Truth', 0.0, 10*max(self.truth.val), shape = (self.Nt))
 
