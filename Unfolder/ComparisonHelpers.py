@@ -234,12 +234,17 @@ def scanRegParameter(unfoldFunction, bkg, mig, eff, truth, N = 1000, rangeAlpha 
   plt_bias.err = np.power(bias_std, 2)
   plt_bias.x = rangeAlpha
   plt_bias.x_err = np.zeros(len(rangeAlpha))
+  plt_bias_err = H1D(bias)
+  plt_bias_err.val = bias
+  plt_bias_err.err = bias_std/np.sqrt(float(N))
+  plt_bias_err.x = rangeAlpha
+  plt_bias_err.x_err = np.zeros(len(rangeAlpha))
   plt_bias_syst = H1D(bias)
   plt_bias_syst.val = bias_syst
   plt_bias_syst.err = np.zeros(len(rangeAlpha))
   plt_bias_syst.x = rangeAlpha
   plt_bias_syst.x_err = np.zeros(len(rangeAlpha))
-  plotH1DLines({plt_bias: "Mean over bins(Mean over toys(bias))", plt_bias_syst: "Only syst. shift"}, "Regularization parameter", "mean over bins(mean over toys(bias))", "Y errors are mean over bins(sqrt(var))", fname)
+  plotH1DLines({plt_bias: "Mean over bins(Mean over toys(bias)) - Y errors are sqrt(var)", plt_bias_err: "MC error in mean", plt_bias_syst: "Only syst. shift"}, "Regularization parameter", "mean over bins(mean over toys(bias))", "", fname)
   plt_bias_norm = H1D(bias)
   plt_bias_norm.val = bias_norm
   plt_bias_norm.err = np.power(bias_norm_std, 2)
@@ -248,7 +253,7 @@ def scanRegParameter(unfoldFunction, bkg, mig, eff, truth, N = 1000, rangeAlpha 
   plotH1DLines({plt_bias_norm: "mean normalisation bias"}, "Regularization parameter", "mean over toys(norm. bias)", "Y errors are the sqrt(var)", fname_norm)
   plt_bias_chi2 = H1D(bias_chi2)
   plt_bias_chi2.val = bias_chi2
-  plt_bias_chi2.err = np.zeros(len(rangeAlpha))
+  plt_bias_chi2.err = np.ones(len(rangeAlpha))*np.sqrt(float(len(truth.val))/float(N)) # error in chi^2 considering errors in the mean of std/sqrt(N)
   plt_bias_chi2.x = rangeAlpha
   plt_bias_chi2.x_err = np.zeros(len(rangeAlpha))
   plt_cte = H1D(plt_bias_chi2)
