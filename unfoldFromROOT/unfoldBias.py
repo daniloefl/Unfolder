@@ -21,34 +21,45 @@ varname = "m_{tt}"
 extension = "png"
 
 # get histograms from file
-truth, recoWithFakes, bkg, mig, eff, nrt = getHistograms("out_ttallhad_psrw_Syst.root", "nominal", "mttAsymm")
+truth = {}
+recoWithFakes = {}
+recoWithoutFakes = {}
+bkg = {}
+mig = {}
+eff = {}
+nrt = {}
 
-recoWithoutFakes = mig.project("y")
+truth[""], recoWithFakes[""], bkg[""], mig[""], eff[""], nrt[""] = getHistograms("out_ttallhad_psrw_Syst.root", "nominal", "mttAsymm")
+truth["me"], recoWithFakes["me"], bkg["me"], mig["me"], eff["me"], nrt["me"] = getHistograms("out_ttallhad_psrw_Syst.root", "aMcAtNloHerwigppEvtGen", "mttAsymm")
+truth["ps"], recoWithFakes["ps"], bkg["ps"], mig["ps"], eff["ps"], nrt["ps"] = getHistograms("out_ttallhad_psrw_Syst.root", "PowhegHerwigppEvtGen", "mttAsymm")
 
-# plot migration matrix as it will be used next for unfolding
-plotH2D(mig.T(), "Particle-level bin", "Reconstructed-level bin", "Number of events for each (reco, truth) configuration", "mig.%s" % extension)
+for i in recoWithFakes:
+  recoWithoutFakes[i] = mig[i].project("y")
 
-# plot 1D histograms for cross checks
-plotH1D(bkg, "Reconstructed "+varname, "Events", "Background", "bkg.%s" % extension)
-plotH1D(truth, "Particle-level "+varname, "Events", "Particle-level distribution", "truth.%s" % extension)
-plotH1D(nrt, "Particle-level "+varname, "Events", "Events in particle-level selection but not reconstructed", "nrt.%s" % extension)
-plotH1D(recoWithFakes, "Reconstructed "+varname, "Events", "Reconstructed-level distribution with fakes", "recoWithFakes.%s" % extension)
-plotH1D(recoWithoutFakes, "Reconstructed "+varname, "Events", "Reconstructed-level distribution without fakes", "recoWithoutFakes.%s" % extension)
-plotH1D(eff, "Particle-level "+varname, "Efficiency", "Efficiency of particle-level selection", "eff.%s" % extension)
+  # plot migration matrix as it will be used next for unfolding
+  plotH2D(mig[i].T(), "Particle-level bin", "Reconstructed-level bin", "Number of events for each (reco, truth) configuration", "mig_%s.%s" % (i,extension))
+
+  # plot 1D histograms for cross checks
+  plotH1D(bkg[i], "Reconstructed "+varname, "Events", "Background", "bkg_%s.%s" % (i, extension))
+  plotH1D(truth[i], "Particle-level "+varname, "Events", "Particle-level distribution", "truth_%s.%s" % (i, extension))
+  plotH1D(nrt[i], "Particle-level "+varname, "Events", "Events in particle-level selection but not reconstructed", "nrt_%s.%s" % (i,extension))
+  plotH1D(recoWithFakes[i], "Reconstructed "+varname, "Events", "Reconstructed-level distribution with fakes", "recoWithFakes_%s.%s" % (i,extension))
+  plotH1D(recoWithoutFakes[i], "Reconstructed "+varname, "Events", "Reconstructed-level distribution without fakes", "recoWithoutFakes_%s.%s" % (i,extension))
+  plotH1D(eff[i], "Particle-level "+varname, "Efficiency", "Efficiency of particle-level selection", "eff_%s.%s" % (i,extension))
 
 # generate perfect fake data
-data = recoWithFakes
+data = recoWithFakes[""]
 
 # generate fake data from model
-pseudo_data = getDataFromModel(bkg, mig, eff, truth)
+pseudo_data = getDataFromModel(bkg[""], mig[""], eff[""])
 
-comparePlot([data, pseudo_data, data - bkg, pseudo_data - bkg],
+comparePlot([data, pseudo_data, data - bkg[""], pseudo_data - bkg[""]],
             ["Reco. projected from unfolding factors", "Reco. simulated with toy experiments",
              "Reco. projected from unfolding factors - bkg", "Reco. simulated with toy experiments - bkg"],
             luminosity*1e-3, True, "fb/GeV", "pseudoData.png")
 
 # Create unfolding class
-m = Unfolder(bkg, mig, eff, truth)
+m = Unfolder(bkg[""], mig[""], eff[""], truth[""])
 m.setUniformPrior()
 #m.setGaussianPrior()
 #m.setCurvaturePrior()
@@ -59,7 +70,7 @@ m.setUniformPrior()
 uncList = [] #'sjcalib1030', 'eup', 'ecup'] + ['lup'+str(x) for x in range(0, 10+1)] + ['cup'+str(x) for x in range(0, 3+1)] + ['bup'+str(x) for x in range(0, 3+1)] + ['ewkup']
 for k in uncList:
   print "Getting histograms for syst. ", k
-  struth, srecoWithFakes, sbkg, smig, seff, snrt = getHistograms("out_ttallhad_psrw_Syst.root", k)
+  struth, srecoWithFakes, sbkg, smig, seff, snrt = getHistograms("out_ttallhad_psrw_Syst.root", k, "mttAsymm")
   m.addUncertainty(k, sbkg, smig.project('y'))
   plotH1D(m.bkg_syst[k], "Reconstructed "+varname, "Events", "Background Uncertainty "+k, "bkg_unc_%s.%s" % (k, extension))
   plotH1D(m.reco_syst[k], "Reconstructed "+varname, "Events", "Impact in reconstructed distribution due to uncertainty "+k, "recoWithoutFakes_unc_%s.%s" % (k, extension))
@@ -86,14 +97,31 @@ m.setFirstDerivativePrior()
 #m.setGaussianPrior()
 m.run(data)
 # does the same for the pseudo-data
-# for first deriv:
-alpha, alphaChi2, bestAlphaBias, bestAlphaStd = m.scanAlpha(1000, np.arange(0.0, 5.0, 0.125), "scanAlpha.%s" % extension, "scanAlpha_chi2.%s" % extension)
-# for curvature
-#alpha, alphaChi2, bestAlphaBias, bestAlphaStd = m.scanAlpha(1000, np.arange(0.0, 4e-8, 1e-9), "scanAlpha.%s" % extension, "scanAlpha_chi2.%s" % extension)
-# for entropy
-#alpha, alphaChi2, bestAlphaBias, bestAlphaStd = m.scanAlpha(1000, np.arange(0.0, 100.0, 2.0), "scanAlpha.%s" % extension, "scanAlpha_chi2.%s" % extension)
-print "Found alpha = ", alpha, " with bias chi2 = ", alphaChi2, ", bias = ", bestAlphaBias, ", std = ", bestAlphaStd
-m.setAlpha(alpha)
+
+alpha = {}
+alphaChi2 = {}
+bestAlphaBias = {}
+bestAlphaBiasStd = {}
+
+for i in ["", "me", "ps"]:
+  alpha[i] = -1
+  alphaChi2[i] = -1
+  bestAlphaBias[i] = -1
+  bestAlphaBiasStd[i] = -1
+
+  # for first deriv:
+  t_bkg = bkg[i]
+  t_mig = mig[i]
+  t_eff = eff[i]
+  alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i] = m.scanAlpha(t_bkg, t_mig, t_eff, 1000, np.arange(0.0, 5.0, 0.125), "scanAlpha_%s.%s" % (i, extension), "scanAlpha_%s_chi2.%s" % (i, extension))
+  # for curvature
+  #alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i] = m.scanAlpha(t_bkg, t_mig, t_eff, 1000, np.arange(0.0, 4e-8, 1e-9), "scanAlpha_%s.%s" % (i, extension), "scanAlpha_%s_chi2.%s" % (i, extension))
+  # for entropy
+  #alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i] = m.scanAlpha(t_bkg, t_mig, t_eff, 1000, np.arange(0.0, 100.0, 2.0), "scanAlpha_%s.%s" % (i, extension), "scanAlpha_%s_chi2.%s" % (i, extension))
+  print "For configuration '%s': Found alpha = %f with bias chi2 = %f, bias mean = %f, bias std = %f" % (i, alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i])
+
+# do the rest with the best alpha from stat. test only
+m.setAlpha(alpha[""])
 
 m.run(pseudo_data)
 m.setData(pseudo_data)
@@ -162,7 +190,7 @@ m.plotNP("plotNP%s.%s" % (suf, extension))
 
 fbu_result = m.hunf
 
-comparePlot([data, pseudo_data, truth,
+comparePlot([data, pseudo_data, truth[""],
              fbu_result,
              pseudo_fbu_result],
             ["Reco. projected from unfolding factors", "Reco. simulated with toy experiments", "Particle-level",
@@ -171,5 +199,5 @@ comparePlot([data, pseudo_data, truth,
             ],
             luminosity*1e-3, True, "fb/GeV", "biasTest.png")
 
-print "FBU     -- alpha = ",     alpha, " with bias = ", bestAlphaBias, ", std = ", bestAlphaStd 
+print "FBU     -- alpha = ",     alpha, " with bias = ", bestAlphaBias, ", std = ", bestAlphaBiasStd 
 

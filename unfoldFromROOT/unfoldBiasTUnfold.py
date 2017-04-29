@@ -23,37 +23,42 @@ extension = "png"
 normMode = ROOT.TUnfold.kEConstraintArea
 
 # get histograms from file
-truth, recoWithFakes, bkg, mig, eff, nrt = getHistograms("out_ttallhad_psrw_Syst.root", "nominal", "mttAsymm")
+truth = {}
+recoWithFakes = {}
+recoWithoutFakes = {}
+bkg = {}
+mig = {}
+eff = {}
+nrt = {}
 
-recoWithoutFakes = mig.project("y")
+truth[""], recoWithFakes[""], bkg[""], mig[""], eff[""], nrt[""] = getHistograms("out_ttallhad_psrw_Syst.root", "nominal", "mttAsymm")
+truth["me"], recoWithFakes["me"], bkg["me"], mig["me"], eff["me"], nrt["me"] = getHistograms("out_ttallhad_psrw_Syst.root", "aMcAtNloHerwigppEvtGen", "mttAsymm")
+truth["ps"], recoWithFakes["ps"], bkg["ps"], mig["ps"], eff["ps"], nrt["ps"] = getHistograms("out_ttallhad_psrw_Syst.root", "PowhegHerwigppEvtGen", "mttAsymm")
 
-# plot migration matrix as it will be used next for unfolding
-plotH2D(mig.T(), "Particle-level bin", "Reconstructed-level bin", "Number of events for each (reco, truth) configuration", "mig.%s" % extension)
+for i in recoWithFakes:
+  recoWithoutFakes[i] = mig[i].project("y")
 
-# plot 1D histograms for cross checks
-plotH1D(bkg, "Reconstructed "+varname, "Events", "Background", "bkg.%s" % extension)
-plotH1D(truth, "Particle-level "+varname, "Events", "Particle-level distribution", "truth.%s" % extension)
-plotH1D(nrt, "Particle-level "+varname, "Events", "Events in particle-level selection but not reconstructed", "nrt.%s" % extension)
-plotH1D(recoWithFakes, "Reconstructed "+varname, "Events", "Reconstructed-level distribution with fakes", "recoWithFakes.%s" % extension)
-plotH1D(recoWithoutFakes, "Reconstructed "+varname, "Events", "Reconstructed-level distribution without fakes", "recoWithoutFakes.%s" % extension)
-plotH1D(eff, "Particle-level "+varname, "Efficiency", "Efficiency of particle-level selection", "eff.%s" % extension)
+  # plot migration matrix as it will be used next for unfolding
+  plotH2D(mig[i].T(), "Particle-level bin", "Reconstructed-level bin", "Number of events for each (reco, truth) configuration", "mig_%s.%s" % (i,extension))
+
+  # plot 1D histograms for cross checks
+  plotH1D(bkg[i], "Reconstructed "+varname, "Events", "Background", "bkg_%s.%s" % (i, extension))
+  plotH1D(truth[i], "Particle-level "+varname, "Events", "Particle-level distribution", "truth_%s.%s" % (i, extension))
+  plotH1D(nrt[i], "Particle-level "+varname, "Events", "Events in particle-level selection but not reconstructed", "nrt_%s.%s" % (i,extension))
+  plotH1D(recoWithFakes[i], "Reconstructed "+varname, "Events", "Reconstructed-level distribution with fakes", "recoWithFakes_%s.%s" % (i,extension))
+  plotH1D(recoWithoutFakes[i], "Reconstructed "+varname, "Events", "Reconstructed-level distribution without fakes", "recoWithoutFakes_%s.%s" % (i,extension))
+  plotH1D(eff[i], "Particle-level "+varname, "Efficiency", "Efficiency of particle-level selection", "eff_%s.%s" % (i,extension))
 
 # generate perfect fake data
-data = recoWithFakes
+data = recoWithFakes[""]
 
 # generate fake data from model
-pseudo_data = getDataFromModel(bkg, mig, eff, truth)
+pseudo_data = getDataFromModel(bkg[""], mig[""], eff[""], truth[""])
 
 comparePlot([data, pseudo_data, data - bkg, pseudo_data - bkg],
             ["Reco. projected from unfolding factors", "Reco. simulated with toy experiments",
              "Reco. projected from unfolding factors - bkg", "Reco. simulated with toy experiments - bkg"],
             luminosity*1e-3, True, "fb/GeV", "pseudoData.png")
-
-# Try alternative
-# Create alternative method for unfolding
-f_truth, f_recoWithFakes, f_bkg, f_mig, f_eff, f_nrt = getHistograms("out_ttallhad_psrw_Syst.root", "nominal", "mttAsymm")
-f_data = f_recoWithFakes
-pseudo_f_data = getDataFromModel(f_bkg, f_mig, f_eff, f_truth)
 
 # functor to unfold
 class TUnfoldForRegularizationTest:
@@ -76,28 +81,38 @@ class TUnfoldForRegularizationTest:
     del dataMinusBkg
     return tunfold_result
 
-bestTau, bestTauChi2, bestTauBias, bestTauStd = scanRegParameter(TUnfoldForRegularizationTest(f_bkg, f_mig, f_data, ROOT.TUnfold.kRegModeCurvature, normMode), f_bkg, f_mig, f_eff, f_truth, 1000, np.arange(0.0, 10e-3, 0.125e-3), "scanTau_TUnfold.png", "scanTau_chi2_TUnfold.png")
-print "Found optimal tau:", bestTau, bestTauChi2, bestTauBias, bestTauStd
+alpha = {}
+alphaChi2 = {}
+bestAlphaBias = {}
+bestAlphaBiasStd = {}
 
-pseudo_tunfolder = getTUnfolder(f_bkg, f_mig, pseudo_f_data, regMode = ROOT.TUnfold.kRegModeDerivative, normMode = normMode)
-#pseudo_tunfolder = getTUnfolder(f_bkg, f_mig, pseudo_f_data, regMode = ROOT.TUnfold.kRegModeCurvature)
-#pseudo_tunfolder = getTUnfolder(f_bkg, f_mig, pseudo_f_data, regMode = ROOT.TUnfold.kRegModeNone)
+for i in ["", "me", "ps"]:
+  alpha[i] = -1
+  alphaChi2[i] = -1
+  bestAlphaBias[i] = -1
+  bestAlphaBiasStd[i] = -1
+  bestAlpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i] = scanRegParameter(TUnfoldForRegularizationTest(bkg[""], mig[""], data, ROOT.TUnfold.kRegModeCurvature, normMode), bkg[i], mig[i], eff[i], truth[i], 1000, np.arange(0.0, 10e-3, 0.125e-3), "scanTau_%s_TUnfold.png" % i, "scanTau_%s_chi2_TUnfold.png" % i)
+  print "For configuration '%s': Found tau = %f with bias chi2 = %f, bias mean = %f, bias std = %f" % (i, alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i])
+
+pseudo_tunfolder = getTUnfolder(bkg[""], mig[""], pseudo_data, regMode = ROOT.TUnfold.kRegModeDerivative, normMode = normMode)
+#pseudo_tunfolder = getTUnfolder(bkg[""], mig[""], pseudo_data, regMode = ROOT.TUnfold.kRegModeCurvature)
+#pseudo_tunfolder = getTUnfolder(bkg[""], mig[""], pseudo_data, regMode = ROOT.TUnfold.kRegModeNone)
 
 #tau_pseudo = printLcurve(pseudo_tunfolder, "tunfold_lcurve_pseudo.png")
-pseudo_tunfolder.DoUnfold(bestTau)
+pseudo_tunfolder.DoUnfold(alpha[""])
 pseudo_tunfold_mig = H1D(pseudo_tunfolder.GetOutput("tunfold_pseudo_result"))
 pseudo_tunfold_result = pseudo_tunfold_mig/eff
 
-tunfolder = getTUnfolder(f_bkg, f_mig, f_data, regMode = ROOT.TUnfold.kRegModeDerivative, normMode = normMode)
-#tunfolder = getTUnfolder(f_bkg, f_mig, f_data, regMode = ROOT.TUnfold.kRegModeCurvature)
-#tunfolder = getTUnfolder(f_bkg, f_mig, f_data, regMode = ROOT.TUnfold.kRegModeNone)
+tunfolder = getTUnfolder(bkg[i], mig[i], data, regMode = ROOT.TUnfold.kRegModeDerivative, normMode = normMode)
+#tunfolder = getTUnfolder(bkg[i], mig[i], data, regMode = ROOT.TUnfold.kRegModeCurvature)
+#tunfolder = getTUnfolder(bkg[i], mig[i], data, regMode = ROOT.TUnfold.kRegModeNone)
 # no regularization
 #tau = printLcurve(tunfolder, "tunfold_lcurve.png")
-tunfolder.DoUnfold(bestTau)
+tunfolder.DoUnfold(alpha[""])
 tunfold_mig = H1D(tunfolder.GetOutput("tunfold_result"))
 tunfold_result = tunfold_mig/eff
 
-comparePlot([f_data, pseudo_f_data, f_truth,
+comparePlot([data, pseudo_data, truth[""],
              tunfold_result,
              pseudo_tunfold_result],
             ["Reco. projected from unfolding factors", "Reco. simulated with toy experiments", "Particle-level",
@@ -105,5 +120,5 @@ comparePlot([f_data, pseudo_f_data, f_truth,
              "Unfolded (TUnfold) from independently simulated reco."],
             luminosity*1e-3, True, "fb/GeV", "biasTest_TUnfold.png")
 
-print "TUnfold -- tau   = ",   bestTau, " with bias = ", bestTauBias, ", std = ", bestTauStd
+print "TUnfold -- tau   = ",   alpha, " with bias = ", bestAlphaBias, ", std = ", bestAlphaBiasStd
 

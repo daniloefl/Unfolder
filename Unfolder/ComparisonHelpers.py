@@ -108,7 +108,8 @@ def getDAgostini(bkg, mig, eff, data, nIter = 1):
 '''
 Use model to get pseudo-data from toy experiments.
 '''
-def getDataFromModel(bkg, mig, eff, truth):
+def getDataFromModel(bkg, mig, eff):
+  truth = mig.project('x')/eff
   response_noeff = H2D(mig) # = P(r|t) = Mtr/sum_k=1^Nr Mtk
   for i in range(0, mig.shape[0]): # for each truth bin
     rsum = 0.0
@@ -120,14 +121,16 @@ def getDataFromModel(bkg, mig, eff, truth):
   data = H1D(bkg) # original bkg histogram is ignored: only used to clone X axis
   # simulate background
   for j in range(0, len(bkg.val)): # j is the reco bin
-    bkgCount = np.random.poisson(bkg.val[j]) # this simulates a counting experiment for the bkg
+    bv = bkg.val[j]
+    if bv < 0: bv = 0
+    bkgCount = np.random.poisson(bv) # this simulates a counting experiment for the bkg
     data.val[j] = bkgCount # overwrite background so that we use a Poisson
     data.err[j] = bkgCount
 
   # for each truth bin
   for i in range(0, len(truth.val)): # i is the truth bin
     #trueCount = np.random.poisson(truth.val[i]) # this simulates a counting experiment for the truth
-    trueCount = truth.val[i] # dirac delta pdf for the truth distribution
+    trueCount = int(truth.val[i]) # dirac delta pdf for the truth distribution
     # calculate cumulative response for bin i
     # C(k|i) = sum_l=0^k P(r=l|t=i)
     C = np.zeros(len(bkg.val))
@@ -168,7 +171,7 @@ def getBiasFromToys(unfoldFunction, alpha, N, bkg, mig, eff, truth):
   bias = np.zeros(len(truth.val))
   bias_variance = np.zeros(len(truth.val))
   for k in range(0, N):
-    pseudo_data = getDataFromModel(bkg, mig, eff, truth)
+    pseudo_data = getDataFromModel(bkg, mig, eff)
     unfolded = unfoldFunction(alpha, pseudo_data)
     fitted[k, :] = (unfolded.val - truth.val)
     #fitted2[k, :] = unfolded.val
@@ -215,7 +218,7 @@ def scanRegParameter(unfoldFunction, bkg, mig, eff, truth, N = 1000, rangeAlpha 
   plt_bias.err = np.power(bias_std, 2)
   plt_bias.x = rangeAlpha
   plt_bias.x_err = np.zeros(len(rangeAlpha))
-  plotH1DLines({plt_bias: "rel. bias"}, "Regularization parameter", "mean over bins(rel. bias)", "Y errors are mean over bins(sqrt(var))", fname)
+  plotH1DLines({plt_bias: "Mean over bins(Mean over toys(bias))"}, "Regularization parameter", "mean over bins(mean over toys(bias))", "Y errors are mean over bins(sqrt(var))", fname)
   plt_bias_chi2 = H1D(bias_chi2)
   plt_bias_chi2.val = bias_chi2
   plt_bias_chi2.err = np.zeros(len(rangeAlpha))
@@ -223,6 +226,6 @@ def scanRegParameter(unfoldFunction, bkg, mig, eff, truth, N = 1000, rangeAlpha 
   plt_bias_chi2.x_err = np.zeros(len(rangeAlpha))
   plt_cte = H1D(plt_bias_chi2)
   plt_cte.val = [0.5]*len(rangeAlpha)
-  plotH1DLines({plt_bias_chi2: "Mean over bins(Mean(rel. bias)^2/Var(rel. bias))", plt_cte: "0.5"}, "Regularization parameter", "chi^2/# bins", "", fname_chi2)
+  plotH1DLines({plt_bias_chi2: "Mean over bins(Mean(bias)^2/Var(bias))", plt_cte: "0.5"}, "Regularization parameter", "chi^2/# bins", "", fname_chi2)
   return [bestAlpha, bestChi2, bias[bestI], bias_std[bestI]]
 
