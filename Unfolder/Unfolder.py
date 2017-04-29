@@ -216,6 +216,11 @@ class Unfolder:
         fitted[k, :] = res['Truth'] - t.val
         bias_norm[k] = np.sum(res['Truth'] - t.val)
     print
+    # systematic bias
+    self.setData(mig.project('y') + bkg)
+    with self.model:
+      res = pm.find_MAP(disp = False)
+      bias_syst = np.mean(res["Truth"] - t.val)
     bias = np.mean(fitted, axis = 0)
     bias_std = np.std(fitted, axis = 0)
     bias_norm_mean = np.mean(bias_norm)
@@ -224,7 +229,7 @@ class Unfolder:
     bias_binsum = np.mean(bias)
     bias_std_binsum = np.mean(bias_std)
     bias_chi2 = np.mean(np.power(bias/bias_std, 2))
-    return [bias_binsum, bias_std_binsum, bias_chi2, bias_norm_mean, bias_norm_std]
+    return [bias_binsum, bias_std_binsum, bias_chi2, bias_norm_mean, bias_norm_std, bias_syst]
 
   '''
   Scan alpha values to minimise bias^2 over variance.
@@ -236,6 +241,7 @@ class Unfolder:
     bias_chi2 = np.zeros(len(rangeAlpha))
     bias_norm = np.zeros(len(rangeAlpha))
     bias_norm_std = np.zeros(len(rangeAlpha))
+    bias_syst = np.zeros(len(rangeAlpha))
     minBias = 1e10
     bestAlpha = 0
     bestChi2 = 0
@@ -245,7 +251,7 @@ class Unfolder:
       print "scanAlpha: parameter = ", rangeAlpha[i], " / ", rangeAlpha[-1]
       sys.stdout.flush()
       self.setAlpha(rangeAlpha[i])
-      bias[i], bias_std[i], bias_chi2[i], bias_norm[i], bias_norm_std[i] = self.getBiasFromMAP(N, bkg, mig, eff) # only take mean values for speed
+      bias[i], bias_std[i], bias_chi2[i], bias_norm[i], bias_norm_std[i], bias_syst[i] = self.getBiasFromMAP(N, bkg, mig, eff) # only take mean values for speed
       print " -- --> scanAlpha: parameter = ", rangeAlpha[i], " / ", rangeAlpha[-1], " with chi2 = ", bias_chi2[i], ", mean and std = ", bias[i], bias_std[i]
       if np.abs(bias_chi2[i] - 0.5) < minBias:
         minBias = np.abs(bias_chi2[i] - 0.5)
@@ -258,7 +264,12 @@ class Unfolder:
     plt_bias.err = np.power(bias_std, 2)
     plt_bias.x = rangeAlpha
     plt_bias.x_err = np.zeros(len(rangeAlpha))
-    plotH1DLines({plt_bias: "mean per bin(mean bias)"}, "alpha", "mean over bins(mean over toys(bias))", "Y errors are mean over bins(sqrt(var))", fname)
+    plt_bias_syst = H1D(bias)
+    plt_bias_syst.val = bias_syst
+    plt_bias_syst.err = np.zeros(len(rangeAlpha))
+    plt_bias_syst.x = rangeAlpha
+    plt_bias_syst.x_err = np.zeros(len(rangeAlpha))
+    plotH1DLines({plt_bias: "mean per bin(mean bias)", plt_bias_syst: "Only syst. shift"}, "alpha", "mean over bins(mean over toys(bias))", "Y errors are mean over bins(sqrt(var))", fname)
     plt_bias_norm = H1D(bias)
     plt_bias_norm.val = bias_norm
     plt_bias_norm.err = np.power(bias_norm_std, 2)
