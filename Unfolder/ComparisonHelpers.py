@@ -84,18 +84,18 @@ dagostini_mig = getDAgostini(bkg, mig, eff, data)
 comparePlot([data, data - bkg, truth, dagostini_result], ["Data", "Data - bkg", "Particle-level", "D'Agostini"], luminosity*1e-3, True, "fb/GeV", "plotDAgostini.png")
 '''
 def getDAgostini(bkg, mig, eff, data, nIter = 1):
-  reco = mig.project('y').toROOT("reco_rp")
+  reco = (mig.project('y') + bkg).toROOT("reco_rp")
   reco.SetDirectory(0)
   truth = (mig.project('x')/eff).toROOT("truth_p")
   truth.SetDirectory(0)
   m = mig.T().toROOT("m")
   m.SetDirectory(0)
   unf_response = ROOT.RooUnfoldResponse(reco, truth, m)
-  dataBkgSub = data - bkg
+  dataBkgSub = data # - bkg
   dd = dataBkgSub.toROOT("dataBkgSub_dagostini")
   dd.SetDirectory(0)
   dagostini = ROOT.RooUnfoldBayes(unf_response, dd, int(nIter))
-  dagostini.SetVerbose(0)
+  dagostini.SetVerbose(-1)
   dagostini_hreco = dagostini.Hreco()
   dagostini_hreco.SetDirectory(0)
   del dagostini
