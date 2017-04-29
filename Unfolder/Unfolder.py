@@ -204,12 +204,14 @@ class Unfolder:
     bias = np.zeros(len(self.truth.val))
     bias_variance = np.zeros(len(self.truth.val))
     for k in range(0, N):
+      print "getBiasFromMAP: Throwing toy experiment {0}/{1}\r".format(k, N),
       pseudo_data = getDataFromModel(bkg, mig, eff)
       self.setData(pseudo_data)
       #self.run(pseudo_data)
       with self.model:
         res = pm.find_MAP(disp = False)
         fitted[k, :] = res['Truth'] - t.val
+    print
     bias = np.mean(fitted, axis = 0)
     bias_std = np.std(fitted, axis = 0)
     #print "getBiasFromMAP with alpha = ", self.var_alpha.get_value(), " N = ", N, ", mean, std = ", bias, bias_std
@@ -230,9 +232,13 @@ class Unfolder:
     bestAlpha = 0
     bestChi2 = 0
     bestI = 0
+    import sys
     for i in range(0, len(rangeAlpha)):
+      print "scanAlpha: parameter = ", rangeAlpha[i], " / ", rangeAlpha[-1]
+      sys.stdout.flush()
       self.setAlpha(rangeAlpha[i])
       bias[i], bias_std[i], bias_chi2[i] = self.getBiasFromMAP(N, bkg, mig, eff) # only take mean values for speed
+      print " -- --> scanAlpha: parameter = ", rangeAlpha[i], " / ", rangeAlpha[-1], " with chi2 = ", bias_chi2[i], ", mean and std = ", bias[i], bias_std[i]
       if np.abs(bias_chi2[i] - 0.5) < minBias:
         minBias = np.abs(bias_chi2[i] - 0.5)
         bestChi2 = bias_chi2[i]

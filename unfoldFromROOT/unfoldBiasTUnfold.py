@@ -87,6 +87,7 @@ bestAlphaBias = {}
 bestAlphaBiasStd = {}
 
 for i in ["", "me", "ps"]:
+  print "Checking bias due to configuration '%s'" % i
   alpha[i] = -1
   alphaChi2[i] = -1
   bestAlphaBias[i] = -1

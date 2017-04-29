@@ -171,6 +171,7 @@ def getBiasFromToys(unfoldFunction, alpha, N, bkg, mig, eff, truth):
   bias = np.zeros(len(truth.val))
   bias_variance = np.zeros(len(truth.val))
   for k in range(0, N):
+    print "getBiasFromToys: Throwing toy experiment {0}/{1}\r".format(k, N),
     pseudo_data = getDataFromModel(bkg, mig, eff)
     unfolded = unfoldFunction(alpha, pseudo_data)
     fitted[k, :] = (unfolded.val - truth.val)
@@ -183,6 +184,7 @@ def getBiasFromToys(unfoldFunction, alpha, N, bkg, mig, eff, truth):
     #  plt.legend(loc = "upper right")
     #  plt.show()
     #  plt.close()
+  print
   bias = np.mean(fitted, axis = 0)
   bias_std = np.std(fitted, axis = 0)
   bias_binsum = np.mean(bias)
@@ -203,10 +205,13 @@ def scanRegParameter(unfoldFunction, bkg, mig, eff, truth, N = 1000, rangeAlpha 
   bestAlpha = 0
   bestChi2 = 0
   bestI = 0
+  import sys
   for i in range(0, len(rangeAlpha)):
     #if i % 100 == 0:
     print "scanRegParameter: parameter = ", rangeAlpha[i], " / ", rangeAlpha[-1]
+    sys.stdout.flush()
     bias[i], bias_std[i], bias_chi2[i] = getBiasFromToys(unfoldFunction, rangeAlpha[i], N, bkg, mig, eff, truth)
+    print " -- --> scanRegParameter: parameter = ", rangeAlpha[i], " / ", rangeAlpha[-1], " with chi2 = ", bias_chi2[i], ", mean and std = ", bias[i], bias_std[i]
     if np.abs(bias_chi2[i] - 0.5) < minBias:
       minBias = np.abs(bias_chi2[i] - 0.5)
       bestAlpha = rangeAlpha[i]
