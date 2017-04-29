@@ -129,8 +129,8 @@ def getDataFromModel(bkg, mig, eff):
 
   # for each truth bin
   for i in range(0, len(truth.val)): # i is the truth bin
-    #trueCount = np.random.poisson(truth.val[i]) # this simulates a counting experiment for the truth
-    trueCount = int(truth.val[i]) # dirac delta pdf for the truth distribution
+    trueCount = np.random.poisson(truth.val[i]) # this simulates a counting experiment for the truth
+    #trueCount = int(truth.val[i]) # dirac delta pdf for the truth distribution
     # calculate cumulative response for bin i
     # C(k|i) = sum_l=0^k P(r=l|t=i)
     C = np.zeros(len(bkg.val))
