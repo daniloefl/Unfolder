@@ -151,7 +151,7 @@ class Unfolder:
   Add uncertainty in the core of the unfolding factors.
   '''
   def addUnfoldingUncertainty(self, name, bkg, mig, eff):
-    self.bkg_unfsyst[name] = H1D(bkg) - self.bkg
+    self.bkg_unfsyst[name] = H1D(bkg)
     self.mig_unfsyst[name] = H2D(mig)
     # calculate response matrix, defined as response[i, j] = P(r = j|t = i) = P(t = i, r = j)/P(t = i)
     self.response_unfsyst[name] = H2D(mig)

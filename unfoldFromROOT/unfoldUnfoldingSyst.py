@@ -77,7 +77,7 @@ unf_orig = m.hunf
   
 uncUnfList = ["me", "ps"]
 for k in uncUnfList:
-  m.addUncertainty(k, bkg[k], mig[k], eff[k])
+  m.addUnfoldingUncertainty(k, bkg[k], mig[k], eff[k])
 
 # plot response matrix P(r|t)*eff(r)
 plotH2D(m.response.T(), "Particle-level bin", "Reconstructed-level bin", "Response matrix P(r|t)*eff(t)", "responseMatrix.%s" % extension)
