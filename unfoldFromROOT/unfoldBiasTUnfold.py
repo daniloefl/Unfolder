@@ -110,7 +110,7 @@ pseudo_tunfolder = getTUnfolder(bkg[""], mig[""], eff[""], pseudo_data, regMode 
 #tau_pseudo = printLcurve(pseudo_tunfolder, "tunfold_lcurve_pseudo.png")
 pseudo_tunfolder.DoUnfold(alpha[""])
 pseudo_tunfold_mig = H1D(pseudo_tunfolder.GetOutput("tunfold_pseudo_result"))
-pseudo_tunfold_result = pseudo_tunfold_mig/eff
+pseudo_tunfold_result = pseudo_tunfold_mig/eff['']
 
 tunfolder = getTUnfolder(bkg[""], mig[""], eff[""], data, regMode = ROOT.TUnfold.kRegModeDerivative, normMode = normMode)
 #tunfolder = getTUnfolder(bkg[""], mig[""], eff[""], data, regMode = ROOT.TUnfold.kRegModeCurvature)
@@ -119,7 +119,7 @@ tunfolder = getTUnfolder(bkg[""], mig[""], eff[""], data, regMode = ROOT.TUnfold
 #tau = printLcurve(tunfolder, "tunfold_lcurve.png")
 tunfolder.DoUnfold(alpha[""])
 tunfold_mig = H1D(tunfolder.GetOutput("tunfold_result"))
-tunfold_result = tunfold_mig/eff
+tunfold_result = tunfold_mig/eff['']
 
 comparePlot([data, pseudo_data, truth[""],
              tunfold_result,
