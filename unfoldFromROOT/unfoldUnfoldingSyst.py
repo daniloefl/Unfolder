@@ -48,8 +48,9 @@ for i in recoWithFakes:
   plotH1D(eff[i], "Particle-level "+varname, "Efficiency", "Efficiency of particle-level selection", "eff_%s.%s" % (i,extension))
 
 # generate perfect fake data
-data = recoWithFakes[""]
+#data = recoWithFakes[""]
 #data = recoWithFakes["me"]
+data = recoWithFakes["ps"]
 
 # Create unfolding class
 m = Unfolder(bkg[""], mig[""], eff[""], truth[""])
@@ -113,5 +114,5 @@ m.plotNPU("plotNPU.%s" % extension)
 m.plotUnfolded("plotUnfolded.png")
 m.plotOnlyUnfolded(luminosity*1e-3, True, "fb/GeV", "plotOnlyUnfolded.png")
 
-comparePlot([data, data - bkg, truth[""], truth["me"], truth["ps"], unf_orig, m.hunf], ["Data", "Data - background", "Particle-level", "Particle-level ME", "Particle-level PS", "FBU no syst.", "FBU"], luminosity*1e-3, True, "fb/GeV", "compareMethods.png")
+comparePlot([data, truth[""], truth["me"], truth["ps"], m.hunf, unf_orig], ["Data", "Particle-level", "Particle-level ME", "Particle-level PS", "FBU", "FBU no syst."], luminosity*1e-3, True, "fb/GeV", "compareMethods.png")
 
