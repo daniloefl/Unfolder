@@ -314,7 +314,7 @@ class Unfolder:
     plt_bias_chi2.x = rangeAlpha
     plt_bias_chi2.x_err = np.zeros(len(rangeAlpha))
     plt_cte = H1D(plt_bias_chi2)
-    plt_cte.val = 0.5*np.zeros(len(rangeAlpha))
+    plt_cte.val = 0.5*np.ones(len(rangeAlpha))
     plt_cte.err = np.zeros(len(rangeAlpha))
     plotH1DLines({plt_bias_chi2: "Mean over bins(Mean(bias)^2/Var(bias))", plt_cte: "0.5"}, "alpha", "chi^2/# bins", "", fname_chi2)
     self.setAlpha(bkp_alpha)
