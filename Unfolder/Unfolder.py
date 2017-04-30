@@ -79,6 +79,9 @@ class Unfolder:
     self.bkg_syst = {}
     self.reco_syst = {}
     self.systematics = []
+    self.bkg_unfsyst = {}
+    self.response_unfsyst = {}
+    self.unf_systematics = []
     self.fb = 0
     self.constrainArea = False
     self.tot_bkg = self.bkg.integral()[0]
@@ -143,6 +146,26 @@ class Unfolder:
     self.bkg_syst[name] = H1D(bkg) - self.bkg
     self.reco_syst[name] = reco - self.recoWithoutFakes
     self.systematics.append(name)
+
+  '''
+  Add uncertainty in the core of the unfolding factors.
+  '''
+  def addUnfoldingUncertainty(self, name, bkg, mig, eff):
+    self.bkg_unfsyst[name] = H1D(bkg) - self.bkg
+    self.mig_unfsyst[name] = H2D(mig)
+    # calculate response matrix, defined as response[i, j] = P(r = j|t = i) = P(t = i, r = j)/P(t = i)
+    self.response_unfsyst[name] = H2D(mig)
+    for i in range(0, self.Nt): # for each truth bin
+      rsum = 0.0
+      for j in range(0, self.Nr): # for each reco bin
+        rsum += self.mig_unfsyst[name].val[i, j]    # calculate the sum of all reco bins in the same truth bin
+      # rsum is now the total sum of events that has that particular truth bin
+      # now, for each reco bin in truth bin i, divide that row by the total number of events in it
+      # and multiply the response matrix by the efficiency
+      for j in range(0, self.Nr):
+        self.response_unfsyst.val[i, j] = self.mig_unfsyst.val[i, j]/rsum*eff.val[i]  # P(r|t) = P(t, r)/P(t) = Mtr*eff(t)/sum_k=1^Nr Mtk
+        self.response_unfsyst.err[i, j] = 0 # FIXME
+    self.unf_systematics.append(name)
 
   '''
   Set a uniform prior.
@@ -210,6 +233,20 @@ class Unfolder:
         self.R_syst[name] = self.var_reco_syst[name] + self.var_bkg_syst[name]
         # add it to the total reco result
         self.R_full += self.theta[name]*self.R_syst[name]
+
+      self.unf_theta = {}
+      self.var_bkg_unfsyst = {}
+      self.var_response_unfsyst = {}
+      self.R_unfsyst = {}
+      for name in self.unf_systematics:
+        self.unf_theta[name] = pm.Normal('tu_'+name, mu = 0, sd = 1) # nuisance parameter
+        # get background constribution
+        self.var_bkg_unfsyst[name] = theano.shared(value = self.asMat(self.bkg_unfsyst[name].val))
+        self.var_response_unfsyst[name] = theano.shared(value = self.asMat(self.response_unfsyst[name].val))
+        self.R_unfsyst[name] = (theano.tensor.dot(self.T, self.var_response) + self.var_bkg) - (theano.tensor.dot(self.T, self.var_response_unfsyst[name]) + self.var_bkg_unfsyst[name])
+        # add it to the total reco result
+        self.R_full += self.unf_theta[name]*self.R_unfsyst[name]
+
       self.U = pm.Poisson('U', mu = self.R_full, observed = self.var_data, shape = (self.Nr, 1))
       if self.constrainArea:
         self.Norm = pm.Poisson('Norm', mu = self.T.sum()*self.ave_eff + self.tot_bkg, observed = self.var_data.sum(), shape = (1))
@@ -348,6 +385,7 @@ class Unfolder:
       pm.summary(self.trace)
 
       self.hnp = H1D(np.zeros(len(self.systematics)))
+      self.hnpu = H1D(np.zeros(len(self.unf_systematics)))
       self.hunf = H1D(self.truth)
       self.hunf_mode = H1D(self.truth)
       for i in range(0, self.Nt):
@@ -366,6 +404,11 @@ class Unfolder:
         self.hnp.err[k] = np.std(self.trace['t_'+self.systematics[k]])**2
         self.hnp.x[k] = self.systematics[k]
         self.hnp.x_err[k] = 1
+      for k in range(0, len(self.unf_systematics)):
+        self.hnpu.val[k] = np.mean(self.trace['tu_'+self.unf_systematics[k]])
+        self.hnpu.err[k] = np.std(self.trace['tu_'+self.unf_systematics[k]])**2
+        self.hnpu.x[k] = self.unf_systematics[k]
+        self.hnpu.x_err[k] = 1
 
   '''
   Plot the distributions for each bin regardless of the other bins
@@ -393,6 +436,21 @@ class Unfolder:
     fig = plt.figure(figsize=(10, 10))
     sns.distplot(self.trace['t_'+self.systematics[i]], kde = True, hist = True, label = self.systematics[i])
     plt.title(self.systematics[i])
+    plt.ylabel("Probability")
+    plt.xlim([-5, 5])
+    plt.xlabel("Nuisance parameter value")
+    plt.tight_layout()
+    plt.savefig("%s"%fname)
+    plt.close()
+
+  '''
+  Plot the distributions for each unfolding nuisance parameter regardless of the other bins
+  '''
+  def plotNPUMarginal(self, syst, fname):
+    i = self.unf_systematics.index(syst)
+    fig = plt.figure(figsize=(10, 10))
+    sns.distplot(self.trace['tu_'+self.unf_systematics[i]], kde = True, hist = True, label = self.unf_systematics[i])
+    plt.title(self.unf_systematics[i])
     plt.ylabel("Probability")
     plt.xlim([-5, 5])
     plt.xlabel("Nuisance parameter value")
@@ -433,7 +491,9 @@ class Unfolder:
       tmp[i, :] = self.trace.Truth[:, i]
     for i in range(0, len(self.systematics)):
       tmp[self.Nt+i, :] = self.trace['t_'+self.systematics[i]]
-    tmplabel = ["Unfolded bin %d" % i for i in range(0, self.Nt)] + self.systematics
+    for i in range(0, len(self.unf_systematics)):
+      tmp[self.Nt+len(self.systematics)+i, :] = self.trace['tu_'+self.unf_systematics[i]]
+    tmplabel = ["Unfolded bin %d" % i for i in range(0, self.Nt)] + self.systematics + self.unf_systematics
     plotH2DWithText(np.corrcoef(tmp, rowvar = 1), tmplabel, "Variable", "Variable", "Pearson correlation coefficients of posterior", fname)
 
   '''
@@ -452,6 +512,13 @@ class Unfolder:
   def plotNP(self, fname):
     fig = plt.figure(figsize=(10, 10))
     plotH1DWithText(self.hnp, "Nuisance parameter", "Nuisance parameter posteriors mean and width", fname)
+
+  '''
+  Plot unfolding nuisance parameter means and spread.
+  '''
+  def plotNPU(self, fname):
+    fig = plt.figure(figsize=(10, 10))
+    plotH1DWithText(self.hnpu, "Nuisance parameter", "Nuisance parameter posteriors mean and width", fname)
 
   '''
   Plot kurtosis.
