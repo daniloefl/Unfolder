@@ -52,7 +52,7 @@ data = recoWithFakes[""]
 #data = recoWithFakes["me"]
 
 # Create unfolding class
-m = Unfolder(bkg, mig, eff, truth)
+m = Unfolder(bkg[""], mig[""], eff[""], truth[""])
 m.setUniformPrior()
 #m.setGaussianPrior()
 #m.setCurvaturePrior()
@@ -109,21 +109,9 @@ m.plotNP("plotNP.%s" % extension)
 m.plotNPU("plotNPU.%s" % extension)
 
 
-#print "Mean of unfolded data:"
-#print np.mean(m.trace.Truth, axis = 0)
-#print "Sqrt of variance of unfolded data:"
-#print np.std(m.trace.Truth, axis = 0)
-#print "Skewness of unfolded data:"
-#print scipy.stats.skew(m.trace.Truth, bias = False)
-#print "Kurtosis of unfolded data:"
-#print scipy.stats.kurtosis(m.trace.Truth, bias = False)
-#print "Print out of the covariance matrix follows:"
-#print np.cov(m.trace.Truth, rowvar = False)
-
-
 # plot unfolded spectrum
 m.plotUnfolded("plotUnfolded.png")
 m.plotOnlyUnfolded(luminosity*1e-3, True, "fb/GeV", "plotOnlyUnfolded.png")
 
-comparePlot([data, data - bkg, truth, unf_orig, m.hunf], ["Data", "Data - background", "Particle-level", "FBU no syst.", "FBU"], luminosity*1e-3, True, "fb/GeV", "compareMethods.png")
+comparePlot([data, data - bkg, truth[""], truth["me"], truth["ps"], unf_orig, m.hunf], ["Data", "Data - background", "Particle-level", "Particle-level ME", "Particle-level PS", "FBU no syst.", "FBU"], luminosity*1e-3, True, "fb/GeV", "compareMethods.png")
 
