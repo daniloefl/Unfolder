@@ -210,12 +210,9 @@ class Unfolder:
         self.R_syst[name] = self.var_reco_syst[name] + self.var_bkg_syst[name]
         # add it to the total reco result
         self.R_full += self.theta[name]*self.R_syst[name]
-      if self.constrainArea:
-        self.theta["norm"] = pm.Normal('norm', mu = 0, sd = 1) # nuisance parameter
-        self.RecoNorm = self.theta["norm"]*(self.T.sum()*self.ave_eff + self.tot_bkg)
       self.U = pm.Poisson('U', mu = self.R_full, observed = self.var_data, shape = (self.Nr, 1))
       if self.constrainArea:
-        self.Norm = pm.Poisson('Norm', mu = self.RecoNorm, observed = self.var_data.sum(), shape = (1))
+        self.Norm = pm.Poisson('Norm', mu = self.T.sum()*self.ave_eff + self.tot_bkg, observed = self.var_data.sum(), shape = (1))
       #self.U = pm.Normal('U', mu = self.R_full, sd = theano.tensor.sqrt(self.R_full), observed = self.var_data, shape = (self.Nr, 1))
 
   '''
