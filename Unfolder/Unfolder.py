@@ -152,19 +152,18 @@ class Unfolder:
   '''
   def addUnfoldingUncertainty(self, name, bkg, mig, eff):
     self.bkg_unfsyst[name] = H1D(bkg)
-    self.mig_unfsyst[name] = H2D(mig)
     # calculate response matrix, defined as response[i, j] = P(r = j|t = i) = P(t = i, r = j)/P(t = i)
     self.response_unfsyst[name] = H2D(mig)
     for i in range(0, self.Nt): # for each truth bin
       rsum = 0.0
       for j in range(0, self.Nr): # for each reco bin
-        rsum += self.mig_unfsyst[name].val[i, j]    # calculate the sum of all reco bins in the same truth bin
+        rsum += mig.val[i, j]    # calculate the sum of all reco bins in the same truth bin
       # rsum is now the total sum of events that has that particular truth bin
       # now, for each reco bin in truth bin i, divide that row by the total number of events in it
       # and multiply the response matrix by the efficiency
       for j in range(0, self.Nr):
-        self.response_unfsyst.val[i, j] = self.mig_unfsyst.val[i, j]/rsum*eff.val[i]  # P(r|t) = P(t, r)/P(t) = Mtr*eff(t)/sum_k=1^Nr Mtk
-        self.response_unfsyst.err[i, j] = 0 # FIXME
+        self.response_unfsyst[name].val[i, j] = mig.val[i, j]/rsum*eff.val[i]  # P(r|t) = P(t, r)/P(t) = Mtr*eff(t)/sum_k=1^Nr Mtk
+        self.response_unfsyst[name].err[i, j] = 0 # FIXME
     self.unf_systematics.append(name)
 
   '''
@@ -486,7 +485,7 @@ class Unfolder:
   Plot the Pearson correlation coefficients including the NPs.
   '''
   def plotCorrWithNP(self, fname):
-    tmp = np.zeros((self.Nt+len(self.systematics), self.N))
+    tmp = np.zeros((self.Nt+len(self.systematics)+len(self.unf_systematics), self.N))
     for i in range(0, self.Nt):
       tmp[i, :] = self.trace.Truth[:, i]
     for i in range(0, len(self.systematics)):
