@@ -95,6 +95,8 @@ plotH2D(m.response_noeff.T(), "Particle-level bin", "Reconstructed-level bin", "
 #m.setCurvaturePrior()
 m.setFirstDerivativePrior(0.0)
 #m.setGaussianPrior()
+
+#m.setConstrainArea(True)
 m.run(data)
 # does the same for the pseudo-data
 

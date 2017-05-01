@@ -104,8 +104,6 @@ for i in ["", "me", "ps"]:
   print "For configuration '%s': Found tau = %f with bias chi2 = %f, bias mean = %f, bias std = %f, norm bias = %f, norm bias std = %f" % (i, alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i])
 
 pseudo_tunfolder = getTUnfolder(bkg[""], mig[""], eff[""], pseudo_data, regMode = ROOT.TUnfold.kRegModeDerivative, normMode = normMode)
-#pseudo_tunfolder = getTUnfolder(bkg[""], mig[""], pseudo_data, regMode = ROOT.TUnfold.kRegModeCurvature)
-#pseudo_tunfolder = getTUnfolder(bkg[""], mig[""], pseudo_data, regMode = ROOT.TUnfold.kRegModeNone)
 
 #tau_pseudo = printLcurve(pseudo_tunfolder, "tunfold_lcurve_pseudo.png")
 pseudo_tunfolder.DoUnfold(alpha[""])
@@ -113,8 +111,6 @@ pseudo_tunfold_mig = H1D(pseudo_tunfolder.GetOutput("tunfold_pseudo_result"))
 pseudo_tunfold_result = pseudo_tunfold_mig/eff['']
 
 tunfolder = getTUnfolder(bkg[""], mig[""], eff[""], data, regMode = ROOT.TUnfold.kRegModeDerivative, normMode = normMode)
-#tunfolder = getTUnfolder(bkg[""], mig[""], eff[""], data, regMode = ROOT.TUnfold.kRegModeCurvature)
-#tunfolder = getTUnfolder(bkg[""], mig[""], eff[""], data, regMode = ROOT.TUnfold.kRegModeNone)
 # no regularization
 #tau = printLcurve(tunfolder, "tunfold_lcurve.png")
 tunfolder.DoUnfold(alpha[""])

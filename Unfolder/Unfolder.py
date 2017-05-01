@@ -239,6 +239,7 @@ class Unfolder:
       self.R_unfsyst = {}
       for name in self.unf_systematics:
         self.unf_theta[name] = pm.Normal('tu_'+name, mu = 0, sd = 1) # nuisance parameter
+        #self.unf_theta[name] = pm.Uniform('tu_'+name, -5, 5) # nuisance parameter
         # get background constribution
         self.var_bkg_unfsyst[name] = theano.shared(value = self.asMat(self.bkg_unfsyst[name].val))
         self.var_response_unfsyst[name] = theano.shared(value = self.asMat(self.response_unfsyst[name].val))
