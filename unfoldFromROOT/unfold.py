@@ -36,28 +36,34 @@ plotH1D(recoWithFakes, "Reconstructed "+varname, "Events", "Reconstructed-level 
 plotH1D(recoWithoutFakes, "Reconstructed "+varname, "Events", "Reconstructed-level distribution without fakes", "recoWithoutFakes.%s" % extension)
 plotH1D(eff, "Particle-level "+varname, "Efficiency", "Efficiency of particle-level selection", "eff.%s" % extension)
 
+eff_noerr = H1D(eff)
+for k in range(0, len(eff_noerr.err)):
+  eff_noerr.err[k] = 0
+
+bkg_noerr = H1D(bkg)
+for k in range(0, len(bkg_noerr.err)):
+  bkg_noerr.err[k] = 0
+
 # generate fake data
 data = recoWithFakes
 
 # Try alternative
 # Create alternative method for unfolding
-f_truth, f_recoWithFakes, f_bkg, f_mig, f_eff, f_nrt = getHistograms("out_ttallhad_psrw_Syst.root", "nominal", "mttAsymm")
-f_data = f_recoWithFakes
-#tunfolder = getTUnfolder(f_bkg, f_mig, f_eff, f_data, regMode = ROOT.TUnfold.kRegModeDerivative)
-tunfolder = getTUnfolder(f_bkg, f_mig, f_eff, f_data, regMode = ROOT.TUnfold.kRegModeNone)
+#tunfolder = getTUnfolder(bkg, mig, eff, data, regMode = ROOT.TUnfold.kRegModeDerivative)
+tunfolder = getTUnfolder(bkg, mig, eff, data, regMode = ROOT.TUnfold.kRegModeNone, normMode = 0)
 # no regularization
 #printLcurve(tunfolder, "tunfold_lcurve.png")
 tunfolder.DoUnfold(0)
 tunfold_mig = H1D(tunfolder.GetOutput("tunfold_result"))
-tunfold_result = tunfold_mig/eff
+tunfold_result = tunfold_mig/eff_noerr
 
-comparePlot([f_data, f_data - f_bkg, truth, tunfold_result], ["Data", "Data - bkg", "Particle-level", "TUnfold"], luminosity*1e-3, True, "fb/GeV", "plotTUnfold.png")
+comparePlot([data, data - bkg, truth, tunfold_result], ["Data", "Data - bkg", "Particle-level", "TUnfold"], luminosity*1e-3, True, "fb/GeV", "plotTUnfold.png")
 
 # now use D'Agostini
 useDAgostini = False
 try:
   dagostini_mig = getDAgostini(bkg, mig, data, nIter = 1)
-  dagostini_result = dagostini_mig/eff
+  dagostini_result = dagostini_mig/eff_noerr
 
   comparePlot([data, data - bkg, truth, dagostini_result], ["Data", "Data - bkg", "Particle-level", "D'Agostini"], luminosity*1e-3, True, "fb/GeV", "plotDAgostini.png")
   useDAgostini = True

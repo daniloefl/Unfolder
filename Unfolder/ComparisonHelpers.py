@@ -49,7 +49,10 @@ comparePlot([f_data, f_data - f_bkg, truth, tunfold_result], ["Data", "Data - bk
 '''
 def getTUnfolder(bkg, mig, eff, data, regMode = ROOT.TUnfold.kRegModeDerivative, normMode = ROOT.TUnfold.kEConstraintArea):
   tunfolder = ROOT.TUnfoldDensity(mig.T().toROOT("tunfold_mig"), ROOT.TUnfold.kHistMapOutputVert, regMode, normMode, ROOT.TUnfoldDensity.kDensityModeeNone)
-  dataBkgSub = data - bkg
+  bkg_noerr = H1D(bkg)
+  for k in range(0, len(bkg.err)):
+    bkg_noerr.err[k] = 0
+  dataBkgSub = data - bkg_noerr
   tunfolder.SetInput(dataBkgSub.toROOT("data_minus_bkg"), 0)
   return tunfolder
 
@@ -191,9 +194,9 @@ def getBiasFromToys(unfoldFunction, alpha, N, bkg, mig, eff, truth):
   # systematic bias
   bias_syst = np.mean(unfoldFunction(alpha, mig.project('y') + bkg).val - truth.val)
   bias = np.mean(fitted, axis = 0)
-  bias_std = np.std(fitted, axis = 0)
+  bias_std = np.std(fitted, axis = 0, ddof = 1)
   bias_norm_mean = np.mean(bias_norm)
-  bias_norm_std = np.std(bias_norm)
+  bias_norm_std = np.std(bias_norm, ddof = 1)
   bias_binsum = np.mean(bias)
   bias_std_binsum = np.mean(bias_std)
   bias_chi2 = np.mean(np.power(bias/bias_std, 2))

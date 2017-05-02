@@ -283,9 +283,9 @@ class Unfolder:
       res = pm.find_MAP(disp = False)
       bias_syst = np.mean(res["Truth"] - truth.val)
     bias = np.mean(fitted, axis = 0)
-    bias_std = np.std(fitted, axis = 0)
+    bias_std = np.std(fitted, axis = 0, ddof = 1)
     bias_norm_mean = np.mean(bias_norm)
-    bias_norm_std = np.std(bias_norm)
+    bias_norm_std = np.std(bias_norm, ddof = 1)
     #print "getBiasFromMAP with alpha = ", self.var_alpha.get_value(), " N = ", N, ", mean, std = ", bias, bias_std
     bias_binsum = np.mean(bias)
     bias_std_binsum = np.mean(bias_std)
@@ -390,7 +390,7 @@ class Unfolder:
       self.hunf_mode = H1D(self.truth)
       for i in range(0, self.Nt):
         self.hunf.val[i] = np.mean(self.trace.Truth[:, i])
-        self.hunf.err[i] = np.std(self.trace.Truth[:, i])**2
+        self.hunf.err[i] = np.std(self.trace.Truth[:, i], ddof = 1)**2
         m = self.hunf.val[i]
         s = 3*np.sqrt(self.hunf.err[i])
         pdf = stats.gaussian_kde(self.trace.Truth[:, i])
@@ -401,12 +401,12 @@ class Unfolder:
 
       for k in range(0, len(self.systematics)):
         self.hnp.val[k] = np.mean(self.trace['t_'+self.systematics[k]])
-        self.hnp.err[k] = np.std(self.trace['t_'+self.systematics[k]])**2
+        self.hnp.err[k] = np.std(self.trace['t_'+self.systematics[k]], ddof = 1)**2
         self.hnp.x[k] = self.systematics[k]
         self.hnp.x_err[k] = 1
       for k in range(0, len(self.unf_systematics)):
         self.hnpu.val[k] = np.mean(self.trace['tu_'+self.unf_systematics[k]])
-        self.hnpu.err[k] = np.std(self.trace['tu_'+self.unf_systematics[k]])**2
+        self.hnpu.err[k] = np.std(self.trace['tu_'+self.unf_systematics[k]], ddof = 1)**2
         self.hnpu.x[k] = self.unf_systematics[k]
         self.hnpu.x_err[k] = 1
 

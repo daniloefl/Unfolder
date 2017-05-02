@@ -27,8 +27,10 @@ truth = {}
 recoWithFakes = {}
 recoWithoutFakes = {}
 bkg = {}
+bkg_noerr = {}
 mig = {}
 eff = {}
+eff_noerr = {}
 nrt = {}
 
 truth[""], recoWithFakes[""], bkg[""], mig[""], eff[""], nrt[""] = getHistograms("out_ttallhad_psrw_Syst.root", "nominal", "mttAsymm")
@@ -49,6 +51,14 @@ for i in recoWithFakes:
   plotH1D(recoWithoutFakes[i], "Reconstructed "+varname, "Events", "Reconstructed-level distribution without fakes", "recoWithoutFakes_%s.%s" % (i,extension))
   plotH1D(eff[i], "Particle-level "+varname, "Efficiency", "Efficiency of particle-level selection", "eff_%s.%s" % (i,extension))
 
+  bkg_noerr[i] = H1D(bkg[i])
+  for k in range(0, len(bkg_noerr[i].err)):
+    bkg_noerr[i].err[k] = 0
+  eff_noerr = H1D(eff_noerr[i].err)
+  for k in range(0, len(eff_noerr[i].err)):
+    eff_noerr[i].err[k] = 0
+  
+
 # generate perfect fake data
 data = recoWithFakes[""]
 
@@ -67,18 +77,24 @@ class TUnfoldForRegularizationTest:
     self.tunfolder_reg = getTUnfolder(f_bkg, f_mig, f_eff, f_data, regMode = regMode, normMode = normMode)
     self.f_eff = f_eff
     self.fb = fb
+    self.f_bkg_noerr = H1D(self.f_bkg)
+    for k in range(0, len(self.f_bkg_noerr.err)):
+      self.f_bkg_noerr.err[k] = 0
+    self.f_eff_noerr = H1D(self.f_eff)
+    for k in range(0, len(self.f_eff_noerr.err)):
+      self.f_eff_noerr.err[k] = 0
 
   def __call__(self, tau, data):
     #f_truth, f_recoWithFakes, f_bkg, f_mig, f_eff, f_nrt = getHistograms("out_ttallhad_psrw_Syst.root", "nominal", "mttAsymm")
     #tunfolder_reg = getTUnfolder(f_bkg, f_mig, data, regMode = ROOT.TUnfold.kRegModeDerivative)
-    dataMinusBkg = (data - self.f_bkg).toROOT("data_minus_bkg_tmp")
+    dataMinusBkg = (data - self.f_bkg_noerr).toROOT("data_minus_bkg_tmp")
     dataMinusBkg.SetDirectory(0)
     self.tunfolder_reg.SetInput(dataMinusBkg, self.fb)
     self.tunfolder_reg.DoUnfold(tau)
     tmp = self.tunfolder_reg.GetOutput("tunfold_result_tmp")
     tmp.SetDirectory(0)
     tunfold_mig = H1D(tmp)
-    tunfold_result = tunfold_mig/self.f_eff
+    tunfold_result = tunfold_mig/self.f_eff_noerr
     del tmp
     del dataMinusBkg
     return tunfold_result
@@ -108,14 +124,14 @@ pseudo_tunfolder = getTUnfolder(bkg[""], mig[""], eff[""], pseudo_data, regMode 
 #tau_pseudo = printLcurve(pseudo_tunfolder, "tunfold_lcurve_pseudo.png")
 pseudo_tunfolder.DoUnfold(alpha[""])
 pseudo_tunfold_mig = H1D(pseudo_tunfolder.GetOutput("tunfold_pseudo_result"))
-pseudo_tunfold_result = pseudo_tunfold_mig/eff['']
+pseudo_tunfold_result = pseudo_tunfold_mig/eff_noerr['']
 
 tunfolder = getTUnfolder(bkg[""], mig[""], eff[""], data, regMode = ROOT.TUnfold.kRegModeDerivative, normMode = normMode)
 # no regularization
 #tau = printLcurve(tunfolder, "tunfold_lcurve.png")
 tunfolder.DoUnfold(alpha[""])
 tunfold_mig = H1D(tunfolder.GetOutput("tunfold_result"))
-tunfold_result = tunfold_mig/eff['']
+tunfold_result = tunfold_mig/eff_noerr['']
 
 comparePlot([data, pseudo_data, truth[""],
              tunfold_result,
