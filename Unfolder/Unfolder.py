@@ -335,7 +335,7 @@ class Unfolder:
     plt_bias_syst.err = np.zeros(len(rangeAlpha))
     plt_bias_syst.x = rangeAlpha
     plt_bias_syst.x_err = np.zeros(len(rangeAlpha))
-    plotH1DLines({plt_bias: "mean per bin(mean bias) - Y errors are sqrt(var)", plt_bias_err: "MC error in mean", plt_bias_syst: "Only syst. shift"}, "alpha", "mean over bins(mean over toys(bias))", "", fname)
+    plotH1DLines({plt_bias: "mean per bin(mean bias) - Y errors are sqrt(var)", plt_bias_syst: "Only syst. shift"}, "alpha", "mean over bins(mean over toys(bias))", "", fname)
     plt_bias_norm = H1D(bias)
     plt_bias_norm.val = bias_norm
     plt_bias_norm.err = np.power(bias_norm_std, 2)
