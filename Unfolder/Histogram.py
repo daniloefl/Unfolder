@@ -30,7 +30,7 @@ class H1D:
     else:
       self.val   = copy.deepcopy(other)
       self.err   = copy.deepcopy(np.sqrt(other))
-      self.x     = range(0, len(other))
+      self.x     = np.arange(0, float(len(other)))
       self.x_err = 0.5*np.ones(len(self.x))
       self.shape = [len(other)]
 
@@ -259,9 +259,9 @@ class H2D:
     else:
       self.val   = copy.deepcopy(other)
       self.err   = copy.deepcopy(np.sqrt(other))
-      self.x     = range(0, other.shape[0])
+      self.x     = np.arange(0, float(other.shape[0]))
       self.x_err = 0.5*np.ones(len(self.x))
-      self.y     = range(0, other.shape[1])
+      self.y     = np.arange(0, float(other.shape[1]))
       self.y_err = 0.5*np.ones(len(self.y))
       self.shape = copy.deepcopy(self.val.shape)
 
@@ -271,20 +271,25 @@ class H2D:
   def fill(self, x, y, w = 1):
     i = len(self.x)-1
     j = len(self.y)-1
-    found = False
     for k in range(0, len(self.x)):
       xe = self.x[k] + self.x_err[k]
-      for l in range(0, len(self.y)):
-        ye = self.y[l] + self.y_err[l]
-        if xe > x and ye > y:
-          i = k
-          j = l
-          found = True
-          break
-      if found: break
+      if xe > x:
+        i = k
+        for l in range(0, len(self.y)):
+          ye = self.y[l] + self.y_err[l]
+          if ye > y:
+            i = k
+            j = l
+            self.val[i, j] += w
+            self.err[i, j] += w*w
+            return [i, j]
+        self.val[i, j] += w
+        self.err[i, j] += w*w
+        return [i, j]
     self.val[i, j] += w
     self.err[i, j] += w*w
     return [i, j]
+    
 
   '''
   Load a 2D histogram from ROOT.

@@ -20,10 +20,10 @@ def generateHistograms(fname = "out_ttallhad_psrw_Syst.root"):
   f.mkdir("PowhegHerwigppEvtGen")
 
   # number of truth bins
-  Nt = 15
+  Nt = 10
   # number of reco bins
-  Nr = 30
-  Nr2 = 15
+  Nr = 20
+  Nr2 = 10
 
   e = {}
   b = {}
@@ -65,23 +65,25 @@ def generateHistograms(fname = "out_ttallhad_psrw_Syst.root"):
   bkg2 = {}
   for direc in ["nominal", "aMcAtNloHerwigppEvtGen", "PowhegHerwigppEvtGen"]:
     truth[direc] = H1D(np.zeros(Nt))
-    truth[direc].x_err += 0.5
+    truth[direc].x += 0.5
     mig[direc] = H2D(np.zeros((Nt, Nr)))
-    mig[direc].x_err += 0.5
+    mig[direc].x += 0.5
+    mig[direc].y += 0.5
     reco[direc] = H1D(np.zeros(Nr))
-    reco[direc].x_err += 0.5
+    reco[direc].x += 0.5
     bkg[direc] = H1D(10*10.0/L*np.ones(Nr))
-    bkg[direc].x_err += 0.5
+    bkg[direc].x += 0.5
     for i in range(0, Nr): bkg[direc].err[i] = 0
 
     truth2[direc] = H1D(np.zeros(Nt))
-    truth2[direc].x_err += 0.5
+    truth2[direc].x += 0.5
     mig2[direc] = H2D(np.zeros((Nt, Nr2)))
-    mig2[direc].x_err += 0.5
+    mig2[direc].x += 0.5
+    mig2[direc].y += 0.5
     reco2[direc] = H1D(np.zeros(Nr2))
-    reco2[direc].x_err += 0.5
+    reco2[direc].x += 0.5
     bkg2[direc] = H1D(10*10.0/L*np.ones(Nr2))
-    bkg2[direc].x_err += 0.5
+    bkg2[direc].x += 0.5
     for i in range(0, Nr2): bkg2[direc].err[i] = 0
     for k in range(0, Nev):
       O = 0
@@ -96,10 +98,10 @@ def generateHistograms(fname = "out_ttallhad_psrw_Syst.root"):
       bt2 = truth2[direc].fill(O, 1.0/L)
       if np.random.uniform() > e[direc][bt]:
         continue
-      br = reco[direc].fill(Or, 1.0/L)
-      br2 = reco2[direc].fill(Or, 1.0/L)
       mig[direc].fill(O, Or, 1.0/L)
       mig2[direc].fill(O, Or, 1.0/L)
+      br = reco[direc].fill(Or, 1.0/L)
+      br2 = reco2[direc].fill(Or, 1.0/L)
     reco[direc] = reco[direc] + bkg[direc]
     reco2[direc] = reco2[direc] + bkg2[direc]
     f.cd(direc)
