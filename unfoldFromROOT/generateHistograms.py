@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 
 import copy
 import ROOT
@@ -11,9 +12,9 @@ def generateHistograms(fname = "out_ttallhad_psrw_Syst.root", variable = "mttCoa
   Nev = 100000
   L = 1.0
   f = ROOT.TFile.Open(fname, "recreate")
-  f.Mkdir("nominal")
-  f.Mkdir("aMcAtNloHerwigppEvtGen")
-  f.Mkdir("PowhegHerwigppEvtGen")
+  f.mkdir("nominal")
+  f.mkdir("aMcAtNloHerwigppEvtGen")
+  f.mkdir("PowhegHerwigppEvtGen")
 
   # number of truth bins
   Nt = 5
@@ -57,14 +58,14 @@ def generateHistograms(fname = "out_ttallhad_psrw_Syst.root", variable = "mttCoa
   reco = {}
   mig = {}
   bkg = {}
-  for direc in ["nominal", "aMcAtNloHerwigppEvtGen", "PowhegHerwigppEvtGen"]
+  for direc in ["nominal", "aMcAtNloHerwigppEvtGen", "PowhegHerwigppEvtGen"]:
     truth[direc] = H1D(np.zeros(Nt))
     mig[direc] = H2D(np.zeros((Nr, Nt)))
     reco[direc] = H1D(np.zeros(Nr))
     bkg[direc] = H1D(np.zeros(Nr))
     for k in range(0, Nev):
       O = 0
-      if np.random.uniform() < 0.2:
+      if np.random.uniform() > 0.2:
         O = np.random.exponential(p["l"][direc])
       else:
         O = np.random.normal(p["m"][direc], p["s"][direc])
@@ -73,15 +74,14 @@ def generateHistograms(fname = "out_ttallhad_psrw_Syst.root", variable = "mttCoa
 
       bt = truth[direc].fill(O, 1.0/L)
       if np.random.uniform() > e[direc][bt]:
-        rnp[direc].fill(Or, 1.0/L)
         continue
       br = reco[direc].fill(Or, 1.0/L)
       mig[direc].fill(Or, O, 1.0/L)
-    f.cd()
-    mig[direc].T().toROOT("%s/%s" % (direc, "unfoldMigRecoPart_%s_cat2b2HTTmasscut" % variable))
-    truth[direc].toROOT("%s/%s" % (direc, "unfoldPart_%s_cat2b2HTTmasscut" % variable))
-    reco[direc].toROOT("%s/%s" % (direc, "unfoldReco_%s_cat2b2HTTmasscut" % variable))
-    bkg[direc].toROOT("%s/%s" % (direc, "unfoldRecoNotPart_%s_cat2b2HTTmasscut" % variable))
+    f.cd(direc)
+    mig[direc].T().toROOT("%s" % ("unfoldMigRecoPart_%s_cat2b2HTTmasscut" % variable)).Write()
+    truth[direc].toROOT("%s" % ("unfoldPart_%s_cat2b2HTTmasscut" % variable)).Write()
+    reco[direc].toROOT("%s" % ("unfoldReco_%s_cat2b2HTTmasscut" % variable)).Write()
+    bkg[direc].toROOT("%s" % ("unfoldRecoNotPart_%s_cat2b2HTTmasscut" % variable)).Write()
     f.Write()
 
 if __name__ == "__main__":

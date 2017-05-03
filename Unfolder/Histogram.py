@@ -31,7 +31,7 @@ class H1D:
       self.val   = copy.deepcopy(other)
       self.err   = copy.deepcopy(np.sqrt(other))
       self.x     = range(0, len(other))
-      self.x_err = [0.5]*len(self.x)
+      self.x_err = 0.5*np.ones(len(self.x))
       self.shape = [len(other)]
 
   '''
@@ -260,9 +260,9 @@ class H2D:
       self.val   = copy.deepcopy(other)
       self.err   = copy.deepcopy(np.sqrt(other))
       self.x     = range(0, other.shape[0])
-      self.x_err = [0.5]*len(self.x)
+      self.x_err = 0.5*np.ones(len(self.x))
       self.y     = range(0, other.shape[1])
-      self.y_err = [0.5]*len(self.y)
+      self.y_err = 0.5*np.ones(len(self.y))
       self.shape = copy.deepcopy(self.val.shape)
 
   '''
@@ -271,6 +271,7 @@ class H2D:
   def fill(self, x, y, w = 1):
     i = 0
     j = 0
+    found = False
     for k in range(0, len(self.x)):
       xe = self.x[k] + self.x_err[k]
       for l in range(0, len(self.y)):
@@ -278,7 +279,9 @@ class H2D:
         if xe > x and ye > y:
           i = k
           j = l
+          found = True
           break
+      if found: break
     self.val[i, j] += w
     self.err[i, j] += w*w
     return [i, j]
