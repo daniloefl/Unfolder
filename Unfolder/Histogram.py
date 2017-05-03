@@ -38,7 +38,7 @@ class H1D:
   Fil a histogram bin.
   '''
   def fill(self, x, w):
-    i = 0
+    i = len(self.val)-1
     for k in range(0, len(self.x)):
       xe = self.x[k] + self.x_err[k]
       if xe > x:
@@ -269,8 +269,8 @@ class H2D:
   Fil a histogram bin.
   '''
   def fill(self, x, y, w = 1):
-    i = 0
-    j = 0
+    i = len(self.x)-1
+    j = len(self.y)-1
     found = False
     for k in range(0, len(self.x)):
       xe = self.x[k] + self.x_err[k]
@@ -474,6 +474,7 @@ def plotH2DWithText(h, x, xlabel = "x", ylabel = "y", title = "Migration matrix 
   plt.title(title)
   plt.ylabel(ylabel)
   plt.xlabel(xlabel)
+  plt.tight_layout()
   plt.savefig(fname)
   plt.close()
 
@@ -484,12 +485,18 @@ def plotH1D(h, xlabel = "x", ylabel = "Events", title = "", fname = "plotH1D.png
     h = {h: xlabel}
   sty = ['ro', 'bv', 'g^', 'm*']
   i = 0
+  ymin = 0
+  ymax = 0.1
   for k in h:
     plt.errorbar(k.x, k.val, k.err**0.5, k.x_err, fmt = sty[i], markersize=10, label = h[k])
+    if np.amax(k.val) > ymax: ymax = np.amax(k.val)
     i += 1
   plt.ylabel(ylabel)
   plt.xlabel(xlabel)
-  plt.legend(loc = "upper left")
+  plt.ylim([ymin, 1.4*ymax])
+  plt.legend(loc = "upper right")
+  sns.despine()
+  plt.tight_layout()
   plt.savefig(fname)
   plt.close()
 
@@ -500,12 +507,18 @@ def plotH1DLines(h, xlabel = "x", ylabel = "Events", title = "", fname = "plotH1
     h = {h: xlabel}
   sty = ['ro-', 'bv-', 'g^-', 'm*-']
   i = 0
+  ymin = 0
+  ymax = 1
   for k in h:
     plt.errorbar(k.x, k.val, k.err**0.5, k.x_err, fmt = sty[i], markersize=10, label = h[k])
+    if np.amax(k.val) > ymax: ymax = np.amax(k.val)
     i += 1
   plt.ylabel(ylabel)
   plt.xlabel(xlabel)
-  plt.legend(loc = "upper left")
+  plt.ylim([ymin, 1.4*ymax])
+  plt.legend(loc = "upper right")
+  sns.despine()
+  plt.tight_layout()
   plt.savefig(fname)
   plt.close()
 
@@ -516,6 +529,7 @@ def plotH1DWithText(h, ylabel = "Events", title = "", fname = "plotH1DWithText.p
   plt.errorbar(range(0, len(h.val)), h.val, h.err**0.5, [0.5]*len(h.val), fmt = 'r+', markersize=10)
   plt.ylabel(ylabel)
   plt.xlabel("")
+  sns.despine()
   plt.tight_layout()
   plt.savefig(fname)
   plt.close()

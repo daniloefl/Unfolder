@@ -73,7 +73,10 @@ def comparePlot(listHist, listLegend, f = 1.0, normaliseByBinWidth = True, units
     plt.errorbar(item.x, item.val, item.err**0.5, item.x_err, fmt = sty[c], linewidth=2, label = listLegend[c], markersize=siz[c])
     c += 1
   plt.legend()
-  plt.ylabel("Differential cross section ["+units+"]")
+  if units != "":
+    plt.ylabel("Differential cross section ["+units+"]")
+  else:
+    plt.ylabel("Events")
   plt.xlabel("Observable")
   plt.tight_layout()
   plt.savefig(fname)
