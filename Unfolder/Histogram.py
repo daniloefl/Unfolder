@@ -35,6 +35,20 @@ class H1D:
       self.shape = [len(other)]
 
   '''
+  Fil a histogram bin.
+  '''
+  def fill(self, x, w):
+    i = 0
+    for k in range(0, len(self.x)):
+      xe = self.x[k] + self.x_err[k]
+      if xe > x:
+        i = k
+        break
+    self.val[i] += w
+    self.err[i] += w*w
+    return i
+
+  '''
   Load a 1D histogram from ROOT.
   '''
   def loadFromROOT(self, rootObj):
@@ -250,6 +264,24 @@ class H2D:
       self.y     = range(0, other.shape[1])
       self.y_err = [0.5]*len(self.y)
       self.shape = copy.deepcopy(self.val.shape)
+
+  '''
+  Fil a histogram bin.
+  '''
+  def fill(self, x, y, w = 1):
+    i = 0
+    j = 0
+    for k in range(0, len(self.x)):
+      xe = self.x[k] + self.x_err[k]
+      for l in range(0, len(self.y)):
+        ye = self.y[l] + self.y_err[l]
+        if xe > x and ye > y:
+          i = k
+          j = l
+          break
+    self.val[i, j] += w
+    self.err[i, j] += w*w
+    return [i, j]
 
   '''
   Load a 2D histogram from ROOT.
