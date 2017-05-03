@@ -8,64 +8,84 @@ import numpy as np
 '''
 Generate unfolding factors.
 '''
-def generateHistograms(fname = "out_ttallhad_psrw_Syst.root", variable = "mttCoarse"):
-  Nev = 100000
-  L = 1.0
+def generateHistograms(fname = "out_ttallhad_psrw_Syst.root"):
+  v1 = "mttAsymm"
+  v2 = "mttCoarse"
+
+  Nev = 500000
+  L = 36.1*10.0
   f = ROOT.TFile.Open(fname, "recreate")
   f.mkdir("nominal")
   f.mkdir("aMcAtNloHerwigppEvtGen")
   f.mkdir("PowhegHerwigppEvtGen")
 
   # number of truth bins
-  Nt = 5
+  Nt = 15
   # number of reco bins
-  Nr = 10
+  Nr = 30
+  Nr2 = 15
 
   e = {}
   b = {}
   a = {}
   b = {}
-  e["nominal"] = [0.05 + x*0.01 for x in range(0, Nt)]
-  e["aMcAtNloHerwigppEvtGen"] = [0.07 - 0.01*x for x in range(0, Nt)]
-  e["PowhegHerwigppEvtGen"] = [0.06 + 0.005*x for x in range(0, Nt)]
-
-  b["nominal"] = [0.10 - 0.02*x**2 for x in range(0, Nr)]
-  b["aMcAtNloHerwigppEvtGen"] = [0.12 - 0.02*x**2 for x in range(0, Nr)]
-  b["PowhegHerwigppEvtGen"] = [0.15 - 0.01*x**2 for x in range(0, Nr)]
+  e["nominal"] = [0.20 for x in range(0, Nt)]
+  e["aMcAtNloHerwigppEvtGen"] = [0.21 for x in range(0, Nt)]
+  e["PowhegHerwigppEvtGen"] = [0.22 for x in range(0, Nt)]
 
   a["nominal"] = 0.5
-  a["aMcAtNloHerwigppEvtGen"] = 0.3
-  a["PowhegHerwigppEvtGen"] = 0.7
-  b["nominal"] = 0.1
-  b["aMcAtNloHerwigppEvtGen"] = 0.05
-  b["PowhegHerwigppEvtGen"] = 0.08
+  a["aMcAtNloHerwigppEvtGen"] = 0.55
+  a["PowhegHerwigppEvtGen"] = 0.52
+  b["nominal"] = 0.3
+  b["aMcAtNloHerwigppEvtGen"] = 0.31
+  b["PowhegHerwigppEvtGen"] = 0.29
 
   p = {}
   p["l"] = {}
   p["m"] = {}
   p["s"] = {}
-  p["l"]["nominal"] = 1/0.8
-  p["l"]["aMcAtNloHerwigppEvtGen"] = 1/0.5
-  p["l"]["PowhegHerwigppEvtGen"] = 1/0.6
+  p["l"]["nominal"] = 1/0.27
+  p["l"]["aMcAtNloHerwigppEvtGen"] = 1/0.25
+  p["l"]["PowhegHerwigppEvtGen"] = 1/0.26
   p["m"]["nominal"] = 1.0
-  p["m"]["aMcAtNloHerwigppEvtGen"] = 1.1
+  p["m"]["aMcAtNloHerwigppEvtGen"] = 1.02
   p["m"]["PowhegHerwigppEvtGen"] = 1.05
-  p["s"]["nominal"] = 0.2
-  p["s"]["aMcAtNloHerwigppEvtGen"] = 0.3
-  p["s"]["PowhegHerwigppEvtGen"] = 0.2
+  p["s"]["nominal"] = 1.0
+  p["s"]["aMcAtNloHerwigppEvtGen"] = 1.05
+  p["s"]["PowhegHerwigppEvtGen"] = 1.02
 
   truth = {}
   reco = {}
   mig = {}
   bkg = {}
+
+  truth2 = {}
+  reco2 = {}
+  mig2 = {}
+  bkg2 = {}
   for direc in ["nominal", "aMcAtNloHerwigppEvtGen", "PowhegHerwigppEvtGen"]:
     truth[direc] = H1D(np.zeros(Nt))
-    mig[direc] = H2D(np.zeros((Nr, Nt)))
+    truth[direc].x_err += 0.5
+    mig[direc] = H2D(np.zeros((Nt, Nr)))
+    mig[direc].x_err += 0.5
     reco[direc] = H1D(np.zeros(Nr))
-    bkg[direc] = H1D(np.zeros(Nr))
+    reco[direc].x_err += 0.5
+    bkg[direc] = H1D(10*10.0/L*np.ones(Nr))
+    bkg[direc].x_err += 0.5
+    for i in range(0, Nr): bkg[direc].err[i] = 0
+
+    truth2[direc] = H1D(np.zeros(Nt))
+    truth2[direc].x_err += 0.5
+    mig2[direc] = H2D(np.zeros((Nt, Nr2)))
+    mig2[direc].x_err += 0.5
+    reco2[direc] = H1D(np.zeros(Nr2))
+    reco2[direc].x_err += 0.5
+    bkg2[direc] = H1D(10*10.0/L*np.ones(Nr2))
+    bkg2[direc].x_err += 0.5
+    for i in range(0, Nr2): bkg2[direc].err[i] = 0
     for k in range(0, Nev):
       O = 0
-      if np.random.uniform() > 0.2:
+      if np.random.uniform() > 0.01:
         O = np.random.exponential(p["l"][direc])
       else:
         O = np.random.normal(p["m"][direc], p["s"][direc])
@@ -73,15 +93,24 @@ def generateHistograms(fname = "out_ttallhad_psrw_Syst.root", variable = "mttCoa
       Or = O + np.random.normal(0, O*(a[direc]/np.sqrt(O) + b[direc]))
 
       bt = truth[direc].fill(O, 1.0/L)
+      bt2 = truth2[direc].fill(O, 1.0/L)
       if np.random.uniform() > e[direc][bt]:
         continue
       br = reco[direc].fill(Or, 1.0/L)
-      mig[direc].fill(Or, O, 1.0/L)
+      br2 = reco2[direc].fill(Or, 1.0/L)
+      mig[direc].fill(O, Or, 1.0/L)
+      mig2[direc].fill(O, Or, 1.0/L)
+    reco[direc] = reco[direc] + bkg[direc]
+    reco2[direc] = reco2[direc] + bkg2[direc]
     f.cd(direc)
-    mig[direc].T().toROOT("%s" % ("unfoldMigRecoPart_%s_cat2b2HTTmasscut" % variable)).Write()
-    truth[direc].toROOT("%s" % ("unfoldPart_%s_cat2b2HTTmasscut" % variable)).Write()
-    reco[direc].toROOT("%s" % ("unfoldReco_%s_cat2b2HTTmasscut" % variable)).Write()
-    bkg[direc].toROOT("%s" % ("unfoldRecoNotPart_%s_cat2b2HTTmasscut" % variable)).Write()
+    mig[direc].T().toROOT("%s" % ("unfoldMigRecoPart_%s_cat2b2HTTmasscut" % v1)).Write()
+    truth[direc].toROOT("%s" % ("unfoldPart_%s" % v1)).Write()
+    reco[direc].toROOT("%s" % ("unfoldReco_%s_cat2b2HTTmasscut" % v1)).Write()
+    bkg[direc].toROOT("%s" % ("unfoldRecoNotPart_%s_cat2b2HTTmasscut" % v1)).Write()
+    mig2[direc].T().toROOT("%s" % ("unfoldMigRecoPart_%s_cat2b2HTTmasscut" % v2)).Write()
+    truth2[direc].toROOT("%s" % ("unfoldPart_%s" % v2)).Write()
+    reco2[direc].toROOT("%s" % ("unfoldReco_%s_cat2b2HTTmasscut" % v2)).Write()
+    bkg2[direc].toROOT("%s" % ("unfoldRecoNotPart_%s_cat2b2HTTmasscut" % v2)).Write()
     f.Write()
 
 if __name__ == "__main__":
