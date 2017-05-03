@@ -48,9 +48,9 @@ for i in recoWithFakes:
   plotH1D(eff[i], "Particle-level "+varname, "Efficiency", "Efficiency of particle-level selection", "eff_%s.%s" % (i,extension))
 
 # generate perfect fake data
-#data = recoWithFakes[""]
+data = recoWithFakes[""]
 #data = recoWithFakes["me"]
-data = recoWithFakes["ps"]
+#data = recoWithFakes["ps"]
 
 # Create unfolding class
 m = Unfolder(bkg[""], mig[""], eff[""], truth[""])
