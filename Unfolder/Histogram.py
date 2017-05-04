@@ -495,7 +495,7 @@ def plotH1D(h, xlabel = "x", ylabel = "Events", title = "", fname = "plotH1D.png
   for k in h:
     plt.errorbar(k.x, k.val, k.err**0.5, k.x_err, fmt = sty[i], markersize=10, label = h[k])
     if np.amax(k.val + k.err*0.5) > ymax: ymax = np.amax(k.val + k.err*0.5)
-    if np.amin(k.val - k.err*0.5) > ymin: ymin = np.amin(k.val - k.err*0.5)
+    if np.amin(k.val - k.err*0.5) < ymin: ymin = np.amin(k.val - k.err*0.5)
     i += 1
   plt.ylabel(ylabel)
   plt.xlabel(xlabel)
@@ -518,7 +518,7 @@ def plotH1DLines(h, xlabel = "x", ylabel = "Events", title = "", fname = "plotH1
   for k in h:
     plt.errorbar(k.x, k.val, k.err**0.5, k.x_err, fmt = sty[i], markersize=10, label = h[k])
     if np.amax(k.val + k.err*0.5) > ymax: ymax = np.amax(k.val + k.err*0.5)
-    if np.amin(k.val - k.err*0.5) > ymin: ymin = np.amin(k.val - k.err*0.5)
+    if np.amin(k.val - k.err*0.5) < ymin: ymin = np.amin(k.val - k.err*0.5)
     i += 1
   plt.ylabel(ylabel)
   plt.xlabel(xlabel)
