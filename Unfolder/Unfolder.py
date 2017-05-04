@@ -209,7 +209,7 @@ class Unfolder:
       elif self.prior == "first derivative":
         self.T = pm.DensityDist('Truth', logp = lambda val: -self.var_alpha*theano.tensor.abs_(theano.tensor.extra_ops.diff(theano.tensor.extra_ops.diff((val - self.fb*self.priorAttributes['bias'])/(self.truth.x_err*2))/np.diff(self.truth.x))/(2*theano.tensor.mean(theano.tensor.extra_ops.diff(val/(self.truth.x_err*2))/np.diff(self.truth.x)))).sum(), shape = (self.Nt), testval = self.truth.val)
       else: # if none of the names above matched, assume it is uniform
-        self.T = pm.Uniform('Truth', 0.0, 10*max(self.truth.val), shape = (self.Nt))
+        self.T = pm.Uniform('Truth', 0.0, 2*max(self.truth.val), shape = (self.Nt))
 
       self.var_bkg = theano.shared(value = self.asMat(self.bkg.val))
       #self.var_bkg.reshape((self.Nr, 1))
@@ -405,7 +405,7 @@ class Unfolder:
         self.hunf_mode.err[i] = self.hunf.err[i]
 
       self.hnp.x = [""]*len(self.systematics)
-      self.hnpu.x = [""]*len(self.systematics)
+      self.hnpu.x = [""]*len(self.unf_systematics)
       for k in range(0, len(self.systematics)):
         self.hnp.val[k] = np.mean(self.trace['t_'+self.systematics[k]])
         self.hnp.err[k] = np.std(self.trace['t_'+self.systematics[k]], ddof = 1)**2
