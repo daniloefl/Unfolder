@@ -20,10 +20,10 @@ def generateHistograms(fname = "out_ttallhad_psrw_Syst.root"):
   f.mkdir("PowhegHerwigppEvtGen")
 
   # number of truth bins
-  Nt = 5
+  Nt = 10
   # number of reco bins
-  Nr = 10
-  Nr2 = 5
+  Nr = 20
+  Nr2 = 10
 
   e = {}
   b = {}
@@ -33,9 +33,9 @@ def generateHistograms(fname = "out_ttallhad_psrw_Syst.root"):
   e["aMcAtNloHerwigppEvtGen"] = [0.21 for x in range(0, Nt)]
   e["PowhegHerwigppEvtGen"] = [0.22 for x in range(0, Nt)]
 
-  a["nominal"] = 0.1
-  a["aMcAtNloHerwigppEvtGen"] = 0.15
-  a["PowhegHerwigppEvtGen"] = 0.12
+  a["nominal"] = 0.20
+  a["aMcAtNloHerwigppEvtGen"] = 0.25
+  a["PowhegHerwigppEvtGen"] = 0.22
   b["nominal"] = 0.01
   b["aMcAtNloHerwigppEvtGen"] = 0.011
   b["PowhegHerwigppEvtGen"] = 0.009
@@ -47,9 +47,9 @@ def generateHistograms(fname = "out_ttallhad_psrw_Syst.root"):
   p["l"]["nominal"] = 1/0.5
   p["l"]["aMcAtNloHerwigppEvtGen"] = 1/0.51
   p["l"]["PowhegHerwigppEvtGen"] = 1/0.52
-  p["m"]["nominal"] = 1.0
-  p["m"]["aMcAtNloHerwigppEvtGen"] = 1.02
-  p["m"]["PowhegHerwigppEvtGen"] = 1.05
+  p["m"]["nominal"] = 4.0
+  p["m"]["aMcAtNloHerwigppEvtGen"] = 4.02
+  p["m"]["PowhegHerwigppEvtGen"] = 4.05
   p["s"]["nominal"] = 1.0
   p["s"]["aMcAtNloHerwigppEvtGen"] = 1.05
   p["s"]["PowhegHerwigppEvtGen"] = 1.02
@@ -87,11 +87,11 @@ def generateHistograms(fname = "out_ttallhad_psrw_Syst.root"):
     for i in range(0, Nr2): bkg2[direc].err[i] = 0
     for k in range(0, Nev):
       O = 0
-      if np.random.uniform() > 0.05:
+      if np.random.uniform() > 0.20:
         O = np.random.exponential(p["l"][direc])
       else:
         O = np.random.normal(p["m"][direc], p["s"][direc])
-      if O > Nt: continue
+      #if O > Nt: continue
       # migration model
       Or = O + np.random.normal(0, O*(a[direc]/np.sqrt(O) + b[direc]))
 
