@@ -322,26 +322,31 @@ class Unfolder:
     fig = plt.figure(figsize=(10, 10))
     plt_bias = H1D(bias)
     plt_bias.val = bias
-    plt_bias.err = np.power(bias_std, 2)
+    plt_bias.err = np.zeros(len(rangeAlpha))
     plt_bias.x = rangeAlpha
     plt_bias.x_err = np.zeros(len(rangeAlpha))
-    plt_bias_err = H1D(bias)
-    plt_bias_err.val = bias
-    plt_bias_err.err = bias_std/np.sqrt(float(N))
-    plt_bias_err.x = rangeAlpha
-    plt_bias_err.x_err = np.zeros(len(rangeAlpha))
+    plt_bias_e = H1D(bias)
+    plt_bias_e.val = bias_std
+    plt_bias_e.err = np.zeros(len(rangeAlpha))
+    plt_bias_e.x = rangeAlpha
+    plt_bias_e.x_err = np.zeros(len(rangeAlpha))
     plt_bias_syst = H1D(bias)
     plt_bias_syst.val = bias_syst
     plt_bias_syst.err = np.zeros(len(rangeAlpha))
     plt_bias_syst.x = rangeAlpha
     plt_bias_syst.x_err = np.zeros(len(rangeAlpha))
-    plotH1DLines({plt_bias: "mean per bin(mean bias) - Y errors are sqrt(var)", plt_bias_syst: "Only syst. shift"}, "alpha", "mean over bins(mean over toys(bias))", "", fname)
+    plotH1DLines({plt_bias: "E_{bins}[E_{toys}[bias]]", plt_bias_e: "E_{bins}[sqrt(Var_{toys}[bias])]", plt_bias_syst: "Only syst. shift"}, "alpha", "Bias", "", fname)
     plt_bias_norm = H1D(bias)
     plt_bias_norm.val = bias_norm
-    plt_bias_norm.err = np.power(bias_norm_std, 2)
+    plt_bias_norm.err = np.zeros(len(rangeAlpha))
     plt_bias_norm.x = rangeAlpha
     plt_bias_norm.x_err = np.zeros(len(rangeAlpha))
-    plotH1DLines({plt_bias_norm: "mean normalisation bias"}, "alpha", "mean over toys(norm. bias)", "Y errors are the sqrt(var)", fname_norm)
+    plt_bias_norm_e = H1D(bias)
+    plt_bias_norm_e.val = bias_norm_std
+    plt_bias_norm_e.err = np.zeros(len(rangeAlpha))
+    plt_bias_norm_e.x = rangeAlpha
+    plt_bias_norm_e.x_err = np.zeros(len(rangeAlpha))
+    plotH1DLines({plt_bias_norm: "E_{toys}[norm. bias]", plt_bias_norm_e: "sqrt(Var_{toys}[norm. bias])"}, "alpha", "Normalisation bias", "", fname_norm)
     plt_bias_chi2 = H1D(bias_chi2)
     plt_bias_chi2.val = bias_chi2
     plt_bias_chi2.err = np.ones(len(rangeAlpha))*np.sqrt(float(len(self.truth.val))/float(N)) # error in chi^2 considering errors in the mean of std/sqrt(N)
@@ -350,7 +355,7 @@ class Unfolder:
     plt_cte = H1D(plt_bias_chi2)
     plt_cte.val = 0.5*np.ones(len(rangeAlpha))
     plt_cte.err = np.zeros(len(rangeAlpha))
-    plotH1DLines({plt_bias_chi2: "Mean over bins(Mean(bias)^2/Var(bias))", plt_cte: "0.5"}, "alpha", "chi^2/# bins", "", fname_chi2)
+    plotH1DLines({plt_bias_chi2: "E_{bins}[E_{toys}[bias]^2/Var_{toys}[bias]]", plt_cte: "0.5"}, "alpha", "Average mean^2/variance of bias over bins", "", fname_chi2)
     self.setAlpha(bkp_alpha)
     return [bestAlpha, bestChi2, bias[bestI], bias_std[bestI], bias_norm[bestI], bias_norm_std[bestI]]
     
