@@ -26,13 +26,20 @@ pip install seaborn
 pip install pymc3
 ```
 
-After this, running the following should run a test unfolding:
+After this, running the following should run a test unfolding (it generates
+the test model and saves it in a ROOT file, therefore one should have PyROOT installed for the test):
 
 ```
-test/test.py
+./unfoldFromROOT/generateHistograms.py
+./unfoldFromROOT/unfold_simple.py
 ```
 
-It might be necessary to add the root directory in the ```PYTHONPATH```.
+It might be necessary to add the Unfolder main directory in the ```PYTHONPATH```.
+One can also do a test on the statistical and systematic bias, by running:
+
+```
+./unfoldFromROOT/unfoldUnfoldingSyst_simple.py
+```
 
 # Usage
 
@@ -47,9 +54,9 @@ needs to know the correlation between the truth events and the one that pass sim
 truth and reco to estimate the truth histogram from the efficiency and the migration matrix).
 
 ```
-#from Unfolder import Unfolder
+from Unfolder import Unfolder
 model = Unfolder.Unfolder(bkg, mig, eff, truth)  # Call the constructor to initialise the model parameters
-model.setUniformPrior()                          # Using a uniform prior is the default
+#model.setUniformPrior()                         # Using a uniform prior is the default
 #model.setGaussianPrior()                        # For a Gaussian prior with means at the truth bins
                                                  # and width in each bin given by sqrt(truth)
 #model.setGaussianPrior(mean, sd)                # If vectors (with the size of the truth distribution number of bins)
@@ -93,8 +100,161 @@ The software also comes with two histogram classes: H1D and H2D, as well as plot
 plotH2D.
 Internally, all information is stored using those classes to guarantee that error propagation is done correctly.
 You can also send the inputs to the software using those classes. They have the advantage to also be able to read
-a ROOT TH1 or TH2 histogram. An example on how to do the analysis from a ROOT file is shown in
-unfoldFromROOT/unfold.py .
+a ROOT TH1 or TH2 histogram.
 
+# Basic functionality
 
+   * `model = Unfolder(bkg, mig, eff, truth)` creates an instance of the Unfolder class.
+
+   * `model.setGaussianPrior(widths, means)` forces the usage of a Gaussian bin-by-bin uncorrelated Gaussian prior
+with the means given in the `means` array and standard deviations given in the `widths` array. Both arrays
+should have the same size as the number of truth bins.
+
+   * `model.setEntropyPrior()` forces the usage of an entropy-based prior.
+
+   * `model.setCurvaturePrior(fb, means)` forces the usage of a curvature-based prior, with a bias distribution given
+by `fb * means`. If `means` is set to `None`, the truth distribution is used. If `fb` is set to zero, this is equivalent to the
+uniform prior.
+
+   * `model.setFirstDerivativePrior(fb, means)` forces the usage of a first-derivative-based prior, with the bias distribution
+given by `fb * means`. If `means` is set to `None`, the truth distribution is used. If `fb` is set to zero, this is equivalent to
+tje uniform prior.
+
+   * `model.setConstrainArea()` forces the addition of an extra constrain which fits the data number of input events to constrain
+the total normalisation of the unfolded distribution.
+This is not done by default.
+
+   * `model.addUncertainty(name, bkg, reco)` adds a systematic uncertainty contribution at reconstruction level, by adding a
+parameter that changes the reconstruction distribution from the nominal background and nominal reconstruction-level distribution
+to the ones given. This can be used for detector-level uncertainties, which are not expected to have a big impact in the migration matrix.
+
+   * `model.addUnfoldingUncertainty(name, bkg, mig, eff)` adds a systematic uncertainty contribution as a difference between the
+reconstruction-level distribution with the nominal or with the alternative model given by the `bkg`, `mig` and `eff` parameters.
+
+   * `model.setUniformPrior()` uses a uniform prior for the truth distribution. This is the default.
+
+   * `model.run(data)` prepares the statistical model for unfolding with the given input data. The prior and systematic uncertainties
+must have been set before calling this. It does not unfold the data.
+
+   * `model.sample(N)` throws toy experiments for the prior, rejecting samples with the probability given by the likelihood model.
+After this call, the unfolded distribution mean is stored in `model.hunf` and the unfolded distribution mode
+is stored in `model.hunf_mode`.
+The mean and square root of the variance of the nuisance parameters can be found in `model.hnp` and `model.hnpu`.
+The accepted toy sample `k` for truth bin `i` are stored in `model.trace.Truth[k, i]`, so one can plot a marginal
+distribution for bin `i` using the following:
+
+```
+import matplotlib.pyplot as plt
+import seaborn as sns
+plt.figure()
+sns.distplot(model.trace.Truth[:, i], kde = True, hist = True, label = "Posterior histogram marginalized in bin %d" %i)
+plt.legend()
+plt.show()
+```
+
+   * `model.plotUnfolded(fname)` plots the truth distribution of the nominal model, the unfolded mean and the unfolded mode distributions in file `fname`.
+
+   * `model.plotOnlyUnfolded(f, normaliseByBinWidth, units, fname)` plots the truth and unfolded mean distributions multiplied by `f` if `normaliseByBinWidth` is False, or
+multiplied by `f/bin width` if `normaliseByBinWidth` is True. It shows the units in the Y axis label if `units != ""`. The output file is `fname`.
+
+   * `model.scanAlpha(bkg, mig, eff, N, listOfAlpha, filename1, filename2, filename3)` throws `N` toy experiments simulating a
+model with background `bkg`, migration matrix `mig` and efficiency `eff` to estimate its impact in the unfolded mode. It performs such
+a test for the list of values of the regularisation parameter in `listOfAlpha`. It outputs the mean bias and the spread of the bias for
+each value of the regularisation parameter in the plot `filename1`. It estimates sum over bins of mean^2/variance of the bias for each alpha
+in `filename2`. It estimates the normalisation bias for each value of alpha in `filename3`. This takes a significant time, due to the `N` toy
+experiments, but it is mandatory for the selection of the regularisation parameter alpha.
+The bias is defined as the difference between the unfolded distribution and the truth distribution obtained from the
+projection of the migration matrix `mig`.
+
+   * `model.setAlpha(alpha)` sets the regularisation parameter.
+
+   * `model.setData(data)` sets the input data after a call to `model.run` has been made already. This keeps
+the same statistical model from the last call to `run`, changing only the input data.
+
+   * `model.plotMarginal(fname)` plots the marginalisation of the posterior distribution for all truth bins in file `fname`.
+
+   * `model.plotNPMarginal(syst, fname)` plots the marginalisation of the posterior distribution for the systematic uncertainty `syst` in file `fname`.
+
+   * `model.plotNPUMarginal(syst, fname)` plots the marginalisation of the posterior distribution for the unfolding systematic uncertainty `syst` in file `fname`.
+
+   * `model.plotPairs(fname)` plots the marginal distributions and scatter plots for each truth bin pair in file `fname`. It can take a long time if there were many samples
+generated in the call to `sample`.
+
+   * `model.plotCov(fname)` plots the covariance matrix of the truth bins in file `fname`.
+
+   * `model.plotCorr(fname)` plots the Pearson correlation matrix of the truth bins in file `fname`.
+
+   * `model.plotCorrWithNP(fname)` plots the Pearson correlation matrix of the truth bins and of the systematic uncertainty nuisance parameters in file `fname`.
+
+   * `model.plotSkewness(fname)` plots the skewness of the posterior of each truth bin in file `fname`.
+
+   * `model.plotNP(fname)` plots the mean and width of the posterior of each systematic uncertainty nuisance parameter in file `fname`.
+
+   * `model.plotNPU(fname)` plots the mean and width of the posterior of each unfolding systematic uncertainty nuisance parameter in file `fname`.
+
+   * `model.plotKurtosis(fname)` plots the Fisher kurtosis of each truth posterior marginal distribution in file `fname`.
+
+# Histogram-related auxiliary functions
+
+One can find classes with simple implementations of the 1D or 2D histograms (H1D and H2D) in Unfolder/Histogram.py.
+It also includes the functions below for plotting, which might be useful:
+
+   * `h = H1D(array1DObj)` or `h = H2D(array2DObj)` creates an H1D or H2D with contents given by the array object. The errors are set to the square root of the contents and
+the X or Y axes have centers in the integers counting from 0 to the length of the array minus one.
+
+   * `h = H1D(root1DObj)` or `h = H2D(root2DObj)` creates an H1D or H2D with contents given by the ROOT TH1 or TH2 object.
+
+   * `H2D.fill(x, y, weight)` fills an H2D.
+
+   * `H1D.fill(x, weight)` fills an H1D.
+
+   * Normal +, -, /, * operators work with H1D and H2D instances.
+
+   * `plotH1D(histogramDictionary, xlabel, ylabel, title, fname)` plots the histograms in the `histogramDictionary` in file `fname`. The histogramDictionary
+has H1D instances as the key and the value is a string to be shown in the legend.
+`plotH1DLines` does the same but adds lines connecting the points.
+`plotH1DWithText` does the same but allows for text to be shown in the X axis.
+
+   * `plotH2D(h, xlabel, ylabel, title, fname)` plots a 2D histogram into file `fname`.
+`plotH2DWithText` allows for text to be shown in the X and Y axes.
+
+Other helpful functions are:
+
+   * `H2D.project(axis)` projects an H2D instance in the x (`axis = 'x'`) or y (`axis = 'y'`) axis.
+
+   * `H2D.T()` returns the transpose of an H2D.
+
+   * `H1D.toROOT(name)` or `H2D.toROOT(name)` converts the H1D or H2D instance to a ROOt TH1D or TH2D instance with name given by the parameter and returns it.
+
+   * `H1D.loadFromROOT(obj)` or `H2D.loadFromROOt(obj)` reads the ROOt object `obj` and sets the instance of H1D or H2D to have its contents.
+
+   * `H1D.integral()` returns the integral of a histogram.
+
+# Auxiliary functions helpful for comparison with other unfolding methods
+
+One can find many other functions in Unfolder/ComparisonHelpers.py which can be used to compare FBU with TUnfold and the iterative Bayesian unfolding method in RooUnfold.
+
+   * `getTUnfolder` can be used as follows to unfold using TUnfold.
+```
+tunfold = getTUnfolder(bkg, mig, eff, data, regMode = ROOT.TUnfold.kRegModeNone, normMode = 0)
+tunfold.DoUnfold(tau)
+tunfold_result = H1D(tunfold.GetOutput("rootName"))/eff
+```
+
+   * `getDAgostini` can be used as follows to unfold using the iterative Bayes method.
+```
+dagostini_unfolded = getDAgostini(bkg, mig, eff, data, nIter)
+```
+
+   * `getDataFromModel(bkg, mig, eff)` can be used to produce one toy experiment of data such that the background is given by `bkg`, the migration matrix is givne by `mig`
+and the efficiency is given by `eff`. This can be used to simulate statistical fluctuations of this underlying model.
+
+   * `getBiasFromToys(unfoldFunction, regularisationParameter, N, bkg, mig, eff)` generates `N` toys of a model with background given by
+`bkg`, migration matrix given by `mig` and efficiency given by `eff` and it unfolds it by calling the `unfoldFunction(regularisationParameter, toyData)`. It then
+returns the mean bias (averaged over the bins), the standard deviation of the bias (averaged over bins), the sum of bias mean^2/bias variance for all bins, the mean
+bias in the normalisation, the standard deviation of the bias in the normalisation, and the bias if the input is given by the nominal reconstruction distribution of the
+model.
+
+   * `comparePlot(listHistograms, listLegend, f, normaliseByBinWidth, units, fname)` can be used to plot a set of histograms in `listHistograms` with legend
+text given by `listLegend`, multiplied by `f` (and normalised by bin width if `normaliseByBinWidth` is True) in the file `fname`.
 
