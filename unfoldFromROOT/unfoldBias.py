@@ -14,11 +14,10 @@ from Unfolder.Unfolder import Unfolder
 from Unfolder.Histogram import H1D, H2D, plotH1D, plotH2D
 from readHistograms import *
 
-sns.set(color_codes=True)
-sns.set(font_scale=1.3)
+sns.set(context = "paper", style = "whitegrid", font_scale=2)
 
-varname = "m_{tt}"
-extension = "png"
+varname = "observable"
+extension = "eps"
 
 # get histograms from file
 truth = {}
@@ -56,7 +55,7 @@ pseudo_data = getDataFromModel(bkg[""], mig[""], eff[""])
 comparePlot([data, pseudo_data, data - bkg[""], pseudo_data - bkg[""]],
             ["Reco. projected from unfolding factors", "Reco. simulated with toy experiments",
              "Reco. projected from unfolding factors - bkg", "Reco. simulated with toy experiments - bkg"],
-            luminosity*1e-3, True, "fb/GeV", "pseudoData.png")
+            luminosity*1e-3, True, "fb/GeV", "pseudoData.%s" % extension)
 
 # Create unfolding class
 m = Unfolder(bkg[""], mig[""], eff[""], truth[""])
@@ -146,8 +145,8 @@ for i in uncList:
   m.plotNPMarginal(i, "plotNPMarginal_pseudo_%s.%s" % (i, extension))
 
 # plot unfolded spectrum
-m.plotUnfolded("plotUnfolded_pseudo.png")
-m.plotOnlyUnfolded(luminosity*1e-3, True, "fb/GeV", "plotOnlyUnfolded_pseudo.png")
+m.plotUnfolded("plotUnfolded_pseudo.%s" % extension)
+m.plotOnlyUnfolded(luminosity*1e-3, True, "fb/GeV", "plotOnlyUnfolded_pseudo.%s" % extension)
 
 # plot correlations graphically
 # it takes forever and it is just pretty
@@ -175,8 +174,8 @@ m.plotNP("plotNP%s.%s" % (suf, extension))
 #print "Print out of the covariance matrix follows:"
 #print np.cov(m.trace.Truth, rowvar = False)
 
-m.plotUnfolded("plotUnfolded_pseudo.png")
-m.plotOnlyUnfolded(luminosity*1e-3, True, "fb/GeV", "plotOnlyUnfolded_pseudo.png")
+m.plotUnfolded("plotUnfolded_pseudo.%s" % extension)
+m.plotOnlyUnfolded(luminosity*1e-3, True, "fb/GeV", "plotOnlyUnfolded_pseudo.%s" % extension)
 
 pseudo_fbu_result = m.hunf
 
@@ -190,8 +189,8 @@ m.plotMarginal("plotMarginal.%s" % extension)
 for i in uncList:
   m.plotNPMarginal(i, "plotNPMarginal_%s.%s" % (i, extension))
 
-m.plotUnfolded("plotUnfolded.png")
-m.plotOnlyUnfolded(luminosity*1e-3, True, "fb/GeV", "plotOnlyUnfolded.png")
+m.plotUnfolded("plotUnfolded.%s" % extension)
+m.plotOnlyUnfolded(luminosity*1e-3, True, "fb/GeV", "plotOnlyUnfolded.%s" % extension)
 
 suf = ""
 m.plotCov("covPlot%s.%s" % (suf, extension))
@@ -203,14 +202,14 @@ m.plotNP("plotNP%s.%s" % (suf, extension))
 
 fbu_result = m.hunf
 
-comparePlot([data, pseudo_data, truth[""],
+comparePlot([truth[""],
              fbu_result,
              pseudo_fbu_result],
-            ["Reco. projected from unfolding factors", "Reco. simulated with toy experiments", "Particle-level",
+            ["Particle-level",
              "Unfolded (FBU) from projected reco.",
              "Unfolded (FBU) from independently simulated reco.",
             ],
-            luminosity*1e-3, True, "fb/GeV", "biasTest.png")
+            luminosity*1e-3, True, "fb/GeV", "biasTest.%s" % extension)
 
 print "FBU     -- alpha = ",     alpha, " with bias = ", bestAlphaBias, ", std = ", bestAlphaBiasStd, ", norm bias = ", bestAlphaNormBias, ", norm bias std = ", bestAlphaNormBiasStd
 

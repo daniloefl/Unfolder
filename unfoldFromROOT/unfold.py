@@ -14,11 +14,10 @@ from Unfolder.Unfolder import Unfolder
 from Unfolder.Histogram import H1D, H2D, plotH1D, plotH2D
 from readHistograms import *
 
-sns.set(color_codes=True)
-sns.set(font_scale=1.3)
+sns.set(context = "paper", style = "whitegrid", font_scale=2)
 
-varname = "m_{tt}"
-extension = "png"
+varname = "observable"
+extension = "eps"
 
 # get histograms from file
 truth, recoWithFakes, bkg, mig, eff, nrt = getHistograms("out_ttallhad_psrw_Syst.root", "nominal", "mttAsymm")
@@ -57,7 +56,7 @@ tunfolder.DoUnfold(0)
 tunfold_mig = H1D(tunfolder.GetOutput("tunfold_result"))
 tunfold_result = tunfold_mig/eff_noerr
 
-comparePlot([data, data - bkg, truth, tunfold_result], ["Data", "Data - bkg", "Particle-level", "TUnfold"], luminosity*1e-3, True, "fb/GeV", "plotTUnfold.png")
+comparePlot([truth, tunfold_result], ["Particle-level", "TUnfold"], luminosity*1e-3, True, "fb/GeV", "plotTUnfold.%s" % extension)
 
 # now use D'Agostini
 useDAgostini = False
@@ -65,7 +64,7 @@ try:
   dagostini_mig = getDAgostini(bkg, mig, data, nIter = 1)
   dagostini_result = dagostini_mig/eff_noerr
 
-  comparePlot([data, data - bkg, truth, dagostini_result], ["Data", "Data - bkg", "Particle-level", "D'Agostini"], luminosity*1e-3, True, "fb/GeV", "plotDAgostini.png")
+  comparePlot([truth, dagostini_result], ["Particle-level", "D'Agostini"], luminosity*1e-3, True, "fb/GeV", "plotDAgostini.%s" % extension)
   useDAgostini = True
 except:
   print "Could not use D'Agostini method. Continuing."
@@ -135,11 +134,11 @@ m.plotNP("plotNP.%s" % extension)
 
 
 # plot unfolded spectrum
-m.plotUnfolded("plotUnfolded.png")
-m.plotOnlyUnfolded(luminosity*1e-3, True, "fb/GeV", "plotOnlyUnfolded.png")
+m.plotUnfolded("plotUnfolded.%s" % extension)
+m.plotOnlyUnfolded(luminosity*1e-3, True, "fb/GeV", "plotOnlyUnfolded.%s" % extension)
 
 if useDAgostini:
-  comparePlot([data, data - bkg, truth, tunfold_result, dagostini_result, m.hunf], ["Data", "Data - background", "Particle-level", "TUnfold", "D'Agostini", "FBU"], luminosity*1e-3, True, "fb/GeV", "compareMethods.png")
+  comparePlot([truth, tunfold_result, dagostini_result, m.hunf], ["Particle-level", "TUnfold", "D'Agostini", "FBU"], luminosity*1e-3, True, "fb/GeV", "compareMethods.%s" % extension)
 else:
-  comparePlot([data, data - bkg, truth, tunfold_result, m.hunf], ["Data", "Data - background", "Particle-level", "TUnfold", "FBU"], luminosity*1e-3, True, "fb/GeV", "compareMethods.png")
+  comparePlot([truth, tunfold_result, m.hunf], ["Particle-level", "TUnfold", "FBU"], luminosity*1e-3, True, "fb/GeV", "compareMethods.%s" % extention)
 

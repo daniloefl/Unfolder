@@ -14,11 +14,10 @@ from Unfolder.Unfolder import Unfolder
 from Unfolder.Histogram import H1D, H2D, plotH1D, plotH2D
 from readHistograms import *
 
-sns.set(color_codes=True)
-sns.set(font_scale=1.3)
+sns.set(context = "paper", style = "whitegrid", font_scale=2)
 
-varname = "m_{tt}"
-extension = "png"
+varname = "observable"
+extension = "eps"
 
 normMode = ROOT.TUnfold.kEConstraintArea
 
@@ -68,7 +67,7 @@ pseudo_data = getDataFromModel(bkg[""], mig[""], eff[""])
 comparePlot([data, pseudo_data, data - bkg[""], pseudo_data - bkg[""]],
             ["Reco. projected from unfolding factors", "Reco. simulated with toy experiments",
              "Reco. projected from unfolding factors - bkg", "Reco. simulated with toy experiments - bkg"],
-            luminosity*1e-3, True, "fb/GeV", "pseudoData.png")
+            luminosity*1e-3, True, "fb/GeV", "pseudoData.%s" % extension)
 
 # functor to unfold
 class TUnfoldForRegularizationTest:
@@ -115,31 +114,31 @@ for i in ["", "me", "ps"]:
   bestAlphaNormBias[i] = -1
   bestAlphaNormBiasStd[i] = -1
   # use this range for fb = 0
-  alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i] = scanRegParameter(TUnfoldForRegularizationTest(bkg[""], mig[""], eff[""], data, 0.0, ROOT.TUnfold.kRegModeDerivative, normMode), bkg[i], mig[i], eff[i], truth[i], 1000, np.arange(0.0, 10e-3, 0.25e-3), "scanTau_%s_TUnfold.png" % i, "scanTau_%s_chi2_TUnfold.png" % i, "scanTau_%s_norm_TUnfold.png" % i)
-  #alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i] = scanRegParameter(TUnfoldForRegularizationTest(bkg[""], mig[""], eff[""], data, 1.0, ROOT.TUnfold.kRegModeDerivative, normMode), bkg[i], mig[i], eff[i], truth[i], 1000, np.arange(0.0, 20e-3, 1e-3), "scanTau_%s_TUnfold.png" % i, "scanTau_%s_chi2_TUnfold.png" % i, "scanTau_%s_norm_TUnfold.png" % i)
+  alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i] = scanRegParameter(TUnfoldForRegularizationTest(bkg[""], mig[""], eff[""], data, 0.0, ROOT.TUnfold.kRegModeDerivative, normMode), bkg[i], mig[i], eff[i], truth[i], 1000, np.arange(0.0, 10e-3, 0.25e-3), "scanTau_%s_TUnfold.%s" % (i, extension), "scanTau_%s_chi2_TUnfold.%s" % (i, extension), "scanTau_%s_norm_TUnfold.%s" % (i, extension))
+  #alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i] = scanRegParameter(TUnfoldForRegularizationTest(bkg[""], mig[""], eff[""], data, 1.0, ROOT.TUnfold.kRegModeDerivative, normMode), bkg[i], mig[i], eff[i], truth[i], 1000, np.arange(0.0, 20e-3, 1e-3), "scanTau_%s_TUnfold.%s" % (i, extension), "scanTau_%s_chi2_TUnfold.%s" % (i, extension), "scanTau_%s_norm_TUnfold.%s" % (i, extension))
   print "For configuration '%s': Found tau = %f with bias chi2 = %f, bias mean = %f, bias std = %f, norm bias = %f, norm bias std = %f" % (i, alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i])
 
 pseudo_tunfolder = getTUnfolder(bkg[""], mig[""], eff[""], pseudo_data, regMode = ROOT.TUnfold.kRegModeDerivative, normMode = normMode)
 
-#tau_pseudo = printLcurve(pseudo_tunfolder, "tunfold_lcurve_pseudo.png")
+#tau_pseudo = printLcurve(pseudo_tunfolder, "tunfold_lcurve_pseudo.%s" % extension)
 pseudo_tunfolder.DoUnfold(alpha[""])
 pseudo_tunfold_mig = H1D(pseudo_tunfolder.GetOutput("tunfold_pseudo_result"))
 pseudo_tunfold_result = pseudo_tunfold_mig/eff_noerr['']
 
 tunfolder = getTUnfolder(bkg[""], mig[""], eff[""], data, regMode = ROOT.TUnfold.kRegModeDerivative, normMode = normMode)
 # no regularization
-#tau = printLcurve(tunfolder, "tunfold_lcurve.png")
+#tau = printLcurve(tunfolder, "tunfold_lcurve.%s" % extension)
 tunfolder.DoUnfold(alpha[""])
 tunfold_mig = H1D(tunfolder.GetOutput("tunfold_result"))
 tunfold_result = tunfold_mig/eff_noerr['']
 
-comparePlot([data, pseudo_data, truth[""],
+comparePlot([truth[""],
              tunfold_result,
              pseudo_tunfold_result],
-            ["Reco. projected from unfolding factors", "Reco. simulated with toy experiments", "Particle-level",
+            ["Particle-level",
              "Unfolded (TUnfold) from projected reco.",
              "Unfolded (TUnfold) from independently simulated reco."],
-            luminosity*1e-3, True, "fb/GeV", "biasTest_TUnfold.png")
+            luminosity*1e-3, True, "fb/GeV", "biasTest_TUnfold.%s" % extension)
 
 print "TUnfold -- tau   = ",   alpha, " with bias = ", bestAlphaBias, ", std = ", bestAlphaBiasStd, ", norm bias = ", bestAlphaNormBias, ", norm bias std = ", bestAlphaNormBiasStd
 

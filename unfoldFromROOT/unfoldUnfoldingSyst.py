@@ -14,11 +14,10 @@ from Unfolder.Unfolder import Unfolder
 from Unfolder.Histogram import H1D, H2D, plotH1D, plotH2D
 from readHistograms import *
 
-sns.set(color_codes=True)
-sns.set(font_scale=1.3)
+sns.set(context = "paper", style = "whitegrid", font_scale=2)
 
-varname = "m_{tt}"
-extension = "png"
+varname = "observable"
+extension = "eps"
 
 # get histograms from file
 truth = {}
@@ -111,8 +110,8 @@ m.plotNPU("plotNPU.%s" % extension)
 
 
 # plot unfolded spectrum
-m.plotUnfolded("plotUnfolded.png")
-m.plotOnlyUnfolded(luminosity*1e-3, True, "fb/GeV", "plotOnlyUnfolded.png")
+m.plotUnfolded("plotUnfolded.%s" % extension)
+m.plotOnlyUnfolded(luminosity*1e-3, True, "fb/GeV", "plotOnlyUnfolded.%s" % extension)
 
-comparePlot([data, truth[""], truth["me"], truth["ps"], m.hunf, unf_orig], ["Data", "Particle-level", "Particle-level ME", "Particle-level PS", "FBU", "FBU no syst."], luminosity*1e-3, True, "fb/GeV", "compareMethods.png")
+comparePlot([truth[""], truth["me"], truth["ps"], m.hunf, unf_orig], ["Particle-level", "Particle-level ME", "Particle-level PS", "FBU", "FBU no syst."], luminosity*1e-3, True, "fb/GeV", "compareMethods.%s" % extension)
 

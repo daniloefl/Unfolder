@@ -14,11 +14,10 @@ from Unfolder.Unfolder import Unfolder
 from Unfolder.Histogram import H1D, H2D, plotH1D, plotH2D
 from readHistograms import *
 
-sns.set(color_codes=True)
-sns.set(font_scale=1.3)
+sns.set(context = "paper", style = "whitegrid", font_scale=2)
 
-varname = "m_{tt}"
-extension = "png"
+varname = "observable"
+extension = "eps"
 
 truth = {}
 recoWithFakes = {}
@@ -56,7 +55,7 @@ pseudo_data = getDataFromModel(bkg[""], mig[""], eff[""])
 comparePlot([data, pseudo_data, data - bkg[""], pseudo_data - bkg[""]],
             ["Reco. projected from unfolding factors", "Reco. simulated with toy experiments",
              "Reco. projected from unfolding factors - bkg", "Reco. simulated with toy experiments - bkg"],
-            luminosity*1e-3, True, "fb/GeV", "pseudoData.png")
+            luminosity*1e-3, True, "fb/GeV", "pseudoData.%s" % extension)
 
 # functor to unfold
 class DAgostiniForRegularizationTest:
@@ -84,7 +83,7 @@ for i in ["", "me", "ps"]:
   bestAlphaBiasStd[i] = -1
   bestAlphaNormBias[i] = -1
   bestAlphaNormBiasStd[i] = -1
-  alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i] = scanRegParameter(DAgostiniForRegularizationTest(bkg[""], mig[""], eff[""]), bkg[i], mig[i], eff[i], truth[i], 1000, np.arange(1.0, 21.0, 1.0), "scanIter_%s_DAgostini.png" % i, "scanIter_%s_chi2_DAgostini.png" % i, "scanIter_%s_norm_DAgostini.png" % i)
+  alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i] = scanRegParameter(DAgostiniForRegularizationTest(bkg[""], mig[""], eff[""]), bkg[i], mig[i], eff[i], truth[i], 1000, np.arange(1.0, 21.0, 1.0), "scanIter_%s_DAgostini.%s" % (i, extension), "scanIter_%s_chi2_DAgostini.%s" % (i, extension), "scanIter_%s_norm_DAgostini.%s" % (i, extension))
   print "For configuration '%s': Found iter = %d with bias chi2 = %f, bias mean = %f, bias std = %f, norm bias = %f, norm bias std = %f" % (i, alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i])
 
 pseudo_dagostini_mig = getDAgostini(bkg[i], mig[i], eff[i], pseudo_data, nIter = alpha[""])
@@ -93,13 +92,13 @@ pseudo_dagostini_result = pseudo_dagostini_mig
 dagostini_mig = getDAgostini(bkg[""], mig[""], eff[""], data, nIter = alpha[""])
 dagostini_result = dagostini_mig
 
-comparePlot([data, pseudo_data, truth[""],
+comparePlot([truth[""],
              dagostini_result,
              pseudo_dagostini_result],
-            ["Reco. projected from unfolding factors", "Reco. simulated with toy experiments", "Particle-level",
+            ["Particle-level",
              "Unfolded (d'Agostini) from projected reco.",
              "Unfolded (d'Agostini) from independently simulated reco."],
-            luminosity*1e-3, True, "fb/GeV", "biasTest_DAgostini.png")
+            luminosity*1e-3, True, "fb/GeV", "biasTest_DAgostini.%s" % extension)
 
 print "DAgostini -- it.  = ",   alpha, " with bias = ", bestAlphaBias, ", std = ", bestAlphaBiasStd, ", norm bias = ", bestAlphaNormBias, ", norm bias std = ", bestAlphaNormBiasStd
 
