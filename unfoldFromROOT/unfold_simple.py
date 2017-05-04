@@ -31,10 +31,12 @@ plotH2D(mig.T(), "Particle-level bin", "Reconstructed-level bin", "Number of eve
 plotH1D(bkg, "Reconstructed "+varname, "Events", "Background", "bkg.%s" % extension)
 plotH1D(truth, "Particle-level "+varname, "Events", "Particle-level distribution", "truth.%s" % extension)
 plotH1D({truth: "Original truth", mig.project("x")/eff: "Projected"}, "Particle-level "+varname, "Events", "Particle-level distribution", "truth_project.%s" % extension)
+plotH1D({truth - mig.project("x")/eff: "Original truth - projected"}, "Particle-level "+varname, "Events", "Particle-level distribution", "truth_project_diff.%s" % extension)
 plotH1D(nrt, "Particle-level "+varname, "Events", "Events in particle-level selection but not reconstructed", "nrt.%s" % extension)
 plotH1D(recoWithFakes, "Reconstructed "+varname, "Events", "Reconstructed-level distribution with fakes", "recoWithFakes.%s" % extension)
 plotH1D(recoWithoutFakes, "Reconstructed "+varname, "Events", "Reconstructed-level distribution without fakes", "recoWithoutFakes.%s" % extension)
 plotH1D({recoWithoutFakes+bkg: "Reco with fakes from projection", recoWithFakes: "From getHistograms"}, "Reconstructed "+varname, "Events", "Reconstructed-level distribution without fakes", "reco_project.%s" % extension)
+plotH1D({recoWithoutFakes+bkg - recoWithFakes: "Reco with fakes from projection - getHistograms"}, "Reconstructed "+varname, "Events", "Reconstructed-level distribution without fakes", "reco_project_diff.%s" % extension)
 plotH1D(eff, "Particle-level "+varname, "Efficiency", "Efficiency of particle-level selection", "eff.%s" % extension)
 
 eff_noerr = H1D(eff)
