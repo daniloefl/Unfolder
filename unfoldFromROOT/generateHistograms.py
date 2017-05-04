@@ -12,7 +12,7 @@ def generateHistograms(fname = "out_ttallhad_psrw_Syst.root"):
   v1 = "mttAsymm"
   v2 = "mttCoarse"
 
-  Nev = 500000
+  Nev = 5000000
   L = 36.1*10.0
   f = ROOT.TFile.Open(fname, "recreate")
   f.mkdir("nominal")
@@ -87,7 +87,7 @@ def generateHistograms(fname = "out_ttallhad_psrw_Syst.root"):
     for i in range(0, Nr2): bkg2[direc].err[i] = 0
     for k in range(0, Nev):
       O = 0
-      if np.random.uniform() > 0.01:
+      if np.random.uniform() > 0.05:
         O = np.random.exponential(p["l"][direc])
       else:
         O = np.random.normal(p["m"][direc], p["s"][direc])

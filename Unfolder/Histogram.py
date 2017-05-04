@@ -275,6 +275,7 @@ class H2D:
       xe = self.x[k] + self.x_err[k]
       if xe > x:
         i = k
+        j = len(self.y)-1
         for l in range(0, len(self.y)):
           ye = self.y[l] + self.y_err[l]
           if ye > y:
@@ -283,6 +284,16 @@ class H2D:
             self.val[i, j] += w
             self.err[i, j] += w*w
             return [i, j]
+        self.val[i, j] += w
+        self.err[i, j] += w*w
+        return [i, j]
+    # overflow x
+    i = len(self.x)-1
+    j = len(self.y)-1
+    for l in range(0, len(self.y)):
+      ye = self.y[l] + self.y_err[l]
+      if ye > y:
+        j = l
         self.val[i, j] += w
         self.err[i, j] += w*w
         return [i, j]
