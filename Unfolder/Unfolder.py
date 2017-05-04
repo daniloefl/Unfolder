@@ -355,7 +355,7 @@ class Unfolder:
     plt_cte = H1D(plt_bias_chi2)
     plt_cte.val = 0.5*np.ones(len(rangeAlpha))
     plt_cte.err = np.zeros(len(rangeAlpha))
-    plotH1DLines({plt_bias_chi2: r"$E_{\mathrm{bins}}[E_{\mathrm{toys}}[\mathrm{bias}]^2/\mathrm{Var}_{\mathrm{toys}}[\mathrm{bias}]]$", plt_cte: "0.5"}, r"$\alpha$", "Bias mean^2/variance", "", fname_chi2)
+    plotH1DLines({plt_bias_chi2: r"$E_{\mathrm{bins}}[E_{\mathrm{toys}}[\mathrm{bias}]^2/\mathrm{Var}_{\mathrm{toys}}[\mathrm{bias}]]$", plt_cte: "0.5"}, r"$\alpha$", r"Bias $\mathrm{mean}^2/\mathrm{variance}$", "", fname_chi2)
     self.setAlpha(bkp_alpha)
     return [bestAlpha, bestChi2, bias[bestI], bias_std[bestI], bias_norm[bestI], bias_norm_std[bestI]]
     
