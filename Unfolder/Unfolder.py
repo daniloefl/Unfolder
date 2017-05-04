@@ -404,6 +404,8 @@ class Unfolder:
         self.hunf_mode.val[i] = mode
         self.hunf_mode.err[i] = self.hunf.err[i]
 
+      self.hnp.x = [""]*len(self.systematics)
+      self.hnpu.x = [""]*len(self.systematics)
       for k in range(0, len(self.systematics)):
         self.hnp.val[k] = np.mean(self.trace['t_'+self.systematics[k]])
         self.hnp.err[k] = np.std(self.trace['t_'+self.systematics[k]], ddof = 1)**2

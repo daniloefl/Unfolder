@@ -28,8 +28,9 @@ mig = {}
 eff = {}
 nrt = {}
 
-truth[""], recoWithFakes[""], bkg[""], mig[""], eff[""], nrt[""] = getHistograms("out_ttallhad_psrw_Syst.root", "nominal", "mttCoarse")
-truth["b"], recoWithFakes["b"], bkg["b"], mig["b"], eff["b"], nrt["b"] = getHistograms("out_ttallhad_psrw_Syst.root", "aMcAtNloHerwigppEvtGen", "mttCoarse")
+truth["A"], recoWithFakes["A"], bkg["A"], mig["A"], eff["A"], nrt["A"] = getHistograms("out_ttallhad_psrw_Syst.root", "nominal", "mttCoarse")
+truth["B"], recoWithFakes["B"], bkg["B"], mig["B"], eff["B"], nrt["B"] = getHistograms("out_ttallhad_psrw_Syst.root", "aMcAtNloHerwigppEvtGen", "mttCoarse")
+truth["C"], recoWithFakes["C"], bkg["C"], mig["C"], eff["C"], nrt["C"] = getHistograms("out_ttallhad_psrw_Syst.root", "PowhegHerwigppEvtGen", "mttCoarse")
 
 for i in recoWithFakes:
   recoWithoutFakes[i] = mig[i].project("y")
@@ -46,11 +47,12 @@ for i in recoWithFakes:
   plotH1D(eff[i], "Particle-level "+varname, "Efficiency", "Efficiency of particle-level selection", "eff_%s.%s" % (i,extension))
 
 # generate perfect fake data
-data = recoWithFakes[""]
-#data = recoWithFakes["b"]
+data = recoWithFakes["A"]
+#data = recoWithFakes["B"]
+#data = recoWithFakes["C"]
 
 # Create unfolding class
-m = Unfolder(bkg[""], mig[""], eff[""], truth[""])
+m = Unfolder(bkg["A"], mig["A"], eff["A"], truth["A"])
 m.setUniformPrior()
 #m.setGaussianPrior()
 #m.setCurvaturePrior()
@@ -62,7 +64,7 @@ m.sample(100000)
 
 unf_orig = m.hunf
   
-uncUnfList = ["b"]
+uncUnfList = ["B", "C"]
 for k in uncUnfList:
   m.addUnfoldingUncertainty(k, bkg[k], mig[k], eff[k])
 
@@ -96,5 +98,5 @@ m.plotNPU("plotNPU.%s" % extension)
 m.plotUnfolded("plotUnfolded.%s" % extension)
 m.plotOnlyUnfolded(1.0, False, "", "plotOnlyUnfolded.%s" % extension)
 
-comparePlot([truth[""], truth["b"], m.hunf, unf_orig], ["Truth", "Truth B", "FBU with systematic uncertainties", "FBU no systematic uncertainties"], 1.0, False, "", "compareMethods.%s" % extension)
+comparePlot([truth["A"], truth["B"], truth["C"], m.hunf, unf_orig], ["Truth A", "Truth B", "Truth C", "FBU with systematic uncertainties", "FBU no systematic uncertainties"], 1.0, False, "", "compareMethods.%s" % extension)
 
