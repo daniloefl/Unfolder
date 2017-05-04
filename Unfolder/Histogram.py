@@ -510,7 +510,7 @@ def plotH1D(h, xlabel = "x", ylabel = "Events", title = "", fname = "plotH1D.png
     i += 1
   plt.ylabel(ylabel)
   plt.xlabel(xlabel)
-  plt.ylim([ymin-0.4*abs(ymin), (1.2 + 0.2*len(h))*ymax])
+  plt.ylim([ymin-0.4*abs(ymin), (1.8 + 0.4*len(h))*ymax])
   plt.legend(loc = "upper right")
   sns.despine()
   plt.tight_layout()
@@ -533,7 +533,7 @@ def plotH1DLines(h, xlabel = "x", ylabel = "Events", title = "", fname = "plotH1
     i += 1
   plt.ylabel(ylabel)
   plt.xlabel(xlabel)
-  plt.ylim([ymin-0.4*abs(ymin), (1.2 + 0.2*len(h))*ymax])
+  plt.ylim([ymin-0.4*abs(ymin), (1.8 + 0.4*len(h))*ymax])
   plt.legend(loc = "upper right")
   sns.despine()
   plt.tight_layout()
