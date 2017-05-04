@@ -140,5 +140,5 @@ m.plotOnlyUnfolded(luminosity*1e-3, True, "fb/GeV", "plotOnlyUnfolded.%s" % exte
 if useDAgostini:
   comparePlot([truth, tunfold_result, dagostini_result, m.hunf], ["Particle-level", "TUnfold", "D'Agostini", "FBU"], luminosity*1e-3, True, "fb/GeV", "compareMethods.%s" % extension)
 else:
-  comparePlot([truth, tunfold_result, m.hunf], ["Particle-level", "TUnfold", "FBU"], luminosity*1e-3, True, "fb/GeV", "compareMethods.%s" % extention)
+  comparePlot([truth, tunfold_result, m.hunf], ["Particle-level", "TUnfold", "FBU"], luminosity*1e-3, True, "fb/GeV", "compareMethods.%s" % extension)
 

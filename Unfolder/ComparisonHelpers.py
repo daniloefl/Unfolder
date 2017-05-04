@@ -66,8 +66,8 @@ def comparePlot(listHist, listLegend, f = 1.0, normaliseByBinWidth = True, units
     newListHist.append(f*item)
     if normaliseByBinWidth:
       newListHist[-1].overBinWidth()
-  sty = ['rv', 'ro', 'b^', 'ro', 'gv', 'ms', 'co']
-  siz = [12, 10, 8, 6, 4, 2, 2]
+  sty = ['rv', 'bo', 'g^', 'mo', 'cv', 'ks']
+  siz = [14, 12, 10, 8, 6, 4]
   c = 0
   for item in newListHist:
     plt.errorbar(item.x, item.val, item.err**0.5, item.x_err, fmt = sty[c], linewidth=2, label = listLegend[c], markersize=siz[c])
