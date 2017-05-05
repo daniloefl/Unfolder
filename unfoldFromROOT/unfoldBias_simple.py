@@ -47,18 +47,13 @@ for i in recoWithFakes:
   plotH1D(eff[i], "Particle-level "+varname, "Efficiency", "Efficiency of particle-level selection", "eff_%s.%s" % (i,extension))
 
 # generate perfect fake data
-data = recoWithFakes[""]
+data = recoWithFakes["A"]
 
 # generate fake data from model
-pseudo_data = getDataFromModel(bkg[""], mig[""], eff[""])
-
-comparePlot([data, pseudo_data, data - bkg[""], pseudo_data - bkg[""]],
-            ["Reco. projected from unfolding factors", "Reco. simulated with toy experiments",
-             "Reco. projected from unfolding factors - bkg", "Reco. simulated with toy experiments - bkg"],
-            luminosity*1e-3, True, "fb/GeV", "pseudoData.%s" % extension)
+pseudo_data = getDataFromModel(bkg["A"], mig["A"], eff["A"])
 
 # Create unfolding class
-m = Unfolder(bkg[""], mig[""], eff[""], truth[""])
+m = Unfolder(bkg["A"], mig["A"], eff["A"], truth["A"])
 m.setUniformPrior()
 #m.setGaussianPrior()
 #m.setCurvaturePrior()
@@ -146,7 +141,7 @@ for i in uncList:
 
 # plot unfolded spectrum
 m.plotUnfolded("plotUnfolded_pseudo.%s" % extension)
-m.plotOnlyUnfolded(luminosity*1e-3, True, "fb/GeV", "plotOnlyUnfolded_pseudo.%s" % extension)
+m.plotOnlyUnfolded(1.0, False, "", "plotOnlyUnfolded_pseudo.%s" % extension)
 
 # plot correlations graphically
 # it takes forever and it is just pretty
@@ -162,20 +157,8 @@ m.plotSkewness("skewPlot%s.%s" % (suf, extension))
 m.plotKurtosis("kurtosisPlot%s.%s" % (suf, extension))
 m.plotNP("plotNP%s.%s" % (suf, extension))
 
-# for debugging
-#print "Mean of unfolded data:"
-#print np.mean(m.trace.Truth, axis = 0)
-#print "Sqrt of variance of unfolded data:"
-#print np.std(m.trace.Truth, axis = 0)
-#print "Skewness of unfolded data:"
-#print scipy.stats.skew(m.trace.Truth, bias = False)
-#print "Kurtosis of unfolded data:"
-#print scipy.stats.kurtosis(m.trace.Truth, bias = False)
-#print "Print out of the covariance matrix follows:"
-#print np.cov(m.trace.Truth, rowvar = False)
-
 m.plotUnfolded("plotUnfolded_pseudo.%s" % extension)
-m.plotOnlyUnfolded(luminosity*1e-3, True, "fb/GeV", "plotOnlyUnfolded_pseudo.%s" % extension)
+m.plotOnlyUnfolded(1.0, False, "", "plotOnlyUnfolded_pseudo.%s" % extension)
 
 pseudo_fbu_result = m.hunf
 
@@ -190,7 +173,7 @@ for i in uncList:
   m.plotNPMarginal(i, "plotNPMarginal_%s.%s" % (i, extension))
 
 m.plotUnfolded("plotUnfolded.%s" % extension)
-m.plotOnlyUnfolded(luminosity*1e-3, True, "fb/GeV", "plotOnlyUnfolded.%s" % extension)
+m.plotOnlyUnfolded(1.0, False, "", "plotOnlyUnfolded.%s" % extension)
 
 suf = ""
 m.plotCov("covPlot%s.%s" % (suf, extension))
@@ -202,14 +185,14 @@ m.plotNP("plotNP%s.%s" % (suf, extension))
 
 fbu_result = m.hunf
 
-comparePlot([truth[""],
+comparePlot([truth["A"],
              fbu_result,
              pseudo_fbu_result],
             ["Particle-level",
              "Unfolded (FBU) from projected reco.",
              "Unfolded (FBU) from independently simulated reco.",
             ],
-            luminosity*1e-3, True, "fb/GeV", "biasTest.%s" % extension)
+            1.0, False, "", "biasTest.%s" % extension)
 
 print "FBU     -- alpha = ",     alpha, " with bias = ", bestAlphaBias, ", std = ", bestAlphaBiasStd, ", norm bias = ", bestAlphaNormBias, ", norm bias std = ", bestAlphaNormBiasStd
 
