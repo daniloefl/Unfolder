@@ -77,9 +77,6 @@ m.sample(100000)
 # plot marginal distributions
 m.plotMarginal("plotMarginal.%s" % extension)
 
-for i in uncList:
-  m.plotNPMarginal(i, "plotNPMarginal_%s.%s" % (i, extension))
-
 # plot correlations
 #m.plotPairs("pairPlot.%s" % extension) # takes forever
 m.plotCov("covPlot.%s" % extension)
