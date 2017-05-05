@@ -20,12 +20,17 @@ def generateHistograms(fname = "out_ttallhad_psrw_Syst.root"):
   f.mkdir("PowhegHerwigppEvtGen")
 
   # number of truth bins
-  Nt = 10
+  xt = np.arange(0, 5, 0.5)
+  Nt = len(xt)
+  xt_err = np.ones(Nt)*0.5
+
   # number of reco bins
-  xf = np.arange(0, 10, 0.25)
+  xf = np.arange(0, 5, 0.125)
   Nr = len(xf)
-  xf_err = np.ones(Nr)*0.25
-  Nr2 = 10
+  xf_err = np.ones(Nr)*0.125
+  xw = np.arange(0, 5, 0.5)
+  Nrw = len(xw)
+  xw_err = np.ones(Nrw)*0.5
 
   e = {}
   b = {}
@@ -53,7 +58,7 @@ def generateHistograms(fname = "out_ttallhad_psrw_Syst.root"):
   p["m"]["aMcAtNloHerwigppEvtGen"] = 4.4
   p["m"]["PowhegHerwigppEvtGen"] = 3.8
   p["s"]["nominal"] = 1.0
-  p["s"]["aMcAtNloHerwigppEvtGen"] = 1.1
+  p["s"]["aMcAtNloHerwigppEvtGen"] = 1.5
   p["s"]["PowhegHerwigppEvtGen"] = 1.2
 
   truth = {}
@@ -67,9 +72,11 @@ def generateHistograms(fname = "out_ttallhad_psrw_Syst.root"):
   bkg2 = {}
   for direc in ["nominal", "aMcAtNloHerwigppEvtGen", "PowhegHerwigppEvtGen"]:
     truth[direc] = H1D(np.zeros(Nt))
-    truth[direc].x += 0.5
+    truth[direc].x = xt
+    truth[direc].x_err = xt_err
     mig[direc] = H2D(np.zeros((Nt, Nr)))
-    mig[direc].x += 0.5
+    mig[direc].x = xt
+    mig[direc].x_err = xt_err
     mig[direc].y = xf
     mig[direc].y_err = xf_err
     reco[direc] = H1D(np.zeros(Nr))
@@ -81,15 +88,20 @@ def generateHistograms(fname = "out_ttallhad_psrw_Syst.root"):
     for i in range(0, Nr): bkg[direc].err[i] = 0
 
     truth2[direc] = H1D(np.zeros(Nt))
-    truth2[direc].x += 0.5
-    mig2[direc] = H2D(np.zeros((Nt, Nr2)))
-    mig2[direc].y += 0.5
-    mig2[direc].x += 0.5
-    reco2[direc] = H1D(np.zeros(Nr2))
-    reco2[direc].x += 0.5
-    bkg2[direc] = H1D(10*10.0/L*np.ones(Nr2))
-    bkg2[direc].x += 0.5
-    for i in range(0, Nr2): bkg2[direc].err[i] = 0
+    truth2[direc].x = xt
+    truth2[direc].x_err = xt_err
+    mig2[direc] = H2D(np.zeros((Nt, Nrw)))
+    mig2[direc].y = xw
+    mig2[direc].y_err = xw_err
+    mig2[direc].x = xt
+    mig2[direc].x_err = xt_err
+    reco2[direc] = H1D(np.zeros(Nrw))
+    reco2[direc].x = xw
+    reco2[direc].x_err = xw_err
+    bkg2[direc] = H1D(10*10.0/L*np.ones(Nrw))
+    bkg2[direc].x = xw
+    bkg2[direc].x_err = xw_err
+    for i in range(0, Nrw): bkg2[direc].err[i] = 0
     for k in range(0, Nev):
       O = 0
       if np.random.uniform() > 0.20:
