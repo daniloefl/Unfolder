@@ -97,7 +97,7 @@ plotH2D(m.response_noeff.T(), "Particle-level bin", "Reconstructed-level bin", "
 # first choose alpha using only a MAP estimate
 #m.setEntropyPrior()
 #m.setCurvaturePrior()
-m.setFirstDerivativePrior(0.0)
+m.setFirstDerivativePrior(1.0)
 #m.setGaussianPrior()
 
 #m.setConstrainArea(True)

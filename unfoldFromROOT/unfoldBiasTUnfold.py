@@ -19,7 +19,8 @@ sns.set(context = "paper", style = "whitegrid", font_scale=2)
 varname = "observable"
 extension = "eps"
 
-normMode = ROOT.TUnfold.kEConstraintArea
+normMode = 0
+#ROOT.TUnfold.kEConstraintArea
 
 # get histograms from file
 truth = {}
@@ -53,7 +54,7 @@ for i in recoWithFakes:
   bkg_noerr[i] = H1D(bkg[i])
   for k in range(0, len(bkg_noerr[i].err)):
     bkg_noerr[i].err[k] = 0
-  eff_noerr = H1D(eff_noerr[i].err)
+  eff_noerr[i] = H1D(eff[i])
   for k in range(0, len(eff_noerr[i].err)):
     eff_noerr[i].err[k] = 0
   
@@ -114,7 +115,7 @@ for i in ["", "me", "ps"]:
   bestAlphaNormBias[i] = -1
   bestAlphaNormBiasStd[i] = -1
   # use this range for fb = 0
-  alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i] = scanRegParameter(TUnfoldForRegularizationTest(bkg[""], mig[""], eff[""], data, 0.0, ROOT.TUnfold.kRegModeDerivative, normMode), bkg[i], mig[i], eff[i], truth[i], 1000, np.arange(0.0, 10e-3, 0.25e-3), "scanTau_%s_TUnfold.%s" % (i, extension), "scanTau_%s_chi2_TUnfold.%s" % (i, extension), "scanTau_%s_norm_TUnfold.%s" % (i, extension))
+  alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i] = scanRegParameter(TUnfoldForRegularizationTest(bkg[""], mig[""], eff[""], data, 1.0, ROOT.TUnfold.kRegModeDerivative, normMode), bkg[i], mig[i], eff[i], truth[i], 1000, np.arange(0.0, 10e-3, 0.25e-3), "scanTau_%s_TUnfold.%s" % (i, extension), "scanTau_%s_chi2_TUnfold.%s" % (i, extension), "scanTau_%s_norm_TUnfold.%s" % (i, extension))
   #alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i] = scanRegParameter(TUnfoldForRegularizationTest(bkg[""], mig[""], eff[""], data, 1.0, ROOT.TUnfold.kRegModeDerivative, normMode), bkg[i], mig[i], eff[i], truth[i], 1000, np.arange(0.0, 20e-3, 1e-3), "scanTau_%s_TUnfold.%s" % (i, extension), "scanTau_%s_chi2_TUnfold.%s" % (i, extension), "scanTau_%s_norm_TUnfold.%s" % (i, extension))
   print "For configuration '%s': Found tau = %f with bias chi2 = %f, bias mean = %f, bias std = %f, norm bias = %f, norm bias std = %f" % (i, alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i])
 
