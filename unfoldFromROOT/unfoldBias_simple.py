@@ -89,7 +89,7 @@ plotH2D(m.response_noeff.T(), "Particle-level bin", "Reconstructed-level bin", "
 #plotH1D(m.recoWithoutFakes, "Reconstructed "+varname, "Events", "Reconstructed-level distribution", "recoWithoutFakes_crossCheck.%s" % extension)
 
 # add migration uncertainty
-#uncUnfList = ["B", "B"]
+#uncUnfList = ["B", "C"]
 #for k in uncUnfList:
 #  m.addUnfoldingUncertainty(k, bkg[k], mig[k], eff[k])
 
