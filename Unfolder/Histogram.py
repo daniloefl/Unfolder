@@ -22,9 +22,13 @@ class H1D:
   Copy constructor
   '''
   def __init__(self, other):
-    if isinstance(other, ROOT.TH1D):
-      self.loadFromROOT(other)
-    elif isinstance(other, H1D):
+    try:
+      if isinstance(other, ROOT.TH1D):
+        self.loadFromROOT(other)
+        return
+    except:
+      pass
+    if isinstance(other, H1D):
       self.val   = copy.deepcopy(other.val)
       self.err   = copy.deepcopy(other.err)
       self.x     = copy.deepcopy(other.x)
@@ -249,9 +253,13 @@ class H2D:
   Copy constructor
   '''
   def __init__(self, other):
-    if isinstance(other, ROOT.TH2D):
-      self.loadFromROOT(other)
-    elif isinstance(other, H2D):
+    try:
+      if isinstance(other, ROOT.TH2D):
+        self.loadFromROOT(other)
+        return
+    except:
+      pass
+    if isinstance(other, H2D):
       self.val   = copy.deepcopy(other.val)
       self.err   = copy.deepcopy(other.err)
       self.x     = copy.deepcopy(other.x)
