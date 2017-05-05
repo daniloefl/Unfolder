@@ -50,7 +50,9 @@ tunfold_result = tunfold_mig/eff
 
 comparePlot([f_data, f_data - f_bkg, truth, tunfold_result], ["Data", "Data - bkg", "Particle-level", "TUnfold"], luminosity*1e-3, True, "fb/GeV", "plotTUnfold.png")
 '''
-def getTUnfolder(bkg, mig, eff, data, regMode = ROOT.TUnfold.kRegModeDerivative, normMode = ROOT.TUnfold.kEConstraintArea):
+def getTUnfolder(bkg, mig, eff, data, regMode = None, normMode = None):
+  if regMode == None: regMode = ROOT.TUnfold.kRegModeDerivative
+  if normMode == None: normMode = ROOT.TUnfold.kEConstraintArea
   tunfolder = ROOT.TUnfoldDensity(mig.T().toROOT("tunfold_mig"), ROOT.TUnfold.kHistMapOutputVert, regMode, normMode, ROOT.TUnfoldDensity.kDensityModeeNone)
   bkg_noerr = H1D(bkg)
   for k in range(0, len(bkg.err)):
