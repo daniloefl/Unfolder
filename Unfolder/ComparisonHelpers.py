@@ -1,5 +1,8 @@
 
-import ROOT
+try:
+  import ROOT
+except:
+  pass
 import array
 import numpy as np
 import matplotlib.pyplot as plt

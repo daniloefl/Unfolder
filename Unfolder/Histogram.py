@@ -9,7 +9,10 @@ import seaborn as sns
 import numpy as np
 import pymc3 as pm
 import matplotlib.cm as cm
-import ROOT
+try:
+  import ROOT
+except:
+  pass
 
 '''
 Class used to represent a 1D histogram with errors.

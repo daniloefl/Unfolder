@@ -26,19 +26,18 @@ pip install seaborn
 pip install pymc3
 ```
 
-After this, running the following should run a test unfolding (it generates
-the test model and saves it in a ROOT file, therefore one should have PyROOT installed for the test):
+After this, running the following should run a test unfolding:
 
 ```
-./unfoldFromROOT/generateHistograms.py
-./unfoldFromROOT/unfold_simple.py
+./toyModel/generateHistograms.py
+./toyModel/closureTest.py
 ```
 
 It might be necessary to add the Unfolder main directory in the ```PYTHONPATH```.
 One can also do a test on the statistical and systematic bias, by running:
 
 ```
-./unfoldFromROOT/unfoldUnfoldingSyst_simple.py
+./toyModel/testBias.py
 ```
 
 # Usage
