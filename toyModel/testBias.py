@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+# Unfolds using or not uncertaintis in FBU (see uncUnfList) for many values of
+# alpha with first derivative regulatisation and plots the bias as a function of alpha
+# The fb setting can be changed to use or not a biasa histogram for the regularisation
+
 import itertools
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -18,6 +22,14 @@ sns.set(context = "paper", style = "whitegrid", font_scale=2)
 
 varname = "observable"
 extension = "eps"
+
+# uncertainties
+uncUnfList = []
+#uncUnfList = ["B", "C"]
+
+# bias in regularisation?
+fb = 1.0
+
 
 # get histograms from file
 truth = {}
@@ -66,15 +78,14 @@ plotH2D(m.response.T(), "Particle-level bin", "Reconstructed-level bin", "Respon
 plotH2D(m.response_noeff.T(), "Particle-level bin", "Reconstructed-level bin", "Migration probabilities P(r|t)", "migrationMatrix.%s" % extension)
 
 # add migration uncertainty
-#uncUnfList = ["B", "C"]
-#for k in uncUnfList:
-#  m.addUnfoldingUncertainty(k, bkg[k], mig[k], eff[k])
+for k in uncUnfList:
+  m.addUnfoldingUncertainty(k, bkg[k], mig[k], eff[k])
 
 # try a curvature-based prior
 # first choose alpha using only a MAP estimate
 #m.setEntropyPrior()
 #m.setCurvaturePrior()
-m.setFirstDerivativePrior(1.0)
+m.setFirstDerivativePrior(fb)
 #m.setGaussianPrior()
 
 #m.setConstrainArea(True)
@@ -118,8 +129,8 @@ m.sample(100000)
 
 # plot marginal distributions
 m.plotMarginal("plotMarginal_pseudo.%s" % extension)
-for i in uncList:
-  m.plotNPMarginal(i, "plotNPMarginal_pseudo_%s.%s" % (i, extension))
+for i in uncUnfList:
+  m.plotNPUMarginal(i, "plotNPUMarginal_pseudo_%s.%s" % (i, extension))
 
 # plot unfolded spectrum
 m.plotUnfolded("plotUnfolded_pseudo.%s" % extension)
@@ -151,8 +162,8 @@ m.sample(100000)
 
 # plot marginal distributions
 m.plotMarginal("plotMarginal.%s" % extension)
-for i in uncList:
-  m.plotNPMarginal(i, "plotNPMarginal_%s.%s" % (i, extension))
+for i in uncUnfList:
+  m.plotNPUMarginal(i, "plotNPUMarginal_%s.%s" % (i, extension))
 
 m.plotUnfolded("plotUnfolded.%s" % extension)
 m.plotOnlyUnfolded(1.0, False, "", "plotOnlyUnfolded.%s" % extension)

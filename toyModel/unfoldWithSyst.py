@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# Unfolds using uncertainties in FBU, but with no regularisation
+
+
 import itertools
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -18,6 +21,13 @@ sns.set(context = "paper", style = "whitegrid", font_scale=2)
 
 varname = "observable"
 extension = "eps"
+
+# uncertainties
+#uncUnfList = []
+uncUnfList = ["B", "C"]
+
+# bias in regularisation?
+fb = 1.0
 
 # get histograms from file
 truth = {}
@@ -64,7 +74,6 @@ m.sample(100000)
 
 unf_orig = m.hunf
   
-uncUnfList = ["B", "C"]
 for k in uncUnfList:
   m.addUnfoldingUncertainty(k, bkg[k], mig[k], eff[k])
 
