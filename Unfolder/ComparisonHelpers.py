@@ -205,7 +205,7 @@ def getBiasFromToys(unfoldFunction, alpha, N, bkg, mig, eff, truth):
   bias_std = np.std(fitted, axis = 0, ddof = 1)
   bias_norm_mean = np.mean(bias_norm)
   bias_norm_std = np.std(bias_norm, ddof = 1)
-  bias_binsum = np.mean(bias)
+  bias_binsum = np.mean(np.abs(bias))
   bias_std_binsum = np.mean(bias_std)
   bias_chi2 = np.mean(np.power(bias/bias_std, 2))
   #print "bias mean = ", np.mean(fitted, axis = 0), ", bias std = ", np.std(fitted, axis = 0)

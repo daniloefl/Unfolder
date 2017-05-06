@@ -282,12 +282,12 @@ class Unfolder:
     with self.model:
       res = pm.find_MAP(disp = False)
       bias_syst = np.mean(res["Truth"] - truth.val)
-    bias = np.mean(np.abs(fitted), axis = 0)
+    bias = np.mean(fitted, axis = 0)
     bias_std = np.std(fitted, axis = 0, ddof = 1)
     bias_norm_mean = np.mean(bias_norm)
     bias_norm_std = np.std(bias_norm, ddof = 1)
     #print "getBiasFromMAP with alpha = ", self.var_alpha.get_value(), " N = ", N, ", mean, std = ", bias, bias_std
-    bias_binsum = np.mean(bias)
+    bias_binsum = np.mean(np.abs(bias))
     bias_std_binsum = np.mean(bias_std)
     bias_chi2 = np.mean(np.power(bias/bias_std, 2))
     return [bias_binsum, bias_std_binsum, bias_chi2, bias_norm_mean, bias_norm_std, bias_syst]
