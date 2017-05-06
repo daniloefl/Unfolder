@@ -476,12 +476,14 @@ class H2D:
     return h
 
 def plotH2D(h, xlabel = "x", ylabel = "y", title = "Migration matrix M(t, r)", fname = "plotH2D.png"):
-  fig = plt.figure(figsize=(15, 15))
+  fig = plt.figure(figsize=(h.shape[1], 0.8*h.shape[0]))
   if isinstance(h, H2D):
-    sns.heatmap(h.val, cmap=cm.RdYlGn, annot = True, linewidths=.5, square = True, annot_kws={"size": 20})
+    with plt.rc_context(dict(sns.axes_style("whitegrid"),**sns.plotting_context("paper", font_scale=3))):
+      sns.heatmap(h.val, cmap="YlGnBu", cbar = False, annot = True, linewidths=.5, fmt='3.2f', square = True, annot_kws={"size": 20})
   else:
-    sns.heatmap(h, cmap=cm.RdYlGn, annot = True, linewidths=.5, square = True, annot_kws={"size": 20})
-  plt.title(title)
+    with plt.rc_context(dict(sns.axes_style("whitegrid"),**sns.plotting_context("paper", font_scale=3))):
+      sns.heatmap(h, cmap="YlGnBu", cbar = False, annot = True, linewidths=.5, fmt = '3.2f', square = True, annot_kws={"size": 20})
+  plt.title(title, size = 20)
   plt.ylabel(ylabel)
   plt.xlabel(xlabel)
   plt.tight_layout()
@@ -489,16 +491,18 @@ def plotH2D(h, xlabel = "x", ylabel = "y", title = "Migration matrix M(t, r)", f
   plt.close()
 
 def plotH2DWithText(h, x, xlabel = "x", ylabel = "y", title = "Migration matrix M(t, r)", fname = "plotH2D.png"):
-  fig = plt.figure(figsize=(35, 35))
+  fig = plt.figure(figsize=(h.shape[1], h.shape[0]))
   if isinstance(h, H2D):
-    sns.heatmap(h.val, cmap="YlGnBu", annot = True, linewidths=.5, square = True, annot_kws={"size": 20}, xticklabels = x, yticklabels = x, fmt = ".2f")
+    with plt.rc_context(dict(sns.axes_style("whitegrid"),**sns.plotting_context("paper", font_scale=3))):
+      sns.heatmap(h.val, cmap="YlGnBu", annot = True, linewidths=.5, square = True, annot_kws={"size": 20}, xticklabels = x, yticklabels = x, fmt = "3.2f")
     plt.xticks(rotation = 90)
     plt.yticks(rotation = 0)
   else:
-    sns.heatmap(h, cmap="YlGnBu", annot = True, linewidths=.5, square = True, annot_kws={"size": 20}, xticklabels = x, yticklabels = x, fmt = ".2f")
+    with plt.rc_context(dict(sns.axes_style("whitegrid"),**sns.plotting_context("paper", font_scale=3))):
+      sns.heatmap(h, cmap="YlGnBu", annot = True, linewidths=.5, square = True, annot_kws={"size": 20}, xticklabels = x, yticklabels = x, fmt = "3.2f")
     plt.xticks(rotation = 90)
     plt.yticks(rotation = 0)
-  plt.title(title)
+  plt.title(title, size = 20)
   plt.ylabel(ylabel)
   plt.xlabel(xlabel)
   plt.tight_layout()
