@@ -13,12 +13,12 @@ def generateHistograms(fname = "histograms.pkl"):
   w = 1.0/10.0
 
   # number of truth bins
-  xt = np.arange(0+0.5, 5, 0.5)
+  xt = np.arange(0+0.5*0.5, 5, 0.5)
   Nt = len(xt)
   xt_err = np.ones(Nt)*0.5*0.5
 
   # number of reco bins
-  xf = np.arange(0+0.125, 5, 0.125)
+  xf = np.arange(0+0.125*0.5, 5, 0.125)
   Nr = len(xf)
   xf_err = np.ones(Nr)*0.125*0.5
 
