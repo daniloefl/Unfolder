@@ -200,7 +200,7 @@ def getBiasFromToys(unfoldFunction, alpha, N, bkg, mig, eff, truth):
     #  plt.close()
   print
   # systematic bias
-  bias_syst = np.mean(unfoldFunction(alpha, mig.project('y') + bkg).val - truth.val)
+  bias_syst = np.mean(np.abs(unfoldFunction(alpha, mig.project('y') + bkg).val - truth.val))
   bias = np.mean(np.abs(fitted), axis = 0)
   bias_std = np.std(fitted, axis = 0, ddof = 1)
   bias_norm_mean = np.mean(bias_norm)
@@ -254,7 +254,7 @@ def scanRegParameter(unfoldFunction, bkg, mig, eff, truth, N = 1000, rangeAlpha 
   plt_bias_syst.err = np.zeros(len(rangeAlpha))
   plt_bias_syst.x = rangeAlpha
   plt_bias_syst.x_err = np.zeros(len(rangeAlpha))
-  plotH1DLines({plt_bias: r"$E_{\mathrm{bins}}[|E_{\mathrm{toys}}[\mathrm{bias}]|]$", plt_bias_e: r"$E_{\mathrm{bins}}[\sqrt{\mathrm{Var}_{\mathrm{toys}}[\mathrm{bias}]}]$", plt_bias_syst: "Only syst. shift"}, "Regularization parameter", "Bias", "", fname)
+  plotH1DLines({plt_bias: r"$E_{\mathrm{bins}}[|E_{\mathrm{toys}}[\mathrm{bias}]|]$", plt_bias_e: r"$E_{\mathrm{bins}}[\sqrt{\mathrm{Var}_{\mathrm{toys}}[\mathrm{bias}]}]$", plt_bias_syst: r"$E_{\mathrm{bins}}[|\mathrm{only syst. bias}|]$"}, "Regularization parameter", "Bias", "", fname)
   plt_bias_norm = H1D(bias)
   plt_bias_norm.val = bias_norm
   plt_bias_norm.err = np.power(bias_norm_std, 2)
