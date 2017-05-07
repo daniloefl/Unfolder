@@ -281,13 +281,13 @@ class Unfolder:
     self.setData(mig.project('y') + bkg)
     with self.model:
       res = pm.find_MAP(disp = False)
-      bias_syst = np.mean(np.abs(res["Truth"] - truth.val))
+      bias_syst = np.mean(res["Truth"] - truth.val)
     bias = np.mean(fitted, axis = 0)
     bias_std = np.std(fitted, axis = 0, ddof = 1)
     bias_norm_mean = np.mean(bias_norm)
     bias_norm_std = np.std(bias_norm, ddof = 1)
     #print "getBiasFromMAP with alpha = ", self.var_alpha.get_value(), " N = ", N, ", mean, std = ", bias, bias_std
-    bias_binsum = np.mean(np.abs(bias))
+    bias_binsum = np.mean(bias)
     bias_std_binsum = np.mean(bias_std)
     bias_chi2 = np.mean(np.power(bias/bias_std, 2))
     return [bias_binsum, bias_std_binsum, bias_chi2, bias_norm_mean, bias_norm_std, bias_syst]
@@ -335,7 +335,7 @@ class Unfolder:
     plt_bias_syst.err = np.zeros(len(rangeAlpha))
     plt_bias_syst.x = rangeAlpha
     plt_bias_syst.x_err = np.zeros(len(rangeAlpha))
-    plotH1DLines({plt_bias: r"$E_{\mathrm{bins}}[|E_{\mathrm{toys}}[\mathrm{bias}]|]$", plt_bias_e: r"$E_{\mathrm{bins}}[\sqrt{\mathrm{Var}_{\mathrm{toys}}[\mathrm{bias}]}]$", plt_bias_syst: r"$E_{\mathrm{bins}}[|\mathrm{only \;\; syst. \;\; bias}|]$"}, r"$\alpha$", "Bias", "", fname)
+    plotH1DLines({plt_bias: r"$E_{\mathrm{bins}}[E_{\mathrm{toys}}[\mathrm{bias}]]$", plt_bias_e: r"$E_{\mathrm{bins}}[\sqrt{\mathrm{Var}_{\mathrm{toys}}[\mathrm{bias}]}]$", plt_bias_syst: r"$E_{\mathrm{bins}}[\mathrm{only \;\; syst. \;\; bias}]$"}, r"$\alpha$", "Bias", "", fname)
     plt_bias_norm = H1D(bias)
     plt_bias_norm.val = bias_norm
     plt_bias_norm.err = np.zeros(len(rangeAlpha))

@@ -25,7 +25,7 @@ extension = "eps"
 
 # uncertainties
 uncUnfList = []
-#uncUnfList = ["B", "C"]
+uncUnfList = ["B", "C"]
 
 # bias in regularisation?
 fb = 1.0
