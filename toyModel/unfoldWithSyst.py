@@ -46,7 +46,7 @@ for i in recoWithFakes:
   recoWithoutFakes[i] = mig[i].project("y")
 
   # plot migration matrix as it will be used next for unfolding
-  plotH2D(mig[i], "Reconstructed-level bin", "Particle-level bin", "Number of events for each (reco, truth) configuration", "mig_%s.%s" % (i,extension))
+  plotH2D(mig[i], "Reconstructed-level bin", "Particle-level bin", "Number of events for each (reco, truth) configuration", "mig_%s.%s" % (i,extension), fmt ="")
 
   # plot 1D histograms for cross checks
   plotH1D(bkg[i], "Reconstructed "+varname, "Events", "Background", "bkg_%s.%s" % (i, extension))
@@ -57,9 +57,9 @@ for i in recoWithFakes:
   plotH1D(eff[i], "Particle-level "+varname, "Efficiency", "Efficiency of particle-level selection", "eff_%s.%s" % (i,extension))
 
 # generate perfect fake data
-data = recoWithFakes["A"]
+#data = recoWithFakes["A"]
 #data = recoWithFakes["B"]
-#data = recoWithFakes["C"]
+data = recoWithFakes["C"]
 
 # Create unfolding class
 m = Unfolder(bkg["A"], mig["A"], eff["A"], truth["A"])
@@ -78,9 +78,9 @@ for k in uncUnfList:
   m.addUnfoldingUncertainty(k, bkg[k], mig[k], eff[k])
 
 # plot response matrix P(r|t)*eff(r)
-plotH2D(m.response, "Reconstructed-level bin", "Particle-level bin", "Transpose of response matrix P(r|t)*eff(t)", "responseMatrix.%s" % extension)
+plotH2D(m.response, "Reconstructed-level bin", "Particle-level bin", "Transpose of response matrix P(r|t)*eff(t)", "responseMatrix.%s" % extension, vmin = 0, vmax = 1.2*np.amax(eff["A"].val))
 # and also the migration probabilities matrix
-plotH2D(m.response_noeff, "Reconstructed-level bin", "Particle-level bin", "Transpose of migration probabilities P(r|t)", "migrationMatrix.%s" % extension)
+plotH2D(m.response_noeff, "Reconstructed-level bin", "Particle-level bin", "Transpose of migration probabilities P(r|t)", "migrationMatrix.%s" % extension, vmin = 0, vmax = 1)
 
 m.run(data)
 m.setAlpha(0.0)

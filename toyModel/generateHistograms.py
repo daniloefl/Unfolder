@@ -18,9 +18,9 @@ def generateHistograms(fname = "histograms.pkl"):
   xt_err = np.ones(Nt)*0.5*0.5
 
   # number of reco bins
-  xf = np.arange(0+0.125*0.5, 5, 0.125)
+  xf = np.arange(0+0.25*0.5, 5, 0.25)
   Nr = len(xf)
-  xf_err = np.ones(Nr)*0.125*0.5
+  xf_err = np.ones(Nr)*0.25*0.5
 
   e = {}
   b = {}

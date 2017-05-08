@@ -475,20 +475,25 @@ class H2D:
     h.shape = h.val.shape
     return h
 
-def plotH2D(h, xlabel = "x", ylabel = "y", title = "Migration matrix M(t, r)", fname = "plotH2D.png"):
+def plotH2D(h, xlabel = "x", ylabel = "y", title = "Migration matrix M(t, r)", fname = "plotH2D.png", vmin = None, vmax = None, fmt = "3.2f"):
   if h.shape[1] > h.shape[0]:
-    fig = plt.figure(figsize=(0.8*h.shape[1], h.shape[0]))
+    fig = plt.figure(figsize=(0.8*h.shape[1], 1.05*h.shape[0]))
   elif h.shape[1] == h.shape[0]:
-    fig = plt.figure(figsize=(h.shape[1], h.shape[0]))
+    fig = plt.figure(figsize=(h.shape[1], 1.05*h.shape[0]))
   else:
-    fig = plt.figure(figsize=(h.shape[1], 0.8*h.shape[0]))
+    fig = plt.figure(figsize=(h.shape[1], 1.05*0.8*h.shape[0]))
 
+  annot = False
+  if fmt != "":
+    annot = True
   if isinstance(h, H2D):
     with plt.rc_context(dict(sns.axes_style("whitegrid"),**sns.plotting_context("paper", font_scale=2.5))):
-      sns.heatmap(h.val, cmap="YlGnBu", cbar = False, annot = True, linewidths=.5, fmt='3.2f', square = True, annot_kws={"size": 16})
+      cax = sns.heatmap(h.val, cmap="YlGnBu", cbar = True, annot = annot, linewidths=.5, fmt=fmt, square = True, annot_kws={"size": 16}, vmin = vmin, vmax = vmax)
+      cax.invert_yaxis()
   else:
     with plt.rc_context(dict(sns.axes_style("whitegrid"),**sns.plotting_context("paper", font_scale=2.5))):
-      sns.heatmap(h, cmap="YlGnBu", cbar = False, annot = True, linewidths=.5, fmt = '3.2f', square = True, annot_kws={"size": 16})
+      cax = sns.heatmap(h, cmap="YlGnBu", cbar = True, annot = annot, linewidths=.5, fmt = fmt, square = True, annot_kws={"size": 16}, vmin = vmin, vmax = vmax)
+      cax.invert_yaxis()
   plt.title(title, size = 16)
   plt.ylabel(ylabel)
   plt.xlabel(xlabel)
