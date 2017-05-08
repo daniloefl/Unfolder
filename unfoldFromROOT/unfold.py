@@ -25,7 +25,7 @@ truth, recoWithFakes, bkg, mig, eff, nrt = getHistograms("out_ttallhad_psrw_Syst
 recoWithoutFakes = mig.project("y")
 
 # plot migration matrix as it will be used next for unfolding
-plotH2D(mig.T(), "Particle-level bin", "Reconstructed-level bin", "Number of events for each (reco, truth) configuration", "mig.%s" % extension)
+plotH2D(mig, "Reconstructed-level bin", "Particle-level bin", "Number of events for each (reco, truth) configuration", "mig.%s" % extension)
 
 # plot 1D histograms for cross checks
 plotH1D(bkg, "Reconstructed "+varname, "Events", "Background", "bkg.%s" % extension)
@@ -89,13 +89,13 @@ for k in uncList:
   
 
 # plot response matrix P(r|t)*eff(r)
-plotH2D(m.response.T(), "Particle-level bin", "Reconstructed-level bin", "Response matrix P(r|t)*eff(t)", "responseMatrix.%s" % extension)
+plotH2D(m.response, "Reconstructed-level bin", "Particle-level bin", "Transpose of response matrix P(r|t)*eff(t)", "responseMatrix.%s" % extension)
 # and also the migration probabilities matrix
-plotH2D(m.response_noeff.T(), "Particle-level bin", "Reconstructed-level bin", "Migration probabilities P(r|t)", "migrationMatrix.%s" % extension)
+plotH2D(m.response_noeff, "Reconstructed-level bin", "Particle-level bin", "Transpose of migration probabilities P(r|t)", "migrationMatrix.%s" % extension)
 
 plotH1D(m.truth, "Particle-level "+varname, "Events", "Particle-level distribution estimated from migrations", "truth_crossCheck.%s" % extension)
 plotH1D(m.eff, "Particle-level "+varname, "Efficiency", "Efficiency of particle-level selection in unfolder", "eff_crossCheck.%s" % extension)
-plotH2D(m.mig.T(), "Particle-level bin", "Reconstructed-level bin", "Number of events for each (reco, truth) configuration", "mig_crossCheck.%s" % extension)
+plotH2D(m.mig, "Reconstructed-level bin", "Particle-level bin", "Number of events for each (reco, truth) configuration", "mig_crossCheck.%s" % extension)
 
 plotH1D(m.bkg, "Reconstructed "+varname, "Events", "Background (including fakes)", "bkg_crossCheck.%s" % extension)
 plotH1D(m.recoWithoutFakes, "Reconstructed "+varname, "Events", "Reconstructed-level distribution", "recoWithoutFakes_crossCheck.%s" % extension)
@@ -119,19 +119,6 @@ m.plotSkewness("skewPlot.%s" % extension)
 m.plotKurtosis("kurtosisPlot.%s" % extension)
 
 m.plotNP("plotNP.%s" % extension)
-
-
-#print "Mean of unfolded data:"
-#print np.mean(m.trace.Truth, axis = 0)
-#print "Sqrt of variance of unfolded data:"
-#print np.std(m.trace.Truth, axis = 0)
-#print "Skewness of unfolded data:"
-#print scipy.stats.skew(m.trace.Truth, bias = False)
-#print "Kurtosis of unfolded data:"
-#print scipy.stats.kurtosis(m.trace.Truth, bias = False)
-#print "Print out of the covariance matrix follows:"
-#print np.cov(m.trace.Truth, rowvar = False)
-
 
 # plot unfolded spectrum
 m.plotUnfolded("plotUnfolded.%s" % extension)
