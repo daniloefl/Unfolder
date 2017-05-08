@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# This only dumps the model histograms stored in histograms.pkl
+
 import itertools
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -47,16 +49,8 @@ bkg_noerr = H1D(bkg)
 for k in range(0, len(bkg_noerr.err)):
   bkg_noerr.err[k] = 0
 
-# generate fake data
-data = recoWithFakes
-
 # Create unfolding class
 m = Unfolder(bkg, mig, eff, truth)
-m.setUniformPrior()
-#m.setGaussianPrior()
-#m.setCurvaturePrior()
-#m.setFirstDerivativePrior()
-
 
 # plot response matrix P(r|t)*eff(r)
 plotH2D(m.response, "Reconstructed-level bin", "Particle-level bin", "Transpose of response matrix P(r|t)*eff(t)", "responseMatrix.%s" % extension)
@@ -69,25 +63,4 @@ plotH2D(m.mig, "Reconstructed-level bin", "Particle-level bin", "Number of event
 
 plotH1D(m.bkg, "Reconstructed "+varname, "Events", "Background (including fakes)", "bkg_crossCheck.%s" % extension)
 plotH1D(m.recoWithoutFakes, "Reconstructed "+varname, "Events", "Reconstructed-level distribution", "recoWithoutFakes_crossCheck.%s" % extension)
-
-m.run(data)
-m.setAlpha(1.0)
-m.sample(100000)
-
-# plot marginal distributions
-m.plotMarginal("plotMarginal.%s" % extension)
-
-# plot correlations
-#m.plotPairs("pairPlot.%s" % extension) # takes forever
-m.plotCov("covPlot.%s" % extension)
-m.plotCorr("corrPlot.%s" % extension)
-m.plotCorrWithNP("corrPlotWithNP.%s" % extension)
-m.plotSkewness("skewPlot.%s" % extension)
-m.plotKurtosis("kurtosisPlot.%s" % extension)
-
-m.plotNP("plotNP.%s" % extension)
-
-# plot unfolded spectrum
-m.plotUnfolded("plotUnfolded.%s" % extension)
-m.plotOnlyUnfolded(1.0, False, "", "plotOnlyUnfolded.%s" % extension)
 

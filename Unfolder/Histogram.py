@@ -476,7 +476,11 @@ class H2D:
     return h
 
 def plotH2D(h, xlabel = "x", ylabel = "y", title = "Migration matrix M(t, r)", fname = "plotH2D.png"):
-  fig = plt.figure(figsize=(h.shape[1], 0.8*h.shape[0]))
+  if h.shape[1] > h.shape[0]:
+    fig = plt.figure(figsize=(0.8*h.shape[1], h.shape[0]))
+  else:
+    fig = plt.figure(figsize=(h.shape[1], 0.8*h.shape[0]))
+
   if isinstance(h, H2D):
     with plt.rc_context(dict(sns.axes_style("whitegrid"),**sns.plotting_context("paper", font_scale=3))):
       sns.heatmap(h.val, cmap="YlGnBu", cbar = False, annot = True, linewidths=.5, fmt='3.2f', square = True, annot_kws={"size": 20})
