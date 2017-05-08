@@ -36,7 +36,7 @@ for i in recoWithFakes:
   recoWithoutFakes[i] = mig[i].project("y")
 
   # plot migration matrix as it will be used next for unfolding
-  plotH2D(mig[i].T(), "Particle-level bin", "Reconstructed-level bin", "Number of events for each (reco, truth) configuration", "mig_%s.%s" % (i,extension))
+  plotH2D(mig[i], "Reconstructed-level bin", "Particle-level bin", "Number of events for each (reco, truth) configuration", "mig_%s.%s" % (i,extension))
 
   # plot 1D histograms for cross checks
   plotH1D(bkg[i], "Reconstructed "+varname, "Events", "Background", "bkg_%s.%s" % (i, extension))
@@ -80,9 +80,9 @@ for k in uncUnfList:
   m.addUnfoldingUncertainty(k, bkg[k], mig[k], eff[k])
 
 # plot response matrix P(r|t)*eff(r)
-plotH2D(m.response.T(), "Particle-level bin", "Reconstructed-level bin", "Response matrix P(r|t)*eff(t)", "responseMatrix.%s" % extension)
+plotH2D(m.response, "Reconstructed-level bin", "Particle-level bin", "Transpose of response matrix P(r|t)*eff(t)", "responseMatrix.%s" % extension)
 # and also the migration probabilities matrix
-plotH2D(m.response_noeff.T(), "Particle-level bin", "Reconstructed-level bin", "Migration probabilities P(r|t)", "migrationMatrix.%s" % extension)
+plotH2D(m.response_noeff, "Reconstructed-level bin", "Particle-level bin", "Transpose of migration probabilities P(r|t)", "migrationMatrix.%s" % extension)
 
 m.run(data)
 m.setAlpha(0.0)

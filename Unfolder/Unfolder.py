@@ -487,7 +487,7 @@ class Unfolder:
   '''
   def plotCorr(self, fname):
     fig = plt.figure(figsize=(10, 10))
-    plotH2D(np.corrcoef(self.trace.Truth, rowvar = 0), "Unfolded bin", "Unfolded bin", "Pearson correlation coefficients of unfolded bins", fname)
+    plotH2D(np.corrcoef(self.trace.Truth, rowvar = 0), "Unfolded bin", "Unfolded bin", "Pearson correlation of unfolded bins", fname)
 
   '''
   Plot the Pearson correlation coefficients including the NPs.
@@ -501,7 +501,7 @@ class Unfolder:
     for i in range(0, len(self.unf_systematics)):
       tmp[self.Nt+len(self.systematics)+i, :] = self.trace['tu_'+self.unf_systematics[i]]
     tmplabel = ["Unfolded bin %d" % i for i in range(0, self.Nt)] + self.systematics + self.unf_systematics
-    plotH2DWithText(np.corrcoef(tmp, rowvar = 1), tmplabel, "Variable", "Variable", "Pearson correlation coefficients of posterior", fname)
+    plotH2DWithText(np.corrcoef(tmp, rowvar = 1), tmplabel, "Variable", "Variable", "Pearson correlation of posterior", fname)
 
   '''
   Plot skewness.

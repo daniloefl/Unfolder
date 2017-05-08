@@ -41,7 +41,7 @@ for i in recoWithFakes:
   recoWithoutFakes[i] = mig[i].project("y")
 
   # plot migration matrix as it will be used next for unfolding
-  plotH2D(mig[i].T(), "Particle-level bin", "Reconstructed-level bin", "Number of events for each (reco, truth) configuration", "mig_%s.%s" % (i,extension))
+  plotH2D(mig[i], "Reconstructed-level bin", "Particle-level bin", "Number of events for each (reco, truth) configuration", "mig_%s.%s" % (i,extension))
 
   # plot 1D histograms for cross checks
   plotH1D(bkg[i], "Reconstructed "+varname, "Events", "Background", "bkg_%s.%s" % (i, extension))
