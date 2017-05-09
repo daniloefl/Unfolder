@@ -26,7 +26,11 @@ normMode = 0
 #ROOT.TUnfold.kEConstraintArea
 
 # bias in regularisation?
-fb = 1.0
+fb = 0.0
+import sys
+if len(sys.argv) > 1:
+  if "bias" in sys.argv:
+    fb = 1.0
 
 # get histograms from file
 truth = {}

@@ -10,7 +10,7 @@ Generate unfolding factors.
 '''
 def generateHistograms(fname = "histograms.pkl"):
   Nev = 500000
-  w = 1.0/10.0
+  w = 1.0/10.0 # generate 10 times more events than we expect in data
 
   # number of truth bins
   xt = np.arange(0+0.5*0.5, 5, 0.5)
@@ -27,8 +27,8 @@ def generateHistograms(fname = "histograms.pkl"):
   a = {}
   b = {}
   e["A"] = [0.20 for x in range(0, Nt)]
-  e["B"] = [0.21 for x in range(0, Nt)]
-  e["C"] = [0.22 for x in range(0, Nt)]
+  e["B"] = [0.25 for x in range(0, Nt)]
+  e["C"] = [0.15 for x in range(0, Nt)]
 
   a["A"] = 0.20
   a["B"] = 0.25
@@ -44,9 +44,9 @@ def generateHistograms(fname = "histograms.pkl"):
   p["l"]["A"] = 1/0.5
   p["l"]["B"] = 1/0.8
   p["l"]["C"] = 1/0.3
-  p["m"]["A"] = 4.0
-  p["m"]["B"] = 4.4
-  p["m"]["C"] = 3.8
+  p["m"]["A"] = 2.0
+  p["m"]["B"] = 2.4
+  p["m"]["C"] = 1.8
   p["s"]["A"] = 1.0
   p["s"]["B"] = 1.5
   p["s"]["C"] = 1.2
@@ -79,7 +79,7 @@ def generateHistograms(fname = "histograms.pkl"):
 
     for k in range(0, Nev):
       O = 0
-      if np.random.uniform() > 0.20:
+      if np.random.uniform() > 0.40:
         O = np.random.exponential(p["l"][direc])
       else:
         O = np.random.normal(p["m"][direc], p["s"][direc])

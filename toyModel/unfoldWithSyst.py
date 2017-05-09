@@ -23,11 +23,27 @@ varname = "observable"
 extension = "eps"
 
 # uncertainties
-#uncUnfList = []
-uncUnfList = ["B", "C"]
+uncUnfList = []
 
 # bias in regularisation?
-fb = 1.0
+fb = 0.0
+
+data_input = "A"
+
+import sys
+if len(sys.argv) > 1:
+  if "withSyst" in sys.argv:
+    uncUnfList = ["B", "C"]
+  if "bias" in sys.argv:
+    fb = 1.0
+
+  if "inputA" in sys.argv:
+    data_input = "A"
+  if "inputB" in sys.argv:
+    data_input = "B"
+  if "inputC" in sys.argv:
+    data_input = "C"
+
 
 # get histograms from file
 truth = {}
@@ -57,9 +73,10 @@ for i in recoWithFakes:
   plotH1D(eff[i], "Particle-level "+varname, "Efficiency", "Efficiency of particle-level selection", "eff_%s.%s" % (i,extension))
 
 # generate perfect fake data
-#data = recoWithFakes["A"]
+import sys
+data = recoWithFakes[data_input]
 #data = recoWithFakes["B"]
-data = recoWithFakes["C"]
+#data = recoWithFakes["C"]
 
 # Create unfolding class
 m = Unfolder(bkg["A"], mig["A"], eff["A"], truth["A"])

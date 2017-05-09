@@ -23,12 +23,17 @@ sns.set(context = "paper", style = "whitegrid", font_scale=2)
 varname = "observable"
 extension = "eps"
 
+# bias in regularisation?
+fb = 0.0
+
 # uncertainties
 uncUnfList = []
-uncUnfList = ["B", "C"]
-
-# bias in regularisation?
-fb = 1.0
+import sys
+if len(sys.argv) > 1:
+  if "withSyst" in sys.argv:
+    uncUnfList = ["B", "C"]
+  if "bias" in sys.argv:
+    fb = 1.0
 
 
 # get histograms from file
