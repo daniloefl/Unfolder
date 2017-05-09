@@ -335,7 +335,7 @@ class Unfolder:
     plt_bias_syst.err = np.zeros(len(rangeAlpha))
     plt_bias_syst.x = rangeAlpha
     plt_bias_syst.x_err = np.zeros(len(rangeAlpha))
-    plotH1DLines({plt_bias: r"$E_{\mathrm{bins}}[|E_{\mathrm{toys}}[\mathrm{bias}]|]$", plt_bias_e: r"$E_{\mathrm{bins}}[\sqrt{\mathrm{Var}_{\mathrm{toys}}[\mathrm{bias}]}]$", plt_bias_syst: r"$E_{\mathrm{bins}}[|\mathrm{only \;\; syst. \;\; bias}|]$"}, r"$\alpha$", "Bias", "", fname)
+    plotH1DLines({r"$E_{\mathrm{bins}}[|E_{\mathrm{toys}}[\mathrm{bias}]|]$": plt_bias, r"$E_{\mathrm{bins}}[\sqrt{\mathrm{Var}_{\mathrm{toys}}[\mathrm{bias}]}]$": plt_bias_e, r"$E_{\mathrm{bins}}[|\mathrm{only \;\; syst. \;\; bias}|]$": plt_bias_syst}, r"$\alpha$", "Bias", "", fname)
     plt_bias_norm = H1D(bias)
     plt_bias_norm.val = bias_norm
     plt_bias_norm.err = np.zeros(len(rangeAlpha))
@@ -346,7 +346,7 @@ class Unfolder:
     plt_bias_norm_e.err = np.zeros(len(rangeAlpha))
     plt_bias_norm_e.x = rangeAlpha
     plt_bias_norm_e.x_err = np.zeros(len(rangeAlpha))
-    plotH1DLines({plt_bias_norm: r"$E_{\mathrm{toys}}[\mathrm{norm. \;\; bias}]$", plt_bias_norm_e: "$\sqrt{\mathrm{Var}_{\mathrm{toys}}[\mathrm{norm. \;\; bias}]}$"}, r"$\alpha$", "Normalisation bias", "", fname_norm)
+    plotH1DLines({r"$E_{\mathrm{toys}}[\mathrm{norm. \;\; bias}]$": plt_bias_norm, r"$\sqrt{\mathrm{Var}_{\mathrm{toys}}[\mathrm{norm. \;\; bias}]}$": plt_bias_norm_e}, r"$\alpha$", "Normalisation bias", "", fname_norm)
     plt_bias_chi2 = H1D(bias_chi2)
     plt_bias_chi2.val = bias_chi2
     plt_bias_chi2.err = np.ones(len(rangeAlpha))*np.sqrt(float(len(self.truth.val))/float(N)) # error in chi^2 considering errors in the mean of std/sqrt(N)
@@ -355,7 +355,7 @@ class Unfolder:
     plt_cte = H1D(plt_bias_chi2)
     plt_cte.val = 0.5*np.ones(len(rangeAlpha))
     plt_cte.err = np.zeros(len(rangeAlpha))
-    plotH1DLines({plt_bias_chi2: r"$E_{\mathrm{bins}}[E_{\mathrm{toys}}[\mathrm{bias}]^2/\mathrm{Var}_{\mathrm{toys}}[\mathrm{bias}]]$", plt_cte: "0.5"}, r"$\alpha$", r"Bias $\mathrm{mean}^2/\mathrm{variance}$", "", fname_chi2)
+    plotH1DLines({r"$E_{\mathrm{bins}}[E_{\mathrm{toys}}[\mathrm{bias}]^2/\mathrm{Var}_{\mathrm{toys}}[\mathrm{bias}]]$": plt_bias_chi2, "0.5": plt_cte}, r"$\alpha$", r"Bias $\mathrm{mean}^2/\mathrm{variance}$", "", fname_chi2)
     self.setAlpha(bkp_alpha)
     return [bestAlpha, bestChi2, bias[bestI], bias_std[bestI], bias_norm[bestI], bias_norm_std[bestI]]
     
