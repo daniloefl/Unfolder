@@ -83,10 +83,11 @@ m = Unfolder(bkg["A"], mig["A"], eff["A"], truth["A"])
 m.setUniformPrior()
 #m.setGaussianPrior()
 #m.setCurvaturePrior()
-#m.setFirstDerivativePrior()
+if fb > 0:
+  m.setFirstDerivativePrior(fb)
+  m.setAlpha(0.1) # FIXME
 
 m.run(data)
-m.setAlpha(0.0)
 m.sample(100000)
 
 unf_orig = m.hunf
@@ -124,5 +125,5 @@ m.plotNPU("plotNPU.%s" % extension)
 m.plotUnfolded("plotUnfolded.%s" % extension)
 m.plotOnlyUnfolded(1.0, False, "", "plotOnlyUnfolded.%s" % extension)
 
-comparePlot([truth["A"], truth["B"], truth["C"], m.hunf, unf_orig], ["Truth A", "Truth B", "Truth C", "FBU with systematic uncertainties", "FBU no systematic uncertainties"], 1.0, False, "", "compareMethods.%s" % extension)
+comparePlot([truth[data_input], m.hunf, unf_orig], ["Truth %s" % data_input, "FBU w/ syst.", "FBU"], 1.0, False, "", "compareMethods.%s" % extension)
 
