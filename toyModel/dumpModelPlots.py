@@ -42,7 +42,7 @@ for i in recoWithFakes:
   # plot 1D histograms for cross checks
   plotH1D(bkg[i], "Reconstructed "+varname, "Events", "Background", "bkg_%s.%s" % (i, extension))
 
-  plotH1D({"Original truth": truthi[i], "Projected": mig[i].project("x")/eff[i]}, "Particle-level "+varname, "Events", "Particle-level distribution", "truth_project.%s" % extension)
+  plotH1D({"Original truth": truth[i], "Projected": mig[i].project("x")/eff[i]}, "Particle-level "+varname, "Events", "Particle-level distribution", "truth_project.%s" % extension)
   plotH1D({"Original truth - projected": truth[i] - mig[i].project("x")/eff[i]}, "Particle-level "+varname, "Events", "Particle-level distribution", "truth_project_diff.%s" % extension)
 
   plotH1D(truth[i], "Particle-level "+varname, "Events", "Particle-level distribution", "truth_%s.%s" % (i, extension))
