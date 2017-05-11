@@ -58,7 +58,7 @@ for i in recoWithFakes:
 m = Unfolder(bkg["A"], mig["A"], eff["A"], truth["A"])
 
 # plot response matrix P(r|t)*eff(r)
-plotH2D(m.response, "Reconstructed-level bin", "Particle-level bin", "Transpose of response matrix P(r|t)*eff(t)", "responseMatrix.%s" % extension, 0, np.amax(eff.val)*1.2)
+plotH2D(m.response, "Reconstructed-level bin", "Particle-level bin", "Transpose of response matrix P(r|t)*eff(t)", "responseMatrix.%s" % extension, 0, np.amax(eff["A"].val)*1.2)
 # and also the migration probabilities matrix
 plotH2D(m.response_noeff, "Reconstructed-level bin", "Particle-level bin", "Transpose of migration probabilities P(r|t)", "migrationMatrix.%s" % extension, 0, 1)
 

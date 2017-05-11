@@ -81,7 +81,7 @@ for i in ["A", "B", "C"]:
   bestAlphaBiasStd[i] = -1
   bestAlphaNormBias[i] = -1
   bestAlphaNormBiasStd[i] = -1
-  alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i] = scanRegParameter(DAgostiniForRegularizationTest(bkg[""], mig[""], eff[""]), bkg[i], mig[i], eff[i], truth[i], 1000, np.arange(1.0, 21.0, 1.0), "scanIter_%s_DAgostini.%s" % (i, extension), "scanIter_%s_chi2_DAgostini.%s" % (i, extension), "scanIter_%s_norm_DAgostini.%s" % (i, extension))
+  alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i] = scanRegParameter(DAgostiniForRegularizationTest(bkg["A"], mig["A"], eff["A"]), bkg[i], mig[i], eff[i], truth[i], 1000, np.arange(1.0, 21.0, 1.0), "scanIter_%s_DAgostini.%s" % (i, extension), "scanIter_%s_chi2_DAgostini.%s" % (i, extension), "scanIter_%s_norm_DAgostini.%s" % (i, extension))
   print "For configuration '%s': Found iter = %d with bias chi2 = %f, bias mean = %f, bias std = %f, norm bias = %f, norm bias std = %f" % (i, alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i])
 
 pseudo_dagostini_mig = getDAgostini(bkg[i], mig[i], eff[i], pseudo_data, nIter = alpha["A"])
