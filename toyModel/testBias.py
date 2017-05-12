@@ -35,6 +35,8 @@ if len(sys.argv) > 1:
   if "bias" in sys.argv:
     fb = 1.0
 
+print uncUnfList
+print fb 
 
 # get histograms from file
 truth = {}
@@ -52,17 +54,6 @@ truth["C"], recoWithFakes["C"], bkg["C"], mig["C"], eff["C"], nrt["C"] = getHist
 for i in recoWithFakes:
   recoWithoutFakes[i] = mig[i].project("y")
 
-  # plot migration matrix as it will be used next for unfolding
-  plotH2D(mig[i], "Particle-level bin", "Reconstructed-level bin", "Number of events for each (reco, truth) configuration", "mig_%s.%s" % (i,extension), fmt = "")
-
-  # plot 1D histograms for cross checks
-  plotH1D(bkg[i], "Reconstructed "+varname, "Events", "Background", "bkg_%s.%s" % (i, extension))
-  plotH1D(truth[i], "Particle-level "+varname, "Events", "Particle-level distribution", "truth_%s.%s" % (i, extension))
-  plotH1D(nrt[i], "Particle-level "+varname, "Events", "Events in particle-level selection but not reconstructed", "nrt_%s.%s" % (i,extension))
-  plotH1D(recoWithFakes[i], "Reconstructed "+varname, "Events", "Reconstructed-level distribution with fakes", "recoWithFakes_%s.%s" % (i,extension))
-  plotH1D(recoWithoutFakes[i], "Reconstructed "+varname, "Events", "Reconstructed-level distribution without fakes", "recoWithoutFakes_%s.%s" % (i,extension))
-  plotH1D(eff[i], "Particle-level "+varname, "Efficiency", "Efficiency of particle-level selection", "eff_%s.%s" % (i,extension))
-
 # generate perfect fake data
 data = recoWithFakes["A"]
 
@@ -76,11 +67,6 @@ m.setUniformPrior()
 #m.setCurvaturePrior()
 #m.setEntropyPrior()
 #m.setFirstDerivativePrior()
-
-# plot response matrix P(r|t)*eff(r)
-plotH2D(m.response, "Reconstructed-level bin", "Particle-level bin", "Transpose of response matrix P(r|t)*eff(t)", "responseMatrix.%s" % extension, vmin = 0, vmax = 1.2*np.amax(eff["A"].val))
-# and also the migration probabilities matrix
-plotH2D(m.response_noeff, "Reconstructed-level bin", "Particle-level bin", "Trnaspose of migration probabilities P(r|t)", "migrationMatrix.%s" % extension, vmin = 0, vmax = 1)
 
 # add migration uncertainty
 for k in uncUnfList:
@@ -118,7 +104,7 @@ for i in ["A", "B", "C"]:
   t_bkg = bkg[i]
   t_mig = mig[i]
   t_eff = eff[i]
-  alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i] = m.scanAlpha(t_bkg, t_mig, t_eff, 1000, np.arange(0.0, 1e-1, 1e-2), "scanAlpha_%s.%s" % (i, extension), "scanAlpha_%s_chi2.%s" % (i, extension), "scanAlpha_%s_norm.%s" % (i, extension))
+  alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i] = m.scanAlpha(t_bkg, t_mig, t_eff, 1000, np.arange(0.0, 2e-1, 1e-2), "scanAlpha_%s.%s" % (i, extension), "scanAlpha_%s_chi2.%s" % (i, extension), "scanAlpha_%s_norm.%s" % (i, extension))
   # for curvature
   #alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i] = m.scanAlpha(t_bkg, t_mig, t_eff, 1000, np.arange(0.0, 4e-8, 2e-9), "scanAlpha_%s.%s" % (i, extension), "scanAlpha_%s_chi2.%s" % (i, extension), "scanAlpha_%s_norm.%s" % (i, extension))
   # for entropy
