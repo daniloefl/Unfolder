@@ -9,18 +9,22 @@ import pickle
 Generate unfolding factors.
 '''
 def generateHistograms(fname = "histograms.pkl"):
-  Nev = 500000
-  w = 1.0/10.0 # generate 10 times more events than we expect in data
+  Nev = 400000
+  wL = 100.0 # generate wL times more events than we expect in data
 
   # number of truth bins
-  xt = np.arange(0+0.5*0.5, 5, 0.5)
+  xt = np.concatenate(( np.arange(1e3, 1.5e3, 0.1e3), np.arange(1.5e3, 2e3, 0.25e3), np.ones(1)*2e3, np.ones(1)*3e3))
+  xt_err = np.diff(xt)*0.5
+  xt = xt[:-1]
+  xt += xt_err
   Nt = len(xt)
-  xt_err = np.ones(Nt)*0.5*0.5
 
   # number of reco bins
-  xf = np.arange(0+0.25*0.5, 5, 0.25)
+  xf = np.concatenate(( np.arange(1e3, 1.5e3, 0.5*0.1e3), np.arange(1.5e3, 2e3, 0.5*0.25e3), np.ones(1)*2e3, np.ones(1)*2.5e3, np.ones(1)*3e3))
+  xf_err = np.diff(xf)*0.5
+  xf = xf[:-1]
+  xf += xf_err
   Nr = len(xf)
-  xf_err = np.ones(Nr)*0.25*0.5
 
   e = {}
   b = {}
@@ -39,17 +43,9 @@ def generateHistograms(fname = "histograms.pkl"):
 
   p = {}
   p["l"] = {}
-  p["m"] = {}
-  p["s"] = {}
-  p["l"]["A"] = 1/0.5
-  p["l"]["B"] = 1/0.8
-  p["l"]["C"] = 1/0.3
-  p["m"]["A"] = 2.0
-  p["m"]["B"] = 2.4
-  p["m"]["C"] = 1.8
-  p["s"]["A"] = 1.0
-  p["s"]["B"] = 1.5
-  p["s"]["C"] = 1.2
+  p["l"]["A"] = 1/3e-3
+  p["l"]["B"] = 1/4e-3
+  p["l"]["C"] = 1/2e-3
 
   truth = {}
   reco = {}
@@ -78,11 +74,16 @@ def generateHistograms(fname = "histograms.pkl"):
     for i in range(0, Nr): bkg[direc].err[i] = 0
 
     for k in range(0, Nev):
-      O = 0
-      if np.random.uniform() > 0.40:
-        O = np.random.exponential(p["l"][direc])
-      else:
-        O = np.random.normal(p["m"][direc], p["s"][direc])
+      # xp = x - 1e3 (force distribution to start at 1e3)
+      # x = xp + 1e3
+      # exp(-K x) = exp(-K xp)*exp(-1e3)
+      # so, generate exp(-K xp) and weight it down by exp(-1e3)
+      Op = 0
+      Op = np.random.exponential(p["l"][direc])
+      O = Op + 1e3
+      #w = (1.0/wL)*np.exp(-1e3) # exp(-1e3) is too small, so just assume that wL = lumi*cross section are enough to factor it out
+      w = 1.0/wL
+
       # migration model
       Or = O + np.random.normal(0, O*(a[direc]/np.sqrt(O) + b[direc]))
 
