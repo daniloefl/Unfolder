@@ -233,13 +233,14 @@ class Unfolder:
         # add it to the total reco result
         self.R_full += self.theta[name]*self.R_syst[name]
 
+
       self.unf_theta = {}
       self.var_bkg_unfsyst = {}
       self.var_response_unfsyst = {}
       self.R_unfsyst = {}
       for name in self.unf_systematics:
         self.unf_theta[name] = pm.Normal('tu_'+name, mu = 0, sd = 1) # nuisance parameter
-        #self.unf_theta[name] = pm.Uniform('tu_'+name, -5, 5) # nuisance parameter
+        #self.unf_theta[name] = pm.Uniform('tu_'+name, -3, 3) # nuisance parameter
         # get background constribution
         self.var_bkg_unfsyst[name] = theano.shared(value = self.asMat(self.bkg_unfsyst[name].val))
         self.var_response_unfsyst[name] = theano.shared(value = self.asMat(self.response_unfsyst[name].val))
@@ -459,7 +460,7 @@ class Unfolder:
     sns.distplot(self.trace['tu_'+self.unf_systematics[i]], kde = True, hist = True, label = self.unf_systematics[i])
     plt.title(self.unf_systematics[i])
     plt.ylabel("Probability")
-    plt.xlim([-5, 5])
+    plt.xlim([-3, 3])
     plt.xlabel("Nuisance parameter value")
     plt.tight_layout()
     plt.savefig("%s"%fname)

@@ -85,7 +85,6 @@ m.setUniformPrior()
 #m.setCurvaturePrior()
 if fb > 0:
   m.setFirstDerivativePrior(fb)
-  m.setAlpha(0.1) # FIXME
 
 m.run(data)
 m.sample(100000)
@@ -101,7 +100,7 @@ plotH2D(m.response, "Reconstructed-level bin", "Particle-level bin", "Transpose 
 plotH2D(m.response_noeff, "Reconstructed-level bin", "Particle-level bin", "Transpose of migration probabilities P(r|t)", "migrationMatrix.%s" % extension, vmin = 0, vmax = 1)
 
 m.run(data)
-m.setAlpha(0.0)
+m.setAlpha(0)
 m.sample(100000)
 
 # plot marginal distributions
