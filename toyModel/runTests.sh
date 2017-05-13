@@ -18,12 +18,12 @@ mkdir results_Dagostini
 
 ./toyModel/dumpModelPlots.py && mv *.eps modelPlots/
 
-./toyModel/closureTest.py && mv *.eps results_withoutSyst/
-
-./toyModel/testBias.py withoutSyst nobias && mv *.eps results_withoutSyst_regFirstDer/
-./toyModel/testBias.py withoutSyst bias && mv *.eps results_withoutSyst_regFirstDer_bias/
 ./toyModel/testBias.py withSyst nobias && mv *.eps results_withSyst_regFirstDer/
+./toyModel/testBias.py withoutSyst nobias && mv *.eps results_withoutSyst_regFirstDer/
 ./toyModel/testBias.py withSyst bias && mv *.eps results_withSyst_regFirstDer_bias/
+./toyModel/testBias.py withoutSyst bias && mv *.eps results_withoutSyst_regFirstDer_bias/
+
+./toyModel/closureTest.py && mv *.eps results_withoutSyst/
 
 ./toyModel/testBiasTUnfold.py nobias && mv *.eps results_TUnfold_regFirstDer/
 ./toyModel/testBiasTUnfold.py bias && mv *.eps results_TUnfold_regFirstDer_bias/
