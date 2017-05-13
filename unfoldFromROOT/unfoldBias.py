@@ -89,14 +89,14 @@ plotH2D(m.response_noeff, "Reconstructed-level bin", "Particle-level bin", "Tran
 #plotH1D(m.recoWithoutFakes, "Reconstructed "+varname, "Events", "Reconstructed-level distribution", "recoWithoutFakes_crossCheck.%s" % extension)
 
 # add migration uncertainty
-#uncUnfList = ["me", "ps"]
-#for k in uncUnfList:
-#  m.addUnfoldingUncertainty(k, bkg[k], mig[k], eff[k])
+uncUnfList = ["me", "ps"]
+for k in uncUnfList:
+  m.addUnfoldingUncertainty(k, bkg[k], mig[k], eff[k])
 
 # try a curvature-based prior
 # first choose alpha using only a MAP estimate
 #m.setEntropyPrior()
-#m.setCurvaturePrior()
+#m.setCurvaturePrior(1.0)
 m.setFirstDerivativePrior(1.0)
 #m.setGaussianPrior()
 
