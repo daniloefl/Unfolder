@@ -107,7 +107,7 @@ for i in ["A", "B", "C"]:
   bestAlphaNormBias[i] = -1
   bestAlphaNormBiasStd[i] = -1
   # use this range for fb = 0
-  alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i] = scanRegParameter(TUnfoldForRegularizationTest(bkg["A"], mig["A"], eff["A"], data, fb, ROOT.TUnfold.kRegModeDerivative, normMode), bkg[i], mig[i], eff[i], truth[i], 1000, np.arange(0.0, 10e-3, 0.25e-3), "scanTau_%s_TUnfold.%s" % (i, extension), "scanTau_%s_chi2_TUnfold.%s" % (i, extension), "scanTau_%s_norm_TUnfold.%s" % (i, extension))
+  alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i] = scanRegParameter(TUnfoldForRegularizationTest(bkg["A"], mig["A"], eff["A"], data, fb, ROOT.TUnfold.kRegModeDerivative, normMode), bkg[i], mig[i], eff[i], truth[i], 1000, np.arange(0.0, 20e-2, 1e-2), "scanTau_%s_TUnfold.%s" % (i, extension), "scanTau_%s_chi2_TUnfold.%s" % (i, extension), "scanTau_%s_norm_TUnfold.%s" % (i, extension))
   #alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i] = scanRegParameter(TUnfoldForRegularizationTest(bkg["A"], mig["A"], eff["A"], data, fb, ROOT.TUnfold.kRegModeDerivative, normMode), bkg[i], mig[i], eff[i], truth[i], 1000, np.arange(0.0, 20e-3, 1e-3), "scanTau_%s_TUnfold.%s" % (i, extension), "scanTau_%s_chi2_TUnfold.%s" % (i, extension), "scanTau_%s_norm_TUnfold.%s" % (i, extension))
   print "For configuration '%s': Found tau = %f with bias chi2 = %f, bias mean = %f, bias std = %f, norm bias = %f, norm bias std = %f" % (i, alpha[i], alphaChi2[i], bestAlphaBias[i], bestAlphaBiasStd[i], bestAlphaNormBias[i], bestAlphaNormBiasStd[i])
 
