@@ -319,3 +319,4 @@ model.
    * `comparePlot(listHistograms, listLegend, f, normaliseByBinWidth, units, fname)` can be used to plot a set of histograms in `listHistograms` with legend
 text given by `listLegend`, multiplied by `f` (and normalised by bin width if `normaliseByBinWidth` is True) in the file `fname`.
 
+
