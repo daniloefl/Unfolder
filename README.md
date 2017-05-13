@@ -30,14 +30,30 @@ After this, running the following should run a test unfolding:
 
 ```
 ./toyModel/generateHistograms.py
+./toyModel/dumpModelPlots.py
 ./toyModel/closureTest.py
 ```
 
 It might be necessary to add the Unfolder main directory in the ```PYTHONPATH```.
-One can also do a test on the statistical and systematic bias, by running:
+One can also do a test on the statistical and systematic bias, by running (this scans the
+regularisation parameter alpha and does many toy experiments to test the impact of the bias,
+so it can take a while):
 
 ```
-./toyModel/testBias.py
+./toyModel/testBias.py withSyst bias
+```
+
+To test the toy model without adding systematic uncertainties in FBU:
+
+```
+./toyModel/testBias.py withoutSyst bias
+```
+
+A comparison with TUnfold and d'Agostini can be made with:
+
+```
+./toyModel/testBiasTUnfold.py bias
+./toyModel/testBiasDagostini.py
 ```
 
 # Usage
@@ -61,10 +77,20 @@ model = Unfolder.Unfolder(bkg, mig, eff, truth)  # Call the constructor to initi
 #model.setGaussianPrior(mean, sd)                # If vectors (with the size of the truth distribution number of bins)
                                                  # are given, they will be used as the means and widths of the Gaussians
                                                  # bin-by-bin, instead of the defaults
+#model.setFirstDerivativePrior(fb = 1.0)         # Uses a first-derivative based prior with a reference distribution if fb = 1.0.
+#model.setCurvaturePrior(fb = 1.0)               # Uses a curvature based prior with a reference distribution if fb = 1.0.
+#model.setEntropyPrior()                         # Uses an entropy based prior.
 ```
 
 The response matrix P(reco = j|truth = i)*efficiency(i) is now stored in ```model.response```.
 For convenience, the same matrix without the efficiency multiplication is stored in ```model.response_noeff```.
+
+One can add systematic uncertainties in the unfolding model as follows:
+```
+model.addUnfoldingUncertainty("alternative_model_B", bkg_B, mig_B, eff_B)
+model.addUnfoldingUncertainty("alternative_model_C", bkg_C, mig_C, eff_C)
+# etc
+```
 
 The statistical model can be prepared for a given input data as follows:
 
@@ -75,6 +101,8 @@ model.run(data)
 Afterwards, one can draw samples to find the posterior as follows:
 
 ```
+alpha = 0
+model.setAlpha(alpha)                            # this sets the regularisation parameter alpha
 model.sample(20000)
 ```
 
@@ -93,7 +121,37 @@ the truth distribution as follows:
 
 ```
 model.plotUnfolded("plotUnfolded.png")
+scale = 1.0
+normaliseByBinWidth = False
+unit_name = "Counts"
+model.plotOnlyUnfolded(scale, normaliseByBinWidth, unit_name, "plotUnfoldedScaled.png") # to normalise histograms
 ```
+
+To plot the correlation matrix, the skewness and kurtosis of the marginal distributions, respectively:
+
+```
+model.plotCorr("correlation.png")
+model.plotSkewness("skewness.png")
+model.plotKurtosis("kurtosis.png")
+```
+
+Tests with different choices of the prior distribution and a scan over possible values of the regularisation parameter
+are fundamental to check what is the best procedure for the regularisation (unless one has chosen to use a uniform prior).
+To scan the values of the regularisation parameter, generating toy input histograms of a given underlying model, so
+that one can test the impact of the alternative model and of its possible statistical fluctuations:
+
+```
+optAlpha, optChi2, optBias, optStd, optNorm, optNormStd = model.scanAlpha(alt_bkg, alt_mig, alt_eff,  # alt. model
+                                                                          1000,                       # number of toys
+                                                                          np.arange(0.0, 10, 0.5),    # range of alpha to probe
+                                                                          "bias.png",                 # bias mean and variance vs alpha
+                                                                          "chi2.png",                 # sum of bias mean^2/variance for all bins vs alpha
+                                                                          "norm.png")                 # bias mean and variance in the normalisation vs alpha
+```
+
+Where `alt_bkg`, `alt_mig`, `alt_eff` are the parameters that describe the model to use to generate toys.
+In this example, 1000 toys are generated and alpha is varied from 0 to 10 in steps of 0.5. Plots of the bias as a function of
+alpha are generated according to the plot file names in the last 3 arguments.
 
 The software also comes with two histogram classes: H1D and H2D, as well as plotting functions for them, plotH1D and
 plotH2D.
@@ -123,12 +181,16 @@ tje uniform prior.
 the total normalisation of the unfolded distribution.
 This is not done by default.
 
-   * `model.addUncertainty(name, bkg, reco)` adds a systematic uncertainty contribution at reconstruction level, by adding a
+   * `model.addUncertainty(name, bkg, reco, prior)` adds a systematic uncertainty contribution at reconstruction level, by adding a
 parameter that changes the reconstruction distribution from the nominal background and nominal reconstruction-level distribution
 to the ones given. This can be used for detector-level uncertainties, which are not expected to have a big impact in the migration matrix.
+The prior parameter is set to 'uniform' by default, so that this nuisance parameter has a uniform distribution, but it can also
+be set to 'gaussian', in which case a Gaussian prior is used, favouring the nominal model over the alternative.
 
-   * `model.addUnfoldingUncertainty(name, bkg, mig, eff)` adds a systematic uncertainty contribution as a difference between the
+   * `model.addUnfoldingUncertainty(name, bkg, mig, eff, prior)` adds a systematic uncertainty contribution as a difference between the
 reconstruction-level distribution with the nominal or with the alternative model given by the `bkg`, `mig` and `eff` parameters.
+The prior parameter is set to 'uniform' by default, so that this nuisance parameter has a uniform distribution, but it can also
+be set to 'gaussian', in which case a Gaussian prior is used, favouring the nominal model over the alternative.
 
    * `model.setUniformPrior()` uses a uniform prior for the truth distribution. This is the default.
 
@@ -256,4 +318,5 @@ model.
 
    * `comparePlot(listHistograms, listLegend, f, normaliseByBinWidth, units, fname)` can be used to plot a set of histograms in `listHistograms` with legend
 text given by `listLegend`, multiplied by `f` (and normalised by bin width if `normaliseByBinWidth` is True) in the file `fname`.
+
 

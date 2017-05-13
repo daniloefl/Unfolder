@@ -76,10 +76,12 @@ class Unfolder:
     self.prior = "uniform"
     self.priorAttributes = {}
     # for systematic uncertainties
+    self.prior_syst = {}
     self.bkg_syst = {}
     self.reco_syst = {}
     self.systematics = []
     self.bkg_unfsyst = {}
+    self.prior_unfsyst = {}
     self.response_unfsyst = {}
     self.unf_systematics = []
     self.fb = 0
@@ -142,7 +144,8 @@ class Unfolder:
   '''
   Add systematic uncertainty.
   '''
-  def addUncertainty(self, name, bkg, reco):
+  def addUncertainty(self, name, bkg, reco, prior = 'uniform'):
+    self.prior_syst[name] = prior
     self.bkg_syst[name] = H1D(bkg) - self.bkg
     self.reco_syst[name] = reco - self.recoWithoutFakes
     self.systematics.append(name)
@@ -150,8 +153,9 @@ class Unfolder:
   '''
   Add uncertainty in the core of the unfolding factors.
   '''
-  def addUnfoldingUncertainty(self, name, bkg, mig, eff):
+  def addUnfoldingUncertainty(self, name, bkg, mig, eff, prior = 'uniform'):
     self.bkg_unfsyst[name] = H1D(bkg)
+    self.prior_unfsyst[name] = prior
     # calculate response matrix, defined as response[i, j] = P(r = j|t = i) = P(t = i, r = j)/P(t = i)
     self.response_unfsyst[name] = H2D(mig)
     for i in range(0, self.Nt): # for each truth bin
@@ -224,7 +228,10 @@ class Unfolder:
       self.var_reco_syst = {}
       self.R_syst = {}
       for name in self.systematics:
-        self.theta[name] = pm.Normal('t_'+name, mu = 0, sd = 1) # nuisance parameter
+        if self.prior_syst[name].lower() == "uniform":
+          self.theta[name] = pm.Uniform('t_'+name, -3, 3)         # nuisance parameter
+        else:
+          self.theta[name] = pm.Normal('t_'+name, mu = 0, sd = 1) # nuisance parameter
         # get background constribution
         self.var_bkg_syst[name] = theano.shared(value = self.asMat(self.bkg_syst[name].val))
         # calculate differential impact in the reco result
@@ -239,8 +246,10 @@ class Unfolder:
       self.var_response_unfsyst = {}
       self.R_unfsyst = {}
       for name in self.unf_systematics:
-        self.unf_theta[name] = pm.Normal('tu_'+name, mu = 0, sd = 1) # nuisance parameter
-        #self.unf_theta[name] = pm.Uniform('tu_'+name, -3, 3) # nuisance parameter
+        if self.prior_unfsyst[name].lower() == "uniform":
+          self.unf_theta[name] = pm.Uniform('tu_'+name, -3, 3) # nuisance parameter
+        else:
+          self.unf_theta[name] = pm.Normal('tu_'+name, mu = 0, sd = 1) # nuisance parameter
         # get background constribution
         self.var_bkg_unfsyst[name] = theano.shared(value = self.asMat(self.bkg_unfsyst[name].val))
         self.var_response_unfsyst[name] = theano.shared(value = self.asMat(self.response_unfsyst[name].val))
@@ -336,7 +345,8 @@ class Unfolder:
     plt_bias_syst.err = np.zeros(len(rangeAlpha))
     plt_bias_syst.x = rangeAlpha
     plt_bias_syst.x_err = np.zeros(len(rangeAlpha))
-    plotH1DLines({r"$E_{\mathrm{bins}}[|E_{\mathrm{toys}}[\mathrm{bias}]|]$": plt_bias, r"$E_{\mathrm{bins}}[\sqrt{\mathrm{Var}_{\mathrm{toys}}[\mathrm{bias}]}]$": plt_bias_e, r"$E_{\mathrm{bins}}[|\mathrm{only \;\; syst. \;\; bias}|]$": plt_bias_syst}, r"$\alpha$", "Bias", "", fname)
+    #plotH1DLines({r"$E_{\mathrm{bins}}[|E_{\mathrm{toys}}[\mathrm{bias}]|]$": plt_bias, r"$E_{\mathrm{bins}}[\sqrt{\mathrm{Var}_{\mathrm{toys}}[\mathrm{bias}]}]$": plt_bias_e, r"$E_{\mathrm{bins}}[|\mathrm{only \;\; syst. \;\; bias}|]$": plt_bias_syst}, r"$\alpha$", "Bias", "", fname)
+    plotH1DLines({r"$E_{\mathrm{bins}}[|E_{\mathrm{toys}}[\mathrm{bias}]|]$": plt_bias, r"$E_{\mathrm{bins}}[\sqrt{\mathrm{Var}_{\mathrm{toys}}[\mathrm{bias}]}]$": plt_bias_e}, r"$\alpha$", "Bias", "", fname)
     plt_bias_norm = H1D(bias)
     plt_bias_norm.val = bias_norm
     plt_bias_norm.err = np.zeros(len(rangeAlpha))

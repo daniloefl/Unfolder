@@ -254,7 +254,8 @@ def scanRegParameter(unfoldFunction, bkg, mig, eff, truth, N = 1000, rangeAlpha 
   plt_bias_syst.err = np.zeros(len(rangeAlpha))
   plt_bias_syst.x = rangeAlpha
   plt_bias_syst.x_err = np.zeros(len(rangeAlpha))
-  plotH1DLines({r"$E_{\mathrm{bins}}[|E_{\mathrm{toys}}[\mathrm{bias}]|]$": plt_bias, r"$E_{\mathrm{bins}}[\sqrt{\mathrm{Var}_{\mathrm{toys}}[\mathrm{bias}]}]$": plt_bias_e, r"$E_{\mathrm{bins}}[|\mathrm{only \;\; syst. \;\; bias}|]$": plt_bias_syst}, "Regularization parameter", "Bias", "", fname)
+  #plotH1DLines({r"$E_{\mathrm{bins}}[|E_{\mathrm{toys}}[\mathrm{bias}]|]$": plt_bias, r"$E_{\mathrm{bins}}[\sqrt{\mathrm{Var}_{\mathrm{toys}}[\mathrm{bias}]}]$": plt_bias_e, r"$E_{\mathrm{bins}}[|\mathrm{only \;\; syst. \;\; bias}|]$": plt_bias_syst}, "Regularization parameter", "Bias", "", fname)
+  plotH1DLines({r"$E_{\mathrm{bins}}[|E_{\mathrm{toys}}[\mathrm{bias}]|]$": plt_bias, r"$E_{\mathrm{bins}}[\sqrt{\mathrm{Var}_{\mathrm{toys}}[\mathrm{bias}]}]$": plt_bias_e}, "Regularization parameter", "Bias", "", fname)
   plt_bias_norm = H1D(bias)
   plt_bias_norm.val = bias_norm
   plt_bias_norm.err = np.power(bias_norm_std, 2)
