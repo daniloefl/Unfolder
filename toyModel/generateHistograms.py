@@ -10,7 +10,7 @@ Generate unfolding factors.
 '''
 def generateHistograms(fname = "histograms.pkl"):
   Nev = 400000
-  wL = 100.0 # generate wL times more events than we expect in data
+  wL = 10.0 # generate wL times more events than we expect in data
 
   # number of truth bins
   xt = np.concatenate(( np.arange(1e3, 1.5e3, 0.1e3), np.arange(1.5e3, 2e3, 0.25e3), np.ones(1)*2e3, np.ones(1)*3e3))
@@ -20,7 +20,7 @@ def generateHistograms(fname = "histograms.pkl"):
   Nt = len(xt)
 
   # number of reco bins
-  xf = np.concatenate(( np.arange(1e3, 1.5e3, 0.5*0.1e3), np.arange(1.5e3, 2e3, 0.5*0.25e3), np.ones(1)*2e3, np.ones(1)*2.5e3, np.ones(1)*3e3))
+  xf = np.concatenate(( np.arange(1e3, 1.5e3, 0.5*0.1e3), np.arange(1.5e3, 2e3, 0.5*0.5*0.25e3), np.arange(2e3, 3.1e3, 0.5*0.5e3) ) )
   xf_err = np.diff(xf)*0.5
   xf = xf[:-1]
   xf += xf_err
@@ -37,9 +37,9 @@ def generateHistograms(fname = "histograms.pkl"):
   a["A"] = 0.20
   a["B"] = 0.25
   a["C"] = 0.22
-  b["A"] = 0.05
-  b["B"] = 0.041
-  b["C"] = 0.059
+  b["A"] = 0.01
+  b["B"] = 0.015
+  b["C"] = 0.005
 
   p = {}
   p["l"] = {}
