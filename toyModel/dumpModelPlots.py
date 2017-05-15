@@ -54,18 +54,11 @@ for i in recoWithFakes:
   plotH1D({"Reco with fakes from projection": recoWithoutFakes[i]+bkg[i], "From getHistograms": recoWithFakes[i]}, "Reconstructed "+varname, "Events", "Reconstructed-level distribution without fakes", "reco_project.%s" % extension)
   plotH1D({"Reco with fakes from projection - getHistograms": recoWithoutFakes[i]+bkg[i] - recoWithFakes[i]}, "Reconstructed "+varname, "Events", "Reconstructed-level distribution without fakes", "reco_project_diff.%s" % extension)
 
-# Create unfolding class
-m = Unfolder(bkg["A"], mig["A"], eff["A"], truth["A"])
+  # Create unfolding class
+  m = Unfolder(bkg[i], mig[i], eff[i], truth[i])
 
-# plot response matrix P(r|t)*eff(r)
-plotH2D(m.response, "Reconstructed-level bin", "Particle-level bin", "Transpose of response matrix P(r|t)*eff(t)", "responseMatrix.%s" % extension, 0, np.amax(eff["A"].val)*1.2)
+  # plot response matrix P(r|t)*eff(r)
+  plotH2D(m.response, "Reconstructed-level bin", "Particle-level bin", "Transpose of response matrix P(r|t)*eff(t)", "responseMatrix_%s.%s" % (i, extension), 0, np.amax(eff[i].val)*1.2)
 # and also the migration probabilities matrix
-plotH2D(m.response_noeff, "Reconstructed-level bin", "Particle-level bin", "Transpose of migration probabilities P(r|t)", "migrationMatrix.%s" % extension, 0, 1)
-
-plotH1D(m.truth, "Particle-level "+varname, "Events", "Particle-level distribution estimated from migrations", "truth_crossCheck.%s" % extension)
-plotH1D(m.eff, "Particle-level "+varname, "Efficiency", "Efficiency of particle-level selection in unfolder", "eff_crossCheck.%s" % extension)
-plotH2D(m.mig, "Reconstructed-level bin", "Particle-level bin", "Number of events for each (reco, truth) configuration", "mig_crossCheck.%s" % extension, fmt = "")
-
-plotH1D(m.bkg, "Reconstructed "+varname, "Events", "Background (including fakes)", "bkg_crossCheck.%s" % extension)
-plotH1D(m.recoWithoutFakes, "Reconstructed "+varname, "Events", "Reconstructed-level distribution", "recoWithoutFakes_crossCheck.%s" % extension)
+  plotH2D(m.response_noeff, "Reconstructed-level bin", "Particle-level bin", "Transpose of migration probabilities P(r|t)", "migrationMatrix_%s.%s" % (i, extension), 0, 1)
 
