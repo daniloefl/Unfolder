@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from Histogram import H1D, H2D, plotH1D, plotH2D, plotH1DWithText, plotH2DWithText, plotH1DLines
 from ComparisonHelpers import getDataFromModel
 from scipy import stats
+from scipy import optimize
 
 theano.config.compute_test_value = 'warn'
 
@@ -147,7 +148,7 @@ class Unfolder:
   def addUncertainty(self, name, bkg, reco, prior = 'uniform'):
     self.prior_syst[name] = prior
     self.bkg_syst[name] = H1D(bkg) - self.bkg
-    self.reco_syst[name] = reco - self.recoWithoutFakes
+    self.reco_syst[name] = H1D(reco) - self.recoWithoutFakes
     self.systematics.append(name)
 
   '''
@@ -196,6 +197,8 @@ class Unfolder:
   def run(self, data):
     self.data = H1D(data)                    # copy data
     self.datasubbkg = self.data - self.bkg   # For monitoring: data - bkg
+    self.minT = 0
+    self.maxT = 10*np.amax(self.truth.val)
 
     self.model = pm.Model()                  # create the model
     with self.model:                         # all in this scope is in the model's context
@@ -213,7 +216,7 @@ class Unfolder:
       elif self.prior == "first derivative":
         self.T = pm.DensityDist('Truth', logp = lambda val: -self.var_alpha*theano.tensor.abs_(theano.tensor.extra_ops.diff(theano.tensor.extra_ops.diff((val - self.fb*self.priorAttributes['bias'])/(self.truth.x_err*2))/np.diff(self.truth.x))/(2*theano.tensor.mean(theano.tensor.extra_ops.diff(val/(self.truth.x_err*2))/np.diff(self.truth.x)))).sum(), shape = (self.Nt), testval = self.truth.val)
       else: # if none of the names above matched, assume it is uniform
-        self.T = pm.Uniform('Truth', 0.0, 2*max(self.truth.val), shape = (self.Nt))
+        self.T = pm.Uniform('Truth', self.minT, self.maxT, shape = (self.Nt), testval = self.truth.val)
 
       self.var_bkg = theano.shared(value = self.asMat(self.bkg.val))
       #self.var_bkg.reshape((self.Nr, 1))
@@ -263,6 +266,35 @@ class Unfolder:
       #self.U = pm.Normal('U', mu = self.R_full, sd = theano.tensor.sqrt(self.R_full), observed = self.var_data, shape = (self.Nr, 1))
 
   '''
+  Calculate bias in each bin.
+  '''
+  def getBiasPerBinFromMAP(self, N, bkg = None, mig = None, eff = None):
+    if bkg == None: bkg = self.bkg
+    if mig == None: mig = self.mig
+    if eff == None: eff = self.eff
+
+    truth = mig.project('x')/eff
+    fitted = np.zeros((N, len(self.truth.val)))
+    bias = np.zeros(len(self.truth.val))
+    import sys
+    for k in range(0, N):
+      if k % 100 == 0:
+        print "getBiasFromMAP: Throwing toy experiment {0}/{1}\r".format(k, N),
+        sys.stdout.flush()
+      pseudo_data = getDataFromModel(bkg, mig, eff)
+      self.setData(pseudo_data)
+      res = pm.find_MAP(model = self.model, disp = False)
+      if not 'Truth' in res and self.prior == "uniform":
+        res["Truth"] = (self.maxT - self.minT) * np.exp(res["Truth_interval_"])/(1.0 + np.exp(res["Truth_interval_"])) + self.minT
+      fitted[k, :] = res["Truth"]
+    bias = np.mean(fitted, axis = 0)
+    bias_std = np.std(fitted - bias, axis = 0, ddof = 1)
+    plt_bias = H1D(truth)
+    plt_bias.val = bias
+    plt_bias.err = np.power(bias_std, 2)
+    return plt_bias
+
+  '''
   Calculate the sum of the bias using only the expected values.
   '''
   def getBiasFromMAP(self, N, bkg = None, mig = None, eff = None):
@@ -284,7 +316,9 @@ class Unfolder:
       #self.run(pseudo_data)
       with self.model:
         res = pm.find_MAP(disp = False)
-        fitted[k, :] = res['Truth'] - truth.val
+        if not 'Truth' in res and self.prior == "uniform":
+          res["Truth"] = (self.maxT - self.minT) * np.exp(res["Truth_interval_"])/(1.0 + np.exp(res["Truth_interval_"])) + self.minT
+        fitted[k, :] = res.Truth - truth.val
         bias_norm[k] = np.sum(res['Truth'] - truth.val)
     print
     # systematic bias
