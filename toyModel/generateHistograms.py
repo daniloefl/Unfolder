@@ -13,14 +13,16 @@ def generateHistograms(fname = "histograms.pkl"):
   wL = 10.0 # generate wL times more events than we expect in data
 
   # number of truth bins
-  xt = np.concatenate(( np.arange(1e3, 1.5e3, 0.1e3), np.arange(1.5e3, 2e3, 0.25e3), np.ones(1)*2e3, np.ones(1)*3e3))
+  xt = np.concatenate(( np.arange(1e3, 1.5e3, 0.25e3), np.arange(1.5e3, 3e3, 0.5e3)))
+  #xt = np.arange(1e3, 3.1e3, 2e3)
   xt_err = np.diff(xt)*0.5
   xt = xt[:-1]
   xt += xt_err
   Nt = len(xt)
 
   # number of reco bins
-  xf = np.concatenate(( np.arange(1e3, 1.5e3, 0.5*0.1e3), np.arange(1.5e3, 2e3, 0.5*0.5*0.25e3), np.arange(2e3, 3.1e3, 0.5*0.5e3) ) )
+  xf = np.concatenate(( np.arange(1e3, 1.5e3, 0.5*0.25e3), np.arange(1.5e3, 3e3, 0.5*0.5e3) ) )
+  #xf = np.arange(1e3, 3.1e3, 2e3)
   xf_err = np.diff(xf)*0.5
   xf = xf[:-1]
   xf += xf_err
@@ -31,21 +33,34 @@ def generateHistograms(fname = "histograms.pkl"):
   a = {}
   b = {}
   e["A"] = [0.20 for x in range(0, Nt)]
-  e["B"] = [0.25 for x in range(0, Nt)]
-  e["C"] = [0.15 for x in range(0, Nt)]
+  e["B"] = [0.22 for x in range(0, Nt)]
+  e["C"] = [0.18 for x in range(0, Nt)]
+  e["D"] = [0.18 + 0.02*x for x in range(0, Nt)]
 
   a["A"] = 0.20
-  a["B"] = 0.25
-  a["C"] = 0.22
+  a["B"] = 0.20
+  a["C"] = 0.25
+  a["D"] = 0.20
   b["A"] = 0.01
-  b["B"] = 0.015
-  b["C"] = 0.005
+  b["B"] = 0.01
+  b["C"] = 0.02
+  b["D"] = 0.01
+
+  #a["A"] = 0
+  #a["B"] = 0
+  #a["C"] = 0
+  #a["D"] = 0
+  #b["A"] = 0
+  #b["B"] = 0
+  #b["C"] = 0
+  #b["D"] = 0
 
   p = {}
   p["l"] = {}
   p["l"]["A"] = 1/3e-3
-  p["l"]["B"] = 1/4e-3
-  p["l"]["C"] = 1/2e-3
+  p["l"]["B"] = 1/3e-3
+  p["l"]["C"] = 1/3e-3
+  p["l"]["D"] = 1/3e-3
 
   truth = {}
   reco = {}
@@ -56,7 +71,7 @@ def generateHistograms(fname = "histograms.pkl"):
   reco2 = {}
   mig2 = {}
   bkg2 = {}
-  for direc in ["A", "B", "C"]:
+  for direc in ["A", "B", "C", "D"]:
     truth[direc] = H1D(np.zeros(Nt))
     truth[direc].x = xt
     truth[direc].x_err = xt_err
@@ -85,7 +100,11 @@ def generateHistograms(fname = "histograms.pkl"):
       w = 1.0/wL
 
       # migration model
-      Or = O + np.random.normal(0, O*(a[direc]/np.sqrt(O) + b[direc]))
+      S = O*(a[direc]/np.sqrt(O) + b[direc])
+      if S > 0:
+        Or = O + np.random.normal(0, S)
+      else:
+        Or = O
 
       bt = truth[direc].fill(O, w)
       if np.random.uniform() > e[direc][bt]:
@@ -95,7 +114,7 @@ def generateHistograms(fname = "histograms.pkl"):
     reco[direc] = reco[direc] + bkg[direc]
 
   with open(fname, 'wb') as output:
-    for direc in ["A", "B", "C"]:
+    for direc in ["A", "B", "C", "D"]:
       model = {}
       model["name"] = direc
       model["mig"] = mig[direc].T()

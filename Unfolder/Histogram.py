@@ -476,12 +476,15 @@ class H2D:
     return h
 
 def plotH2D(h, xlabel = "x", ylabel = "y", title = "Migration matrix M(t, r)", fname = "plotH2D.png", vmin = None, vmax = None, fmt = "3.2f"):
-  if h.shape[1] > h.shape[0]:
-    fig = plt.figure(figsize=(0.8*h.shape[1], 1.05*h.shape[0]))
-  elif h.shape[1] == h.shape[0]:
-    fig = plt.figure(figsize=(h.shape[1], 1.05*h.shape[0]))
-  else:
-    fig = plt.figure(figsize=(h.shape[1], 1.05*0.8*h.shape[0]))
+  try:
+    if h.shape[1] > h.shape[0]:
+      fig = plt.figure(figsize=(0.8*h.shape[1], 1.05*h.shape[0]))
+    elif h.shape[1] == h.shape[0]:
+      fig = plt.figure(figsize=(h.shape[1], 1.05*h.shape[0]))
+    else:
+      fig = plt.figure(figsize=(h.shape[1], 1.05*0.8*h.shape[0]))
+  except:
+    fig = plt.figure(figsize=(1, 1.05))
 
   annot = False
   if fmt != "":
@@ -497,7 +500,7 @@ def plotH2D(h, xlabel = "x", ylabel = "y", title = "Migration matrix M(t, r)", f
   plt.title(title, size = 16)
   plt.ylabel(ylabel)
   plt.xlabel(xlabel)
-  plt.tight_layout()
+  #plt.tight_layout()
   plt.savefig(fname)
   plt.close()
 
@@ -579,4 +582,25 @@ def plotH1DWithText(h, ylabel = "Events", title = "", fname = "plotH1DWithText.p
   plt.tight_layout()
   plt.savefig(fname)
   plt.close()
+
+'''
+Return the response matrix by normalising the migration matrix and
+then multiplying each truth bin by the efficiency.
+Assumes that the truth bins are in rows and reco bins are in columns.
+'''
+def getNormResponse(migration, efficiency):
+  Nt = migration.shape[0]
+  Nr = migration.shape[1]
+  response = H2D(migration)
+  for i in range(0, Nt): # for each truth bin
+    rsum = 0.0
+    for j in range(0, Nr): # for each reco bin
+      rsum += migration.val[i, j]    # calculate the sum of all reco bins in the same truth bin
+    # rsum is now the total sum of events that has that particular truth bin
+    # now, for each reco bin in truth bin i, divide that row by the total number of events in it
+    # and multiply the response matrix by the efficiency
+    for j in range(0, Nr):
+      response.val[i, j] = migration.val[i, j]/rsum*efficiency.val[i]  # P(r|t) = P(t, r)/P(t) = Mtr*eff(t)/sum_k=1^Nr Mtk
+      response.err[i, j] = 0 # FIXME
+  return response
 

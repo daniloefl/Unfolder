@@ -77,12 +77,9 @@ class Unfolder:
     self.prior = "uniform"
     self.priorAttributes = {}
     # for systematic uncertainties
-    self.prior_syst = {}
     self.bkg_syst = {}
     self.reco_syst = {}
     self.systematics = []
-    self.bkg_unfsyst = {}
-    self.prior_unfsyst = {}
     self.response_unfsyst = {}
     self.unf_systematics = []
     self.fb = 0
@@ -143,20 +140,41 @@ class Unfolder:
     self.constrainArea = value
 
   '''
-  Add systematic uncertainty.
+  Add systematic uncertainty at reconstruction level.
+  To add uncertainty due to the unfolding factors, one can proceed as follows, taking the difference between
+  the reconstructed-level distributions using the alternative migration matrices or the nominal.
+
+  from Unfolder.Histogram import getNormResponse
+  addUncertainty(name, nominalBackground, np.dot(nominalTruth.val, getNormResponse(alternativeMigration, alternativeEfficiency).val))
+
+  Where Nr is the number of reconstruction-level bins. The first term keeps the effect in the background at zero so that the background
+  is not correlated with this uncertainty.
+  The second term is the reconstruction-level histogram one would get if the nominal truth is folded with an alternative unfolding factor.
   '''
-  def addUncertainty(self, name, bkg, reco, prior = 'uniform'):
-    self.prior_syst[name] = prior
+  def addUncertainty(self, name, bkg, reco):
     self.bkg_syst[name] = H1D(bkg) - self.bkg
     self.reco_syst[name] = H1D(reco) - self.recoWithoutFakes
     self.systematics.append(name)
 
   '''
   Add uncertainty in the core of the unfolding factors.
+  Note that this creates a non-linearity in the model.
+  Analytical calculations show that if one has a difference
+  in efficiencies between the nominal and other models, this creates
+  an extra inflection point in the likelihood at nuisance parameter = - (efficiency difference)/(nominal efficiency).
+  At this point, the likelihood is exactly zero for a one bin analytical calculation.
+  If this point is in the range sampled for the nuisance parameter, it will cause an asymmetry in the
+  posterior of the nuisance parameter, which will shift the mean of the posterior of the
+  unfolded distributions.
+  It is recommended to add a linear uncertainty by calling:
+  from Unfolder.Histogram import getNormResponse
+  addUncertainty(name, nominalBackground, np.dot(nominalTruth.val, getNormResponse(alternativeMigration, alternativeEfficiency).val))
+
+  Where Nr is the number of reconstruction-level bins. The first term keeps the effect in the background at zero so that the background
+  is not correlated with this uncertainty.
+  The second term is the reconstruction-level histogram one would get if the nominal truth is folded with an alternative unfolding factor.
   '''
-  def addUnfoldingUncertainty(self, name, bkg, mig, eff, prior = 'uniform'):
-    self.bkg_unfsyst[name] = H1D(bkg)
-    self.prior_unfsyst[name] = prior
+  def addUnfoldingUncertainty(self, name, mig, eff):
     # calculate response matrix, defined as response[i, j] = P(r = j|t = i) = P(t = i, r = j)/P(t = i)
     self.response_unfsyst[name] = H2D(mig)
     for i in range(0, self.Nt): # for each truth bin
@@ -174,8 +192,10 @@ class Unfolder:
   '''
   Set a uniform prior.
   '''
-  def setUniformPrior(self):
-    self.prior = "uniform"
+  def setUniformPrior(self, capAtZero = False):
+    self.prior = "flat"
+    if capAtZero:
+      self.prior = "uniform"
     self.fb = 0
 
   '''
@@ -197,6 +217,8 @@ class Unfolder:
   def run(self, data):
     self.data = H1D(data)                    # copy data
     self.datasubbkg = self.data - self.bkg   # For monitoring: data - bkg
+
+    # for the uniform prior, capping at zero
     self.minT = 0
     self.maxT = 10*np.amax(self.truth.val)
 
@@ -215,55 +237,82 @@ class Unfolder:
         self.T = pm.DensityDist('Truth', logp = lambda val: -self.var_alpha*theano.tensor.sqr(theano.tensor.extra_ops.diff(theano.tensor.extra_ops.diff((val - self.fb*self.priorAttributes['bias'])))).sum(), shape = (self.Nt), testval = self.truth.val)
       elif self.prior == "first derivative":
         self.T = pm.DensityDist('Truth', logp = lambda val: -self.var_alpha*theano.tensor.abs_(theano.tensor.extra_ops.diff(theano.tensor.extra_ops.diff((val - self.fb*self.priorAttributes['bias'])/(self.truth.x_err*2))/np.diff(self.truth.x))/(2*theano.tensor.mean(theano.tensor.extra_ops.diff(val/(self.truth.x_err*2))/np.diff(self.truth.x)))).sum(), shape = (self.Nt), testval = self.truth.val)
-      else: # if none of the names above matched, assume it is uniform
+      elif self.prior == "uniform": # if using uniform, cap at zero
         self.T = pm.Uniform('Truth', self.minT, self.maxT, shape = (self.Nt), testval = self.truth.val)
+      else: # if none of the names above matched, assume it is uniform
+        self.T = pm.Flat('Truth', shape = (self.Nt), testval = self.truth.val)
+
+      self.theta = {}
+      self.unf_theta = {}
+      for name in self.unf_systematics:
+        self.unf_theta[name] = pm.Normal('tu_'+name, mu = 0, sd = 1, testval = 0)
+      for name in self.systematics:
+        self.theta[name] = pm.Normal('t_'+name, mu = 0, sd = 1, testval = 0)
 
       self.var_bkg = theano.shared(value = self.asMat(self.bkg.val))
-      #self.var_bkg.reshape((self.Nr, 1))
       self.var_response = theano.shared(value = self.asMat(self.response.val))
       self.R = theano.tensor.dot(self.T, self.var_response) + self.var_bkg
 
-      # reco result including systematics:
-      self.R_full = self.R
+      self.var_response_unfsyst = {}
+      for name in self.unf_systematics:
+        self.var_response_unfsyst[name] = theano.shared(value = self.asMat(self.response_unfsyst[name].val))
 
-      self.theta = {}
       self.var_bkg_syst = {}
       self.var_reco_syst = {}
       self.R_syst = {}
       for name in self.systematics:
-        if self.prior_syst[name].lower() == "uniform":
-          self.theta[name] = pm.Uniform('t_'+name, -3, 3)         # nuisance parameter
-        else:
-          self.theta[name] = pm.Normal('t_'+name, mu = 0, sd = 1) # nuisance parameter
         # get background constribution
         self.var_bkg_syst[name] = theano.shared(value = self.asMat(self.bkg_syst[name].val))
         # calculate differential impact in the reco result
         self.var_reco_syst[name] = theano.shared(value = self.asMat(self.reco_syst[name].val))
         self.R_syst[name] = self.var_reco_syst[name] + self.var_bkg_syst[name]
+
+      # reco result including systematics:
+      self.R_full = self.R
+
+      for name in self.systematics:
         # add it to the total reco result
         self.R_full += self.theta[name]*self.R_syst[name]
 
-
-      self.unf_theta = {}
-      self.var_bkg_unfsyst = {}
-      self.var_response_unfsyst = {}
-      self.R_unfsyst = {}
       for name in self.unf_systematics:
-        if self.prior_unfsyst[name].lower() == "uniform":
-          self.unf_theta[name] = pm.Uniform('tu_'+name, -3, 3) # nuisance parameter
-        else:
-          self.unf_theta[name] = pm.Normal('tu_'+name, mu = 0, sd = 1) # nuisance parameter
-        # get background constribution
-        self.var_bkg_unfsyst[name] = theano.shared(value = self.asMat(self.bkg_unfsyst[name].val))
-        self.var_response_unfsyst[name] = theano.shared(value = self.asMat(self.response_unfsyst[name].val))
-        self.R_unfsyst[name] = (theano.tensor.dot(self.T, self.var_response) + self.var_bkg) - (theano.tensor.dot(self.T, self.var_response_unfsyst[name]) + self.var_bkg_unfsyst[name])
         # add it to the total reco result
-        self.R_full += self.unf_theta[name]*self.R_unfsyst[name]
+        self.R_full += theano.tensor.dot(self.unf_theta[name]*self.asMat(self.truth.val), self.var_response_unfsyst[name])
 
       self.U = pm.Poisson('U', mu = self.R_full, observed = self.var_data, shape = (self.Nr, 1))
       if self.constrainArea:
         self.Norm = pm.Poisson('Norm', mu = self.T.sum()*self.ave_eff + self.tot_bkg, observed = self.var_data.sum(), shape = (1))
-      #self.U = pm.Normal('U', mu = self.R_full, sd = theano.tensor.sqrt(self.R_full), observed = self.var_data, shape = (self.Nr, 1))
+
+  '''
+  Make theano graph used for calculation.
+  '''
+  def graph(self, fname = "graph.png"):
+    from theano.printing import pydotprint
+    pydotprint(self.model.logpt, outfile=fname, var_with_name_simple=True) 
+    '''
+    import matplotlib.pyplot as plt
+    import networkx as nx
+    fig = plt.figure(figsize=(10,10))
+    graph = nx.DiGraph()
+    variables = self.model.named_vars.values()
+    for var in variables:
+      graph.add_node(var)
+      dist = var.distribution
+      for param_name in getattr(dist, "vars", []):
+        param_value = getattr(dist, param_name)
+        owner = getattr(param_value, "owner", None)
+        if param_value in variables:
+          graph.add_edge(param_value, var)
+        elif owner is not None:
+          parents = _get_all_parents(param_value)
+          for parent in parents:
+            if parent in variables:
+              graph.add_edge(parent, var)
+    pos = nx.fruchterman_reingold_layout(graph)
+    nx.draw_networkx(graph, pos, arrows=True, node_size=1000, node_color='w', font_size=8)
+    plt.axis('off')
+    plt.savefig(fname)
+    plt.close()
+    '''
 
   '''
   Calculate bias in each bin.
@@ -429,9 +478,10 @@ class Unfolder:
   def sample(self, N = 100000):
     self.N = N
     with self.model:
-      start = pm.find_MAP()
-      step = pm.NUTS(state = start)
-      self.trace = pm.sample(N, step, start = start)
+      #start = pm.find_MAP()
+      #step = pm.NUTS(state = start)
+      self.trace = pm.sample(N) #, step, start = start)
+      
       pm.summary(self.trace)
 
       self.hnp = H1D(np.zeros(len(self.systematics)))
@@ -442,15 +492,42 @@ class Unfolder:
         self.hunf.val[i] = np.mean(self.trace.Truth[:, i])
         self.hunf.err[i] = np.std(self.trace.Truth[:, i], ddof = 1)**2
         m = self.hunf.val[i]
-        s = 3*np.sqrt(self.hunf.err[i])
+        s = np.sqrt(self.hunf.err[i])
         pdf = stats.gaussian_kde(self.trace.Truth[:, i])
-        g = np.linspace(m-3*s, m+3*s, 1000)
+        g = np.linspace(m-2*s, m+2*s, 1000)
         mode = g[np.argmax(pdf(g))]
         self.hunf_mode.val[i] = mode
         self.hunf_mode.err[i] = self.hunf.err[i]
 
+      self.hunf_np0 = H1D(self.truth)
+      self.hunf_np1p = H1D(self.truth)
+      self.hunf_np1m = H1D(self.truth)
       self.hnp.x = [""]*len(self.systematics)
       self.hnpu.x = [""]*len(self.unf_systematics)
+      for i in range(0, self.Nt):
+        L = range(0, len(self.trace.Truth[:, 0]))
+        for k in range(0, len(self.systematics)):
+          L = [x for x in L if x in np.where(np.fabs(self.trace['t_'+self.systematics[k]][:]) < 0.1)[0]]
+        for k in range(0, len(self.unf_systematics)):
+          L = [x for x in L if x in np.where(np.fabs(self.trace['tu_'+self.unf_systematics[k]][:]) < 0.1)[0]]
+        self.hunf_np0.val[i] = np.mean(self.trace.Truth[L, i])
+        self.hunf_np0.err[i] = np.std(self.trace.Truth[L, i], ddof = 1)**2
+
+        L = range(0, len(self.trace.Truth[:, 0]))
+        for k in range(0, len(self.systematics)):
+          L = [x for x in L if x in np.where(self.trace['t_'+self.systematics[k]][:] > 0.9)[0]]
+        for k in range(0, len(self.unf_systematics)):
+          L = [x for x in L if x in np.where(self.trace['tu_'+self.unf_systematics[k]][:] > 0.9)[0]]
+        self.hunf_np1p.val[i] = np.mean(self.trace.Truth[L, i])
+        self.hunf_np1p.err[i] = np.std(self.trace.Truth[L, i], ddof = 1)**2
+
+        L = range(0, len(self.trace.Truth[:, 0]))
+        for k in range(0, len(self.systematics)):
+          L = [x for x in L if x in np.where(self.trace['t_'+self.systematics[k]][:] < -0.9)[0]]
+        for k in range(0, len(self.unf_systematics)):
+          L = [x for x in L if x in np.where(self.trace['tu_'+self.unf_systematics[k]][:] < -0.9)[0]]
+        self.hunf_np1m.val[i] = np.mean(self.trace.Truth[L, i])
+        self.hunf_np1m.err[i] = np.std(self.trace.Truth[L, i], ddof = 1)**2
       for k in range(0, len(self.systematics)):
         self.hnp.val[k] = np.mean(self.trace['t_'+self.systematics[k]])
         self.hnp.err[k] = np.std(self.trace['t_'+self.systematics[k]], ddof = 1)**2
@@ -525,7 +602,7 @@ class Unfolder:
   '''
   def plotCov(self, fname):
     fig = plt.figure(figsize=(10, 10))
-    plotH2D(np.cov(self.trace.Truth, rowvar = False), "Unfolded bin", "Unfolded bin", "Covariance matrix of unfolded bins", fname)
+    plotH2D(np.cov(self.trace.Truth, rowvar = 0), "Unfolded bin", "Unfolded bin", "Covariance matrix of unfolded bins", fname, fmt = "")
 
   '''
   Plot the Pearson correlation coefficients.
@@ -545,7 +622,7 @@ class Unfolder:
       tmp[self.Nt+i, :] = self.trace['t_'+self.systematics[i]]
     for i in range(0, len(self.unf_systematics)):
       tmp[self.Nt+len(self.systematics)+i, :] = self.trace['tu_'+self.unf_systematics[i]]
-    tmplabel = ["Unfolded bin %d" % i for i in range(0, self.Nt)] + self.systematics + self.unf_systematics
+    tmplabel = ["Unf. bin %d" % i for i in range(0, self.Nt)] + self.systematics + self.unf_systematics
     plotH2DWithText(np.corrcoef(tmp, rowvar = 1), tmplabel, "Variable", "Variable", "Pearson correlation of posterior", fname)
 
   '''
@@ -593,6 +670,9 @@ class Unfolder:
     plt.errorbar(self.truth.x, self.truth.val, self.truth.err**0.5, self.truth.x_err, fmt = 'g^', linewidth=2, label = "Truth", markersize=10)
     plt.errorbar(self.hunf_mode.x, self.hunf_mode.val, self.hunf_mode.err**0.5, self.hunf_mode.x_err, fmt = 'm^', linewidth=2, label = "Unfolded mode", markersize = 5)
     plt.errorbar(self.hunf.x, self.hunf.val, self.hunf.err**0.5, self.hunf.x_err, fmt = 'rv', linewidth=2, label = "Unfolded mean", markersize=5)
+    plt.errorbar(self.hunf_np0.x, self.hunf_np0.val, self.hunf_np0.err**0.5, self.hunf_np0.x_err, fmt = 'b*', linewidth=1, label = "Unfolded mean for abs(NP) < 0.1", markersize=5)
+    plt.errorbar(self.hunf_np1p.x, self.hunf_np1p.val, self.hunf_np1p.err**0.5, self.hunf_np1p.x_err, fmt = 'b^', linewidth=1, label = "Unfolded mean for NP > 0.9", markersize=5)
+    plt.errorbar(self.hunf_np1m.x, self.hunf_np1m.val, self.hunf_np1m.err**0.5, self.hunf_np1m.x_err, fmt = 'bv', linewidth=1, label = "Unfolded mean for NP < -0.9", markersize=5)
     plt.legend()
     plt.ylabel("Events")
     plt.xlabel("Observable")
@@ -608,11 +688,14 @@ class Unfolder:
     fig = plt.figure(figsize=(10, 10))
     expectedCs = f*self.truth
     observedCs = f*self.hunf
+    observedCs_mode = f*self.hunf_mode
     if normaliseByBinWidth:
       expectedCs = expectedCs.overBinWidth()
       observedCs = observedCs.overBinWidth()
+      observedCs_mode = observedCs_mode.overBinWidth()
     plt.errorbar(expectedCs.x, expectedCs.val, expectedCs.err**0.5, expectedCs.x_err, fmt = 'g^', linewidth=2, label = "Truth", markersize=10)
     plt.errorbar(observedCs.x, observedCs.val, observedCs.err**0.5, observedCs.x_err, fmt = 'rv', linewidth=2, label = "Unfolded mean", markersize=5)
+    plt.errorbar(observedCs_mode.x, observedCs_mode.val, observedCs_mode.err**0.5, observedCs_mode.x_err, fmt = 'bv', linewidth=2, label = "Unfolded mode", markersize=5)
     plt.legend()
     if units != "":
       plt.ylabel("Differential cross section ["+units+"]")
