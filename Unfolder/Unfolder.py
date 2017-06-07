@@ -366,9 +366,9 @@ class Unfolder:
       #self.run(pseudo_data)
       with self.model:
         res = pm.find_MAP(disp = False)
-        if not 'Truth' in res and self.prior == "uniform":
+        if not 'Truth' in res and (self.prior == "uniform" or self.prior == "flat"):
           res["Truth"] = (self.maxT - self.minT) * np.exp(res["Truth_interval_"])/(1.0 + np.exp(res["Truth_interval_"])) + self.minT
-        fitted[k, :] = res.Truth - truth.val
+        fitted[k, :] = res["Truth"] - truth.val
         bias_norm[k] = np.sum(res['Truth'] - truth.val)
     print
     # systematic bias
