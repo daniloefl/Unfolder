@@ -255,7 +255,7 @@ class Unfolder:
 
       self.var_response_unfsyst = {}
       for name in self.unf_systematics:
-        self.var_response_unfsyst[name] = theano.shared(value = self.asMat(self.response_unfsyst[name].val))
+        self.var_response_unfsyst[name] = theano.shared(value = self.asMat(self.response_unfsyst[name].val - self.response.val))
 
       self.var_bkg_syst = {}
       self.var_reco_syst = {}
@@ -276,7 +276,8 @@ class Unfolder:
 
       for name in self.unf_systematics:
         # add it to the total reco result
-        self.R_full += theano.tensor.dot(self.unf_theta[name]*self.asMat(self.truth.val), self.var_response_unfsyst[name])
+        #self.R_full += theano.tensor.dot(self.unf_theta[name]*self.asMat(self.truth.val), self.var_response_unfsyst[name])
+        self.R_full += theano.tensor.dot(self.unf_theta[name], theano.tensor.dot(self.T, self.var_response_unfsyst[name]))
 
       self.U = pm.Poisson('U', mu = self.R_full, observed = self.var_data, shape = (self.Nr, 1))
       if self.constrainArea:
