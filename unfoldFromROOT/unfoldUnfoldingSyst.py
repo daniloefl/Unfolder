@@ -11,7 +11,7 @@ import scipy
 
 from Unfolder.ComparisonHelpers import *
 from Unfolder.Unfolder import Unfolder
-from Unfolder.Histogram import H1D, H2D, plotH1D, plotH2D
+from Unfolder.Histogram import H1D, H2D, plotH1D, plotH2D, getNormResponse
 from readHistograms import *
 
 sns.set(context = "paper", style = "whitegrid", font_scale=2)
@@ -27,27 +27,23 @@ bkg = {}
 mig = {}
 eff = {}
 nrt = {}
+response = {}
 
 truth[""], recoWithFakes[""], bkg[""], mig[""], eff[""], nrt[""] = getHistograms("out_ttallhad_psrw_Syst.root", "nominal", "mttAsymm")
 truth["me"], recoWithFakes["me"], bkg["me"], mig["me"], eff["me"], nrt["me"] = getHistograms("out_ttallhad_psrw_Syst.root", "aMcAtNloHerwigppEvtGen", "mttAsymm")
 truth["ps"], recoWithFakes["ps"], bkg["ps"], mig["ps"], eff["ps"], nrt["ps"] = getHistograms("out_ttallhad_psrw_Syst.root", "PowhegHerwigppEvtGen", "mttAsymm")
 
 for i in recoWithFakes:
+  response[i] = getNormResponse(mig[i], eff[i])
   recoWithoutFakes[i] = mig[i].project("y")
 
-  # plot migration matrix as it will be used next for unfolding
-  plotH2D(mig[i], "Reconstructed-level bin", "Particle-level bin", "Number of events for each (reco, truth) configuration", "mig_%s.%s" % (i,extension))
-
-  # plot 1D histograms for cross checks
-  plotH1D(bkg[i], "Reconstructed "+varname, "Events", "Background", "bkg_%s.%s" % (i, extension))
-  plotH1D(truth[i], "Particle-level "+varname, "Events", "Particle-level distribution", "truth_%s.%s" % (i, extension))
-  plotH1D(nrt[i], "Particle-level "+varname, "Events", "Events in particle-level selection but not reconstructed", "nrt_%s.%s" % (i,extension))
-  plotH1D(recoWithFakes[i], "Reconstructed "+varname, "Events", "Reconstructed-level distribution with fakes", "recoWithFakes_%s.%s" % (i,extension))
-  plotH1D(recoWithoutFakes[i], "Reconstructed "+varname, "Events", "Reconstructed-level distribution without fakes", "recoWithoutFakes_%s.%s" % (i,extension))
-  plotH1D(eff[i], "Particle-level "+varname, "Efficiency", "Efficiency of particle-level selection", "eff_%s.%s" % (i,extension))
+inp = ""
+import sys
+if len(sys.argv) > 1:
+  inp = sys.argv[1]
 
 # generate perfect fake data
-data = recoWithFakes[""]
+data = recoWithFakes[inp]
 #data = recoWithFakes["me"]
 #data = recoWithFakes["ps"]
 
@@ -66,8 +62,6 @@ for k in uncList:
   print "Getting histograms for syst. ", k
   struth, srecoWithFakes, sbkg, smig, seff, snrt = getHistograms("out_ttallhad_psrw_Syst.root", k, "mttAsymm")
   m.addUncertainty(k, sbkg, smig.project('y'))
-  plotH1D(m.bkg_syst[k], "Reconstructed "+varname, "Events", "Background Uncertainty "+k, "bkg_unc_%s.%s" % (k, extension))
-  plotH1D(m.reco_syst[k], "Reconstructed "+varname, "Events", "Impact in reconstructed distribution due to uncertainty "+k, "recoWithoutFakes_unc_%s.%s" % (k, extension))
 
 m.run(data)
 m.setAlpha(0.0)
@@ -77,12 +71,8 @@ unf_orig = m.hunf
   
 uncUnfList = ["me", "ps"]
 for k in uncUnfList:
-  m.addUnfoldingUncertainty(k, bkg[k], mig[k], eff[k])
-
-# plot response matrix P(r|t)*eff(r)
-plotH2D(m.response, "Reconstructed-level bin", "Particle-level bin", "Transpose of response matrix P(r|t)*eff(t)", "responseMatrix.%s" % extension)
-# and also the migration probabilities matrix
-plotH2D(m.response_noeff, "Reconstructed-level bin", "Particle-level bin", "Transpose of migration probabilities P(r|t)", "migrationMatrix.%s" % extension)
+  #m.addUnfoldingUncertainty(k, mig[k], eff[k])
+  m.addUncertainty(k, bkg[k], np.dot(truth[k].val, response[k].val))
 
 m.run(data)
 m.setAlpha(0.0)
