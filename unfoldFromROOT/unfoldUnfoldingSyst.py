@@ -85,7 +85,8 @@ for i in uncList:
   m.plotNPMarginal(i, "plotNPMarginal_%s.%s" % (i, extension))
 
 for i in uncUnfList:
-  m.plotNPUMarginal(i, "plotNPUMarginal_%s.%s" % (i, extension))
+  #m.plotNPUMarginal(i, "plotNPUMarginal_%s.%s" % (i, extension))
+  m.plotNPMarginal(i, "plotNPUMarginal_%s.%s" % (i, extension))
 
 # plot correlations
 #m.plotPairs("pairPlot.%s" % extension) # takes forever
