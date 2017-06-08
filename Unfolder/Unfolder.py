@@ -81,6 +81,7 @@ class Unfolder:
     self.reco_syst = {}
     self.systematics = []
     self.response_unfsyst = {}
+    self.bkg_unfsyst = {}
     self.unf_systematics = []
     self.fb = 0
     self.constrainArea = False
@@ -174,9 +175,10 @@ class Unfolder:
   is not correlated with this uncertainty.
   The second term is the reconstruction-level histogram one would get if the nominal truth is folded with an alternative unfolding factor.
   '''
-  def addUnfoldingUncertainty(self, name, mig, eff):
+  def addUnfoldingUncertainty(self, name, bkg, mig, eff):
     # calculate response matrix, defined as response[i, j] = P(r = j|t = i) = P(t = i, r = j)/P(t = i)
     self.response_unfsyst[name] = H2D(mig)
+    self.bkg_unfsyst[name] = H1D(bkg)
     for i in range(0, self.Nt): # for each truth bin
       rsum = 0.0
       for j in range(0, self.Nr): # for each reco bin
@@ -254,8 +256,10 @@ class Unfolder:
       self.R = theano.tensor.dot(self.T, self.var_response) + self.var_bkg
 
       self.var_response_unfsyst = {}
+      self.var_bkg_unfsyst = {}
       for name in self.unf_systematics:
         self.var_response_unfsyst[name] = theano.shared(value = self.asMat(self.response_unfsyst[name].val - self.response.val))
+        self.var_bkg_unfsyst[name] = theano.shared(value = self.asMat(self.bkg_unfsyst[name].val - self.bkg.val))
 
       self.var_bkg_syst = {}
       self.var_reco_syst = {}
@@ -277,7 +281,7 @@ class Unfolder:
       for name in self.unf_systematics:
         # add it to the total reco result
         #self.R_full += theano.tensor.dot(self.unf_theta[name]*self.asMat(self.truth.val), self.var_response_unfsyst[name])
-        self.R_full += theano.tensor.dot(self.unf_theta[name], theano.tensor.dot(self.T, self.var_response_unfsyst[name]))
+        self.R_full += theano.tensor.dot(self.unf_theta[name], self.var_bkg_unfsyst[name] + theano.tensor.dot(self.T, self.var_response_unfsyst[name]))
 
       self.U = pm.Poisson('U', mu = self.R_full, observed = self.var_data, shape = (self.Nr, 1))
       if self.constrainArea:

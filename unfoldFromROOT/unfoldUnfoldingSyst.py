@@ -71,8 +71,8 @@ unf_orig = m.hunf
   
 uncUnfList = ["me", "ps"]
 for k in uncUnfList:
-  #m.addUnfoldingUncertainty(k, mig[k], eff[k])
-  m.addUncertainty(k, bkg[k], np.dot(truth[k].val, response[k].val))
+  m.addUnfoldingUncertainty(k, bkg[k], mig[k], eff[k])
+  #m.addUncertainty(k, bkg[k], np.dot(truth[k].val, response[k].val))
 
 m.run(data)
 m.setAlpha(0.0)
@@ -85,8 +85,8 @@ for i in uncList:
   m.plotNPMarginal(i, "plotNPMarginal_%s.%s" % (i, extension))
 
 for i in uncUnfList:
-  #m.plotNPUMarginal(i, "plotNPUMarginal_%s.%s" % (i, extension))
-  m.plotNPMarginal(i, "plotNPUMarginal_%s.%s" % (i, extension))
+  m.plotNPUMarginal(i, "plotNPUMarginal_%s.%s" % (i, extension))
+  #m.plotNPMarginal(i, "plotNPUMarginal_%s.%s" % (i, extension))
 
 # plot correlations
 #m.plotPairs("pairPlot.%s" % extension) # takes forever
