@@ -545,6 +545,52 @@ class Unfolder:
         self.hnpu.x_err[k] = 1
 
   '''
+  Estimate modes from GKE.
+  '''
+  def getPosteriorMode(self):
+    dt = self.trace.Truth.shape[1]
+    du = len(self.unf_systematics)
+    d = dt + du
+    r = self.trace.Truth.shape[0]
+    value = np.zeros( (d, r) )
+    S = np.zeros( (d, 1) )
+    dS = np.zeros( (d, 1) )
+    for i in range(0, dt):
+      value[i, :] = copy.deepcopy(self.trace.Truth[:, i])
+      m = np.mean(self.trace.Truth[:, i])
+      s = np.std(self.trace.Truth[:, i])
+      S[i, 0] = m
+      dS[i, 0] = s
+    for i in range(0, du):
+      value[dt + i, :] = copy.deepcopy(self.trace['tu_'+self.unf_systematics[i]][:])
+      m = np.mean(self.trace['tu_'+self.unf_systematics[i]])
+      s = np.std(self.trace['tu_'+self.unf_systematics[i]])
+      S[dt + i, 0] = m
+      dS[dt + i, 0] = s
+    #pdf = stats.kde.gaussian_kde(value)
+    H = np.cov(value)
+    Hi = np.linalg.inv(H)
+    detH = np.linalg.det(H)
+    def mpdf(x):
+      #scale = np.power(2*np.pi, -r*0.5) *np.power(detH, -0.5)  # this is constant ...
+      scale = 1.0
+      p = 0
+      for i in range(0, r):
+        xs = x.reshape(d, 1) - value[:, i].reshape(d, 1)
+        xs = xs.reshape(d, 1)
+        p += scale*np.exp(-0.5*float(np.matmul(np.transpose(xs), np.matmul(Hi, xs))))
+      if p > 0:
+        p = -2*np.log(p)
+      elif p == 0:
+        p = 1e20
+      else:
+        print "Negative PDF:", p
+      return p
+    print "Start minimization with %s = %f" % (str(S), mpdf(S))
+    res = optimize.minimize(mpdf, S, method='L-BFGS-B', options={'ftol': 1e-6, 'gtol': 0, 'maxiter': 100, 'eps': 1e-3, 'disp': True})
+    print res
+
+  '''
   Plot the distributions for each bin regardless of the other bins
   Marginalizing each bin's PDF
   '''
