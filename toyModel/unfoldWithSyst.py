@@ -33,7 +33,7 @@ data_input = "A"
 import sys
 if len(sys.argv) > 1:
   if "withSyst" in sys.argv:
-    uncUnfList = ["B", "C", "D"]
+    uncUnfList = ["B", "C"]
   if "bias" in sys.argv:
     fb = 1.0
 
@@ -43,8 +43,6 @@ if len(sys.argv) > 1:
     data_input = "B"
   if "inputC" in sys.argv:
     data_input = "C"
-  if "inputD" in sys.argv:
-    data_input = "D"
 
 
 # get histograms from file
@@ -60,7 +58,6 @@ response = {}
 truth["A"], recoWithFakes["A"], bkg["A"], mig["A"], eff["A"], nrt["A"] = getHistograms("histograms.pkl", "A")
 truth["B"], recoWithFakes["B"], bkg["B"], mig["B"], eff["B"], nrt["B"] = getHistograms("histograms.pkl", "B")
 truth["C"], recoWithFakes["C"], bkg["C"], mig["C"], eff["C"], nrt["C"] = getHistograms("histograms.pkl", "C")
-truth["D"], recoWithFakes["D"], bkg["D"], mig["D"], eff["D"], nrt["D"] = getHistograms("histograms.pkl", "D")
 
 for i in recoWithFakes:
   response[i] = getNormResponse(mig[i], eff[i])
@@ -127,5 +124,5 @@ m.plotNPU("plotNPU.%s" % extension)
 m.plotUnfolded("plotUnfolded.%s" % extension)
 #m.plotOnlyUnfolded(1.0, False, "", "plotOnlyUnfolded.%s" % extension)
 
-comparePlot([truth[data_input], m.hunf, unf_orig], ["Truth %s" % data_input, "FBU w/ syst.", "FBU"], 1.0, False, "", "compareMethods.%s" % extension)
+comparePlot([truth[data_input], m.hunf, unf_orig], ["Truth %s" % data_input, "FBU w/ syst.", "FBU"], 1.0, False, "", logy = True, fname = "compareMethods.%s" % extension)
 

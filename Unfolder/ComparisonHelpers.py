@@ -64,7 +64,7 @@ def getTUnfolder(bkg, mig, eff, data, regMode = None, normMode = None):
 '''
 Use this to plot the histograms in listHist with the legends in listLegend.
 '''
-def comparePlot(listHist, listLegend, f = 1.0, normaliseByBinWidth = True, units = "fb", fname = "comparePlot.png"):
+def comparePlot(listHist, listLegend, f = 1.0, normaliseByBinWidth = True, units = "fb", logy = False, fname = "comparePlot.png"):
   fig = plt.figure(figsize=(10, 10))
   newListHist = []
   for item in listHist:
@@ -74,6 +74,10 @@ def comparePlot(listHist, listLegend, f = 1.0, normaliseByBinWidth = True, units
   sty = ['rv', 'bo', 'g^', 'mo', 'cv', 'ks']
   siz = [14, 12, 10, 8, 6, 4]
   c = 0
+  if logy:
+    plt.yscale("log")
+  else:
+    plt.yscale("linear")
   for item in newListHist:
     plt.errorbar(item.x, item.val, item.err**0.5, item.x_err, fmt = sty[c], linewidth=2, label = listLegend[c], markersize=siz[c])
     c += 1

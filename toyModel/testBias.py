@@ -176,7 +176,7 @@ comparePlot([truth["A"],
              "Unfolded (FBU) from projected reco.",
              "Unfolded (FBU) from independently simulated reco.",
             ],
-            1.0, False, "", "biasTest.%s" % extension)
+            1.0, False, "", logy = True, fname = "biasTest.%s" % extension)
 
 print "FBU     -- alpha = ",     alpha, " with bias = ", bestAlphaBias, ", std = ", bestAlphaBiasStd, ", norm bias = ", bestAlphaNormBias, ", norm bias std = ", bestAlphaNormBiasStd
 

@@ -131,7 +131,7 @@ comparePlot([truth["A"],
             ["Particle-level",
              "Unfolded (TUnfold) from projected reco.",
              "Unfolded (TUnfold) from independently simulated reco."],
-            1.0, False, "", "biasTest_TUnfold.%s" % extension)
+            1.0, False, "", logy = True, fname = "biasTest_TUnfold.%s" % extension)
 
 print "TUnfold -- tau   = ",   alpha, " with bias = ", bestAlphaBias, ", std = ", bestAlphaBiasStd, ", norm bias = ", bestAlphaNormBias, ", norm bias std = ", bestAlphaNormBiasStd
 

@@ -13,6 +13,7 @@ try:
   import ROOT
 except:
   pass
+from matplotlib.colors import LogNorm
 
 '''
 Class used to represent a 1D histogram with errors.
@@ -475,7 +476,7 @@ class H2D:
     h.shape = h.val.shape
     return h
 
-def plotH2D(h, xlabel = "x", ylabel = "y", title = "Migration matrix M(t, r)", fname = "plotH2D.png", vmin = None, vmax = None, fmt = "3.2f"):
+def plotH2D(h, xlabel = "x", ylabel = "y", title = "Migration matrix M(t, r)", logz = False, fname = "plotH2D.png", vmin = None, vmax = None, fmt = "3.2f"):
   try:
     if h.shape[1] > h.shape[0]:
       fig = plt.figure(figsize=(0.8*h.shape[1], 1.05*h.shape[0]))
@@ -491,11 +492,28 @@ def plotH2D(h, xlabel = "x", ylabel = "y", title = "Migration matrix M(t, r)", f
     annot = True
   if isinstance(h, H2D):
     with plt.rc_context(dict(sns.axes_style("whitegrid"),**sns.plotting_context("paper", font_scale=2.5))):
-      cax = sns.heatmap(h.val, cmap="YlGnBu", cbar = True, annot = annot, linewidths=.5, fmt=fmt, square = True, annot_kws={"size": 16}, vmin = vmin, vmax = vmax)
+      if logz:
+        mat = copy.deepcopy(h)
+        for i in xrange(mat.shape[0]):
+          for j in xrange(mat.shape[1]):
+            if mat.val[i, j] < 1e-7:
+              mat.val[i, j] = 1e-7
+        cax = sns.heatmap(mat.val, cmap="YlGnBu", cbar = True, annot = annot, linewidths=.5, fmt=fmt, square = True, annot_kws={"size": 16}, norm=LogNorm(vmin=vmin, vmax=vmax))
+      else:
+        cax = sns.heatmap(h.val, cmap="YlGnBu", cbar = True, annot = annot, linewidths=.5, fmt=fmt, square = True, annot_kws={"size": 16}, vmin = vmin, vmax = vmax)
       cax.invert_yaxis()
   else:
     with plt.rc_context(dict(sns.axes_style("whitegrid"),**sns.plotting_context("paper", font_scale=2.5))):
-      cax = sns.heatmap(h, cmap="YlGnBu", cbar = True, annot = annot, linewidths=.5, fmt = fmt, square = True, annot_kws={"size": 16}, vmin = vmin, vmax = vmax)
+      if logz:
+        if vmin == None: vmin = 1e-1
+        mat = copy.deepcopy(h)
+        for i in xrange(mat.shape[0]):
+          for j in xrange(mat.shape[1]):
+            if mat[i, j] < vmin:
+              mat[i, j] = vmin
+        cax = sns.heatmap(mat, cmap="YlGnBu", cbar = True, annot = annot, linewidths=.5, fmt = fmt, square = True, annot_kws={"size": 16}, norm=LogNorm(vmin=vmin, vmax=vmax))
+      else:
+        cax = sns.heatmap(h, cmap="YlGnBu", cbar = True, annot = annot, linewidths=.5, fmt = fmt, square = True, annot_kws={"size": 16}, vmin = vmin, vmax = vmax)
       cax.invert_yaxis()
   plt.title(title, size = 16)
   plt.ylabel(ylabel)
@@ -523,12 +541,16 @@ def plotH2DWithText(h, x, xlabel = "x", ylabel = "y", title = "Migration matrix 
   plt.savefig(fname)
   plt.close()
 
-def plotH1D(h, xlabel = "x", ylabel = "Events", title = "", fname = "plotH1D.png"):
+def plotH1D(h, xlabel = "x", ylabel = "Events", title = "", logy = False, fname = "plotH1D.png"):
   fig = plt.figure()
   plt.title(title)
   if isinstance(h, H1D):
     h = {xlabel: h}
   sty = ['ro', 'bv', 'g^', 'm*']
+  if logy:
+    plt.yscale("log")
+  else:
+    plt.yscale("linear")
   i = 0
   ymin = 0
   ymax = 0.1
@@ -547,7 +569,7 @@ def plotH1D(h, xlabel = "x", ylabel = "Events", title = "", fname = "plotH1D.png
   plt.savefig(fname)
   plt.close()
 
-def plotH1DLines(h, xlabel = "x", ylabel = "Events", title = "", fname = "plotH1D.png"):
+def plotH1DLines(h, xlabel = "x", ylabel = "Events", title = "", logy = False, fname = "plotH1D.png"):
   fig = plt.figure()
   plt.title(title)
   if isinstance(h, H1D):
@@ -565,6 +587,10 @@ def plotH1DLines(h, xlabel = "x", ylabel = "Events", title = "", fname = "plotH1
   plt.ylabel(ylabel)
   plt.xlabel(xlabel)
   plt.ylim([ymin-0.4*abs(ymin), (1.8 + 0.4*len(h))*ymax])
+  if logy:
+    plt.yscale("log")
+  else:
+    plt.yscale("linear")
   plt.legend(loc = "upper right")
   sns.despine()
   plt.tight_layout()

@@ -85,7 +85,7 @@ comparePlot([truth["A"],
             ["Particle-level",
              "Unfolded (d'Agostini) from projected reco.",
              "Unfolded (d'Agostini) from independently simulated reco."],
-            1.0, False, "fb/GeV", "biasTest_DAgostini.%s" % extension)
+            1.0, False, "fb/GeV", logy = True, fname = "biasTest_DAgostini.%s" % extension)
 
 print "DAgostini -- it.  = ",   alpha, " with bias = ", bestAlphaBias, ", std = ", bestAlphaBiasStd, ", norm bias = ", bestAlphaNormBias, ", norm bias std = ", bestAlphaNormBiasStd
 
