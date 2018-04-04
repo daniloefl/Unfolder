@@ -561,10 +561,10 @@ class Unfolder:
       for i in range(0, len(self.unf_systematics)):
         tmp[self.Nt+len(self.systematics)+i, :] = self.trace['tu_'+self.unf_systematics[i]]
       pdf = stats.gaussian_kde(tmp)
-      def mll(x):
-        return -np.log(pdf(x))
+      def mpdf(x):
+        return -pdf(x)
       # now need to find the PDF maximum
-      mode = optimize.minimize(mll, x0, method='L-BFGS-B', options={'ftol': 1e-6, 'gtol': 0, 'maxiter': 100, 'eps': 1e-3, 'disp': True})
+      mode = optimize.minimize(mpdf, x0, method='L-BFGS-B', options={'maxiter': 1000, 'eps': 1e-3, 'disp': True})
       for k in range(0, self.Nt):
         self.hunf_mode.val[i] = mode.x[k]
         self.hunf_mode.err[i] = np.sqrt(mode.hess_inv.todense()[k,k]) #self.hunf.err[i]
