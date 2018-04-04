@@ -485,8 +485,9 @@ class Unfolder:
     with self.model:
       #start = pm.find_MAP()
       #step = pm.NUTS(state = start)
-      self.trace = pm.sample(N, tune = N/2) #, step, start = start)
-      self.N = len(self.trace)
+      self.trace = pm.sample(N) #, step, start = start)
+      self.N = self.trace.Truth.shape[0]
+      print("Number of truth samples:", self.N)
 
       pm.summary(self.trace)
 

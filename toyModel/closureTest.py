@@ -45,7 +45,7 @@ m.setUniformPrior()
 
 m.run(data)
 m.setAlpha(1.0)
-m.sample(100000)
+m.sample(50000)
 
 # plot marginal distributions
 m.plotMarginal("plotMarginal.%s" % extension)
