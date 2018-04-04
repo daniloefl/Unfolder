@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import itertools
 import matplotlib.pyplot as plt
@@ -20,7 +20,7 @@ varname = "observable"
 extension = "eps"
 
 # get histograms from file
-truth, recoWithFakes, bkg, mig, eff, nrt = getHistograms("histograms.pkl", "A")
+truth, recoWithFakes, bkg, mig, eff, nrt = getHistograms(direc = "A")
 
 recoWithoutFakes = mig.project("y")
 

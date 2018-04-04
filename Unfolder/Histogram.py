@@ -4,10 +4,10 @@ import copy
 import numbers
 import itertools
 import matplotlib.pyplot as plt
-import pandas as pd
+#import pandas as pd
 import seaborn as sns 
 import numpy as np
-import pymc3 as pm
+#import pymc3 as pm
 import matplotlib.cm as cm
 try:
   import ROOT

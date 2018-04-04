@@ -20,21 +20,20 @@ More information on HMC can be found in http://www.sciencedirect.com/science/art
 You can use install Numpy, Matplotlib, SciPy, Pandas, Seaborn and pyMC3 in Ubuntu as follows.
 
 ```
-sudo apt-get install python-pip python-dev build-essential python-matplotlib python-numpy python-scipy
-pip install pandas
-pip install seaborn
-pip install pymc3
+sudo apt-get install python3 python3-pip
+pip3 install --user pandas
+pip3 install --user seaborn
+pip3 install --user pymc3
 ```
 
-After this, running the following should run a test unfolding:
+After this, running the following should run a test unfolding using the toy model in toyModel/ModelChris.json:
 
 ```
-./toyModel/generateHistograms.py
 ./toyModel/dumpModelPlots.py
 ./toyModel/closureTest.py
 ```
 
-It might be necessary to add the Unfolder main directory in the ```PYTHONPATH```.
+It might be necessary to add the main directory in the ```PYTHONPATH```.
 One can also do a test on the statistical and systematic bias, by running (this scans the
 regularisation parameter alpha and does many toy experiments to test the impact of the bias,
 so it can take a while):

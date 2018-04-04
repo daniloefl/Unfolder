@@ -6,8 +6,8 @@ import seaborn as sns
 import theano
 import theano.tensor
 import matplotlib.pyplot as plt
-from Histogram import H1D, H2D, plotH1D, plotH2D, plotH1DWithText, plotH2DWithText, plotH1DLines
-from ComparisonHelpers import getDataFromModel
+from Unfolder.Histogram import H1D, H2D, plotH1D, plotH2D, plotH1DWithText, plotH2DWithText, plotH1DLines
+from Unfolder.ComparisonHelpers import getDataFromModel
 from scipy import stats
 from scipy import optimize
 
@@ -18,11 +18,11 @@ Shows reference for Full Bayesian Unfolding to encourage people to give credit f
 work (which is not mine!).
 '''
 def printReferences():
-  print "This software has been produced using the ideas put forth in:"
-  print "Choudalakis, G., ``Fully Bayesian Unfolding'', physics.data-an:1201.4612, https://arxiv.org/abs/1201.4612"
-  print "Please cite it if you plan to publish this."
-  print "More information on the software itself can be found in https://github.com/daniloefl/Unfolder"
-  print ""
+  print("This software has been produced using the ideas put forth in:")
+  print("Choudalakis, G., ``Fully Bayesian Unfolding'', physics.data-an:1201.4612, https://arxiv.org/abs/1201.4612")
+  print("Please cite it if you plan to publish this.")
+  print("More information on the software itself can be found in https://github.com/daniloefl/Unfolder")
+  print("")
 
 printReferences()
 
@@ -333,7 +333,7 @@ class Unfolder:
     import sys
     for k in range(0, N):
       if k % 100 == 0:
-        print "getBiasFromMAP: Throwing toy experiment {0}/{1}\r".format(k, N),
+        print("getBiasFromMAP: Throwing toy experiment {0}/{1}\r".format(k, N))
         sys.stdout.flush()
       pseudo_data = getDataFromModel(bkg, mig, eff)
       self.setData(pseudo_data)
@@ -363,7 +363,7 @@ class Unfolder:
     import sys
     for k in range(0, N):
       if k % 100 == 0:
-        print "getBiasFromMAP: Throwing toy experiment {0}/{1}\r".format(k, N),
+        print("getBiasFromMAP: Throwing toy experiment {0}/{1}\r".format(k, N))
         sys.stdout.flush()
       pseudo_data = getDataFromModel(bkg, mig, eff)
       self.setData(pseudo_data)
@@ -384,7 +384,7 @@ class Unfolder:
     bias_std = np.std(fitted, axis = 0, ddof = 1)
     bias_norm_mean = np.mean(bias_norm)
     bias_norm_std = np.std(bias_norm, ddof = 1)
-    #print "getBiasFromMAP with alpha = ", self.var_alpha.get_value(), " N = ", N, ", mean, std = ", bias, bias_std
+    #print("getBiasFromMAP with alpha = ", self.var_alpha.get_value(), " N = ", N, ", mean, std = ", bias, bias_std)
     bias_binsum = np.mean(np.abs(bias))
     bias_std_binsum = np.mean(bias_std)
     bias_chi2 = np.mean(np.power(bias/bias_std, 2))
@@ -407,11 +407,11 @@ class Unfolder:
     bestI = 0
     import sys
     for i in range(0, len(rangeAlpha)):
-      print "scanAlpha: parameter = ", rangeAlpha[i], " / ", rangeAlpha[-1]
+      print("scanAlpha: parameter = ", rangeAlpha[i], " / ", rangeAlpha[-1])
       sys.stdout.flush()
       self.setAlpha(rangeAlpha[i])
       bias[i], bias_std[i], bias_chi2[i], bias_norm[i], bias_norm_std[i], bias_syst[i] = self.getBiasFromMAP(N, bkg, mig, eff) # only take mean values for speed
-      print " -- --> scanAlpha: parameter = ", rangeAlpha[i], " / ", rangeAlpha[-1], " with chi2 = ", bias_chi2[i], ", mean and std = ", bias[i], bias_std[i]
+      print(" -- --> scanAlpha: parameter = ", rangeAlpha[i], " / ", rangeAlpha[-1], " with chi2 = ", bias_chi2[i], ", mean and std = ", bias[i], bias_std[i])
       if np.abs(bias_chi2[i] - 0.5) < minBias:
         minBias = np.abs(bias_chi2[i] - 0.5)
         bestChi2 = bias_chi2[i]
@@ -480,13 +480,14 @@ class Unfolder:
   distribution mean and mode in self.hunf and self.hunf_mode respectively
   the sqrt of the variance in self.hunf_err
   '''
-  def sample(self, N = 100000):
+  def sample(self, N = 50000):
     self.N = N
     with self.model:
       #start = pm.find_MAP()
       #step = pm.NUTS(state = start)
-      self.trace = pm.sample(N) #, step, start = start)
-      
+      self.trace = pm.sample(N, tune = N/2) #, step, start = start)
+      self.N = len(self.trace)
+
       pm.summary(self.trace)
 
       self.hnp = H1D(np.zeros(len(self.systematics)))
@@ -584,11 +585,11 @@ class Unfolder:
       elif p == 0:
         p = 1e20
       else:
-        print "Negative PDF:", p
+        print("Negative PDF:", p)
       return p
-    print "Start minimization with %s = %f" % (str(S), mpdf(S))
+    print("Start minimization with %s = %f" % (str(S), mpdf(S)))
     res = optimize.minimize(mpdf, S, method='L-BFGS-B', options={'ftol': 1e-6, 'gtol': 0, 'maxiter': 100, 'eps': 1e-3, 'disp': True})
-    print res
+    print(res)
 
   '''
   Plot the distributions for each bin regardless of the other bins

@@ -7,7 +7,7 @@ import array
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns 
-from Histogram import H1D, H2D, plotH1D, plotH2D, plotH1DWithText, plotH2DWithText, plotH1DLines
+from Unfolder.Histogram import H1D, H2D, plotH1D, plotH2D, plotH1DWithText, plotH2DWithText, plotH1DLines
 
 '''
 To be used to scan TUnfold's object to find the optimal tau value for
@@ -23,7 +23,7 @@ def printLcurve(tunfolder, fname):
   lCurve  = ROOT.TGraph()
   iBest = tunfolder.ScanLcurve(nScan,tauMin,tauMax,lCurve, logTauX, logTauY)
   tau   = tunfolder.GetTau()
-  print "With TUnfold: Lcurve scan chose tau =", tau
+  print("With TUnfold: Lcurve scan chose tau =", tau)
 
   c = ROOT.TCanvas()
   t = ROOT.Double()
@@ -187,7 +187,7 @@ def getBiasFromToys(unfoldFunction, alpha, N, bkg, mig, eff, truth):
   import sys
   for k in range(0, N):
     if k % 100 == 0:
-      print "getBiasFromToys: Throwing toy experiment {0}/{1}\r".format(k, N),
+      print("getBiasFromToys: Throwing toy experiment {0}/{1}\r".format(k, N))
       sys.stdout.flush()
     pseudo_data = getDataFromModel(bkg, mig, eff)
     unfolded = unfoldFunction(alpha, pseudo_data)
@@ -233,10 +233,10 @@ def scanRegParameter(unfoldFunction, bkg, mig, eff, truth, N = 1000, rangeAlpha 
   import sys
   for i in range(0, len(rangeAlpha)):
     #if i % 100 == 0:
-    print "scanRegParameter: parameter = ", rangeAlpha[i], " / ", rangeAlpha[-1]
+    print("scanRegParameter: parameter = ", rangeAlpha[i], " / ", rangeAlpha[-1])
     sys.stdout.flush()
     bias[i], bias_std[i], bias_chi2[i], bias_norm[i], bias_norm_std[i], bias_syst[i] = getBiasFromToys(unfoldFunction, rangeAlpha[i], N, bkg, mig, eff, truth)
-    print " -- --> scanRegParameter: parameter = ", rangeAlpha[i], " / ", rangeAlpha[-1], " with chi2 = ", bias_chi2[i], ", mean and std = ", bias[i], bias_std[i]
+    print(" -- --> scanRegParameter: parameter = ", rangeAlpha[i], " / ", rangeAlpha[-1], " with chi2 = ", bias_chi2[i], ", mean and std = ", bias[i], bias_std[i])
     if np.abs(bias_chi2[i] - 0.5) < minBias:
       minBias = np.abs(bias_chi2[i] - 0.5)
       bestAlpha = rangeAlpha[i]

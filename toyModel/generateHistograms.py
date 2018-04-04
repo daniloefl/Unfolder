@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import copy
 from Unfolder.Histogram import H1D, H2D
