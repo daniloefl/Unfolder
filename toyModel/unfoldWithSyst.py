@@ -17,7 +17,7 @@ from Unfolder.Unfolder import Unfolder
 from Unfolder.Histogram import H1D, H2D, plotH1D, plotH2D, getNormResponse
 from readHistograms import *
 
-sns.set(context = "paper", style = "whitegrid", font_scale=2)
+sns.set(context = "paper", style = "whitegrid", font_scale=1.1)
 
 varname = "observable"
 extension = "eps"
@@ -77,9 +77,10 @@ if fb > 0:
 
 m.run(data)
 #m.graph("model.png")
-m.sample(10000)
+m.sample(50000)
 
 unf_orig = m.hunf
+unf_orig_mode = m.hunf_mode
 
 del m
 n = None
@@ -92,20 +93,21 @@ if fb > 0:
   
 for k in uncUnfList:
   # use uncertainty at reconstruction level, by using the nominal truth folded with the alternative response matrix
-  m.addUncertainty(k, bkg["A"], np.dot(truth["A"].val, response[k].val))
+  #m.addUncertainty(k, bkg["A"], np.dot(truth["A"].val, response[k].val))
   # one can also use a non-linear term in the unfolding
-  #m.addUnfoldingUncertainty(k, mig[k], eff[k])
+  m.addUnfoldingUncertainty(k, bkg[k], mig[k], eff[k])
 
 m.run(data)
 #m.graph("modelWithSysts.png")
 m.setAlpha(0)
-m.sample(100000)
+m.sample(50000)
 
 # plot marginal distributions
 m.plotMarginal("plotMarginal.%s" % extension)
 
 for i in uncUnfList:
-  m.plotNPMarginal(i, "plotNPMarginal_%s.%s" % (i, extension))
+  #m.plotNPMarginal(i, "plotNPMarginal_%s.%s" % (i, extension))
+  m.plotNPUMarginal(i, "plotNPUMarginal_%s.%s" % (i, extension))
 
 # plot correlations
 #m.plotPairs("pairPlot.%s" % extension) # takes forever
@@ -122,5 +124,6 @@ m.plotNPU("plotNPU.%s" % extension)
 m.plotUnfolded("plotUnfolded.%s" % extension)
 #m.plotOnlyUnfolded(1.0, False, "", "plotOnlyUnfolded.%s" % extension)
 
-comparePlot([truth[data_input], m.hunf, unf_orig], ["Truth %s" % data_input, "FBU w/ syst.", "FBU"], 1.0, False, "", logy = True, fname = "compareMethods.%s" % extension)
+comparePlot([truth[data_input], m.hunf_mode, unf_orig_mode], ["Truth %s" % data_input, "FBU w/ syst. (mode)", "FBU (mode)"], 1.0, False, "", logy = True, fname = "compareMethods.%s" % extension)
+comparePlot([truth[data_input], m.hunf, unf_orig], ["Truth %s" % data_input, "FBU w/ syst. (mean)", "FBU (mean)"], 1.0, False, "", logy = True, fname = "compareMethods_mean.%s" % extension)
 

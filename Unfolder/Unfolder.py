@@ -487,24 +487,26 @@ class Unfolder:
       #step = pm.NUTS(state = start)
       self.trace = pm.sample(N) #, step, start = start)
       self.N = self.trace.Truth.shape[0]
-      print("Number of truth samples:", self.N)
+      #print("Number of truth samples:", self.N)
 
       pm.summary(self.trace)
 
       self.hnp = H1D(np.zeros(len(self.systematics)))
       self.hnpu = H1D(np.zeros(len(self.unf_systematics)))
       self.hunf = H1D(self.truth)
+
       self.hunf_mode = H1D(self.truth)
+      self.hnp_mode = H1D(np.zeros(len(self.systematics)))
+      self.hnpu_mode = H1D(np.zeros(len(self.unf_systematics)))
+
+      x0 = np.zeros(self.Nt+len(self.systematics)+len(self.unf_systematics))
       for i in range(0, self.Nt):
         self.hunf.val[i] = np.mean(self.trace.Truth[:, i])
         self.hunf.err[i] = np.std(self.trace.Truth[:, i], ddof = 1)**2
         m = self.hunf.val[i]
         s = np.sqrt(self.hunf.err[i])
-        pdf = stats.gaussian_kde(self.trace.Truth[:, i])
-        g = np.linspace(m-2*s, m+2*s, 1000)
-        mode = g[np.argmax(pdf(g))]
-        self.hunf_mode.val[i] = mode
-        self.hunf_mode.err[i] = self.hunf.err[i]
+        x0[i] = m
+      
 
       self.hunf_np0 = H1D(self.truth)
       self.hunf_np1p = H1D(self.truth)
@@ -538,13 +540,42 @@ class Unfolder:
       for k in range(0, len(self.systematics)):
         self.hnp.val[k] = np.mean(self.trace['t_'+self.systematics[k]])
         self.hnp.err[k] = np.std(self.trace['t_'+self.systematics[k]], ddof = 1)**2
+        x0[self.Nt+k] = self.hnp.val[k]
         self.hnp.x[k] = self.systematics[k]
         self.hnp.x_err[k] = 1
       for k in range(0, len(self.unf_systematics)):
         self.hnpu.val[k] = np.mean(self.trace['tu_'+self.unf_systematics[k]])
         self.hnpu.err[k] = np.std(self.trace['tu_'+self.unf_systematics[k]], ddof = 1)**2
+        x0[self.Nt+len(self.systematics)+k] = self.hnpu.val[k]
         self.hnpu.x[k] = self.unf_systematics[k]
         self.hnpu.x_err[k] = 1
+
+      # get mode
+      tmp = np.zeros((self.Nt+len(self.systematics)+len(self.unf_systematics), self.N))
+      for i in range(0, self.Nt):
+        tmp[i, :] = self.trace.Truth[:, i]
+      for i in range(0, len(self.systematics)):
+        tmp[self.Nt+i, :] = self.trace['t_'+self.systematics[i]]
+      for i in range(0, len(self.unf_systematics)):
+        tmp[self.Nt+len(self.systematics)+i, :] = self.trace['tu_'+self.unf_systematics[i]]
+      pdf = stats.gaussian_kde(tmp)
+      def mll(x):
+        return -np.log(pdf(x))
+      # now need to find the PDF maximum
+      mode = optimize.minimize(mll, x0, method='L-BFGS-B', options={'ftol': 1e-6, 'gtol': 0, 'maxiter': 100, 'eps': 1e-3, 'disp': True})
+      for k in range(0, self.Nt):
+        self.hunf_mode.val[i] = mode.x[k]
+        self.hunf_mode.err[i] = np.sqrt(mode.hess_inv[k,k]) #self.hunf.err[i]
+      for k in range(0, len(self.systematics)):
+        self.hnp_mode.val[k] = mode.x[self.Nt+k]
+        self.hnp_mode.err[k] = np.sqrt(mode.hess_inv[self.Nt+k, self.Nt+k])
+        self.hnp_mode.x[k] = self.systematics[k]
+        self.hnp_mode.x_err[k] = 1
+      for k in range(0, len(self.unf_systematics)):
+        self.hnpu_mode.val[k] = mode.x[self.Nt+len(self.systematics)+k]
+        self.hnpu_mode.err[k] = np.sqrt(mode.hess_inv[self.Nt+len(self.systematics)+k, self.Nt+len(self.systematics)+k])
+        self.hnpu_mode.x[k] = self.unf_systematics[k]
+        self.hnpu_mode.x_err[k] = 1
 
   '''
   Estimate modes from GKE.
@@ -601,12 +632,15 @@ class Unfolder:
     m = np.mean(self.trace.Truth) + 3*np.std(self.trace.Truth)
     for i in range(0, self.Nt):
       ax = fig.add_subplot(self.Nt, 1, i+1, title='Truth')
-      sns.distplot(self.trace.Truth[:, i], kde = True, hist = True, label = "Truth bin %d" % i, ax = ax)
+      sns.distplot(self.trace.Truth[:, i], kde = True, hist = True, label = "Truth bin %d" % i, ax = ax, label = 'Marginal truth bin %d' % i)
       ax.set_title("Bin %d value" % i)
       ax.set_ylabel("Probability")
       ax.set_xlim([0, m])
+      ax.axvline(self.hunf_mode.val[i], linestyle = '--', linewidth = 1.5, color = 'r', label = 'Mode')
+      ax.axvline(self.hunf.val[i], linestyle = ':', linewidth = 1.5, color = 'm', label = 'Marginal mean')
     plt.xlabel("Truth bin value")
     plt.tight_layout()
+    plt.legend()
     plt.savefig("%s"%fname)
     plt.close()
 
@@ -616,11 +650,14 @@ class Unfolder:
   def plotNPMarginal(self, syst, fname):
     i = self.systematics.index(syst)
     fig = plt.figure(figsize=(10, 10))
-    sns.distplot(self.trace['t_'+self.systematics[i]], kde = True, hist = True, label = self.systematics[i])
+    sns.distplot(self.trace['t_'+self.systematics[i]], kde = True, hist = True, label = self.systematics[i], label = 'Marginal %s' % syst)
+    plt.axvline(self.hnp_mode.val[i], linestyle = '--', linewidth = 1.5, color = 'r', label = 'Mode')
+    plt.axvline(self.hnp.val[i], linestyle = ':', linewidth = 1.5, color = 'm', label = 'Marginal mean')
     plt.title(self.systematics[i])
     plt.ylabel("Probability")
     plt.xlim([-5, 5])
     plt.xlabel("Nuisance parameter value")
+    plt.legend()
     plt.tight_layout()
     plt.savefig("%s"%fname)
     plt.close()
@@ -631,11 +668,14 @@ class Unfolder:
   def plotNPUMarginal(self, syst, fname):
     i = self.unf_systematics.index(syst)
     fig = plt.figure(figsize=(10, 10))
-    sns.distplot(self.trace['tu_'+self.unf_systematics[i]], kde = True, hist = True, label = self.unf_systematics[i])
+    sns.distplot(self.trace['tu_'+self.unf_systematics[i]], kde = True, hist = True, label = self.unf_systematics[i], label = 'Marginal %s' % syst)
+    plt.axvline(self.hnpu_mode.val[i], linestyle = '--', linewidth = 1.5, color = 'r', label = 'Mode')
+    plt.axvline(self.hnpu.val[i], linestyle = ':', linewidth = 1.5, color = 'm', label = 'Marginal mean')
     plt.title(self.unf_systematics[i])
     plt.ylabel("Probability")
-    plt.xlim([-3, 3])
+    plt.xlim([-5, 5])
     plt.xlabel("Nuisance parameter value")
+    plt.legend()
     plt.tight_layout()
     plt.savefig("%s"%fname)
     plt.close()
@@ -689,18 +729,18 @@ class Unfolder:
     plotH1D(sk, "Particle-level observable", "Skewness", "Skewness of the distribution after unfolding", logy = False, fname = fname)
 
   '''
-  Plot nuisance parameter means and spread.
+  Plot nuisance parameter mode.
   '''
   def plotNP(self, fname):
     fig = plt.figure(figsize=(10, 10))
-    plotH1DWithText(self.hnp, "Nuisance parameter", "Nuisance parameter posteriors mean and width", fname)
+    plotH1DWithText(self.hnp_mode, "Nuisance parameter", "Nuisance parameter mode", fname)
 
   '''
   Plot unfolding nuisance parameter means and spread.
   '''
   def plotNPU(self, fname):
     fig = plt.figure(figsize=(10, 10))
-    plotH1DWithText(self.hnpu, "Nuisance parameter", "Nuisance parameter posteriors mean and width", fname)
+    plotH1DWithText(self.hnpu_mode, "Nuisance parameter", "Nuisance parameter mode", fname)
 
   '''
   Plot kurtosis.
@@ -723,9 +763,9 @@ class Unfolder:
     plt.errorbar(self.truth.x, self.truth.val, self.truth.err**0.5, self.truth.x_err, fmt = 'g^', linewidth=2, label = "Truth", markersize=10)
     plt.errorbar(self.hunf_mode.x, self.hunf_mode.val, self.hunf_mode.err**0.5, self.hunf_mode.x_err, fmt = 'm^', linewidth=2, label = "Unfolded mode", markersize = 5)
     plt.errorbar(self.hunf.x, self.hunf.val, self.hunf.err**0.5, self.hunf.x_err, fmt = 'rv', linewidth=2, label = "Unfolded mean", markersize=5)
-    plt.errorbar(self.hunf_np0.x, self.hunf_np0.val, self.hunf_np0.err**0.5, self.hunf_np0.x_err, fmt = 'b*', linewidth=1, label = "Unfolded mean for abs(NP) < 0.1", markersize=5)
-    plt.errorbar(self.hunf_np1p.x, self.hunf_np1p.val, self.hunf_np1p.err**0.5, self.hunf_np1p.x_err, fmt = 'b^', linewidth=1, label = "Unfolded mean for NP > 0.9", markersize=5)
-    plt.errorbar(self.hunf_np1m.x, self.hunf_np1m.val, self.hunf_np1m.err**0.5, self.hunf_np1m.x_err, fmt = 'bv', linewidth=1, label = "Unfolded mean for NP < -0.9", markersize=5)
+    #plt.errorbar(self.hunf_np0.x, self.hunf_np0.val, self.hunf_np0.err**0.5, self.hunf_np0.x_err, fmt = 'b*', linewidth=1, label = "Unfolded mean for abs(NP) < 0.1", markersize=5)
+    #plt.errorbar(self.hunf_np1p.x, self.hunf_np1p.val, self.hunf_np1p.err**0.5, self.hunf_np1p.x_err, fmt = 'b^', linewidth=1, label = "Unfolded mean for NP > 0.9", markersize=5)
+    #plt.errorbar(self.hunf_np1m.x, self.hunf_np1m.val, self.hunf_np1m.err**0.5, self.hunf_np1m.x_err, fmt = 'bv', linewidth=1, label = "Unfolded mean for NP < -0.9", markersize=5)
     plt.legend()
     plt.ylabel("Events")
     plt.xlabel("Observable")
@@ -747,7 +787,7 @@ class Unfolder:
       observedCs = observedCs.overBinWidth()
       observedCs_mode = observedCs_mode.overBinWidth()
     plt.errorbar(expectedCs.x, expectedCs.val, expectedCs.err**0.5, expectedCs.x_err, fmt = 'g^', linewidth=2, label = "Truth", markersize=10)
-    plt.errorbar(observedCs.x, observedCs.val, observedCs.err**0.5, observedCs.x_err, fmt = 'rv', linewidth=2, label = "Unfolded mean", markersize=5)
+    #plt.errorbar(observedCs.x, observedCs.val, observedCs.err**0.5, observedCs.x_err, fmt = 'rv', linewidth=2, label = "Unfolded mean", markersize=5)
     plt.errorbar(observedCs_mode.x, observedCs_mode.val, observedCs_mode.err**0.5, observedCs_mode.x_err, fmt = 'bv', linewidth=2, label = "Unfolded mode", markersize=5)
     plt.legend()
     if units != "":
