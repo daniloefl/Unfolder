@@ -632,7 +632,7 @@ class Unfolder:
     m = np.mean(self.trace.Truth) + 3*np.std(self.trace.Truth)
     for i in range(0, self.Nt):
       ax = fig.add_subplot(self.Nt, 1, i+1, title='Truth')
-      sns.distplot(self.trace.Truth[:, i], kde = True, hist = True, label = "Truth bin %d" % i, ax = ax, label = 'Marginal truth bin %d' % i)
+      sns.distplot(self.trace.Truth[:, i], kde = True, hist = True, label = "Truth bin %d" % i, ax = ax)
       ax.set_title("Bin %d value" % i)
       ax.set_ylabel("Probability")
       ax.set_xlim([0, m])
@@ -650,7 +650,7 @@ class Unfolder:
   def plotNPMarginal(self, syst, fname):
     i = self.systematics.index(syst)
     fig = plt.figure(figsize=(10, 10))
-    sns.distplot(self.trace['t_'+self.systematics[i]], kde = True, hist = True, label = self.systematics[i], label = 'Marginal %s' % syst)
+    sns.distplot(self.trace['t_'+self.systematics[i]], kde = True, hist = True, label = self.systematics[i])
     plt.axvline(self.hnp_mode.val[i], linestyle = '--', linewidth = 1.5, color = 'r', label = 'Mode')
     plt.axvline(self.hnp.val[i], linestyle = ':', linewidth = 1.5, color = 'm', label = 'Marginal mean')
     plt.title(self.systematics[i])
@@ -668,7 +668,7 @@ class Unfolder:
   def plotNPUMarginal(self, syst, fname):
     i = self.unf_systematics.index(syst)
     fig = plt.figure(figsize=(10, 10))
-    sns.distplot(self.trace['tu_'+self.unf_systematics[i]], kde = True, hist = True, label = self.unf_systematics[i], label = 'Marginal %s' % syst)
+    sns.distplot(self.trace['tu_'+self.unf_systematics[i]], kde = True, hist = True, label = self.unf_systematics[i])
     plt.axvline(self.hnpu_mode.val[i], linestyle = '--', linewidth = 1.5, color = 'r', label = 'Mode')
     plt.axvline(self.hnpu.val[i], linestyle = ':', linewidth = 1.5, color = 'm', label = 'Marginal mean')
     plt.title(self.unf_systematics[i])

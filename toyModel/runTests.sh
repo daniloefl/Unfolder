@@ -11,10 +11,10 @@ tar cvfz model_toy.tar.gz modelPlots
 ./toyModel/closureTest.py && mv *.eps results_withoutSyst/
 tar cvfz closure_toy.tar.gz results_withoutSyst
 
-./toyModel/unfoldWithSyst.py withSyst nobias inputA && mv *.eps results_unfA_withSyst/
-tar cvfz closure_systA_toy.tar.gz results_unfA_withSyst
-./toyModel/unfoldWithSyst.py withSyst nobias inputB && mv *.eps results_unfB_withSyst/
-tar cvfz closure_systB_toy.tar.gz results_unfB_withSyst
+./toyModel/unfoldWithSyst.py withSyst nobias inputA && mv *.eps results_unfA_withSyst_nonlinear/
+tar cvfz closure_systA_toy.tar.gz results_unfA_withSyst_nonlinear
+./toyModel/unfoldWithSyst.py withSyst nobias inputB && mv *.eps results_unfB_withSyst_nonlinear/
+tar cvfz closure_systB_toy.tar.gz results_unfB_withSyst_nonlinear
 
 #mkdir results_withoutSyst_regFirstDer
 #mkdir results_withoutSyst_regFirstDer_bias
