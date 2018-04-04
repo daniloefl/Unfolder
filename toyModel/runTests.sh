@@ -2,8 +2,8 @@
 
 mkdir modelPlots
 mkdir results_withoutSyst
-mkdir results_unfA_withSyst
-mkdir results_unfB_withSyst
+mkdir results_unfA_withSyst_nonlinear
+mkdir results_unfB_withSyst_nonlinear
 
 ./toyModel/dumpModelPlots.py && mv *.eps modelPlots/
 tar cvfz model_toy.tar.gz modelPlots
