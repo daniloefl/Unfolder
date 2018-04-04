@@ -33,7 +33,7 @@ data_input = "A"
 import sys
 if len(sys.argv) > 1:
   if "withSyst" in sys.argv:
-    uncUnfList = ["B", "C"]
+    uncUnfList = ["B"]
   if "bias" in sys.argv:
     fb = 1.0
 
@@ -41,8 +41,6 @@ if len(sys.argv) > 1:
     data_input = "A"
   if "inputB" in sys.argv:
     data_input = "B"
-  if "inputC" in sys.argv:
-    data_input = "C"
 
 
 # get histograms from file
