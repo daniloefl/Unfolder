@@ -62,23 +62,23 @@ for i in recoWithFakes:
 # and also the migration probabilities matrix
   plotH2D(m.response_noeff, "Reconstructed-level bin", "Particle-level bin", "Transpose of migration probabilities P(r|t)", logz = False, fname = "migrationMatrix_%s.%s" % (i, extension), vmin = 0, vmax = 1)
 
-comparePlot(listHist = [bkg["A"], bkg["B"], bkg["C"]],
-            listLegend = ["Background A", "Background B", "Background C"],
+comparePlot(listHist = [bkg["A"], bkg["B"]],
+            listLegend = ["Background A", "Background B"],
             f = 1.0, normaliseByBinWidth = False, units = "", logy = True, fname = "compare_bkg.%s" % extension)
 
-comparePlot(listHist = [eff["A"], eff["B"], eff["C"]],
-            listLegend = ["Efficiency A", "Efficiency B", "Efficiency C"],
+comparePlot(listHist = [eff["A"], eff["B"]],
+            listLegend = ["Efficiency A", "Efficiency B"],
             f = 1.0, normaliseByBinWidth = False, units = "", fname = "compare_eff.%s" % extension)
 
-comparePlot(listHist = [recoWithoutFakes["A"], recoWithoutFakes["B"], recoWithoutFakes["C"]],
-            listLegend = ["Reco A", "Reco B", "Reco C"],
+comparePlot(listHist = [recoWithoutFakes["A"], recoWithoutFakes["B"]],
+            listLegend = ["Reco A", "Reco B"],
             f = 1.0, normaliseByBinWidth = False, units = "", logy = True, fname = "compare_reco.%s" % extension)
 
-comparePlot(listHist = [recoWithFakes["A"], recoWithFakes["B"], recoWithFakes["C"]],
-            listLegend = ["Reco+bkg A", "Reco+bkg B", "Reco+bkg C"],
+comparePlot(listHist = [recoWithFakes["A"], recoWithFakes["B"]],
+            listLegend = ["Reco+bkg A", "Reco+bkg B"],
             f = 1.0, normaliseByBinWidth = False, units = "", logy = True, fname = "compare_recobkg.%s" % extension)
 
-comparePlot(listHist = [truth["A"], truth["B"], truth["C"]],
-            listLegend = ["Truth A", "Truth B", "Truth C"],
+comparePlot(listHist = [truth["A"], truth["B"]],
+            listLegend = ["Truth A", "Truth B"],
             f = 1.0, normaliseByBinWidth = False, units = "", logy = True, fname = "compare_truth.%s" % extension)
 

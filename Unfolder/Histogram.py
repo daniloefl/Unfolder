@@ -153,7 +153,7 @@ class H1D:
   '''
   Divide histograms.
   '''
-  def __div__(self, other):
+  def __truediv__(self, other):
     h = H1D(self)
     if isinstance(other, H1D):
       if len(self.x) != len(other.x): raise 'Trying to divide two incompatible histograms'
@@ -494,8 +494,8 @@ def plotH2D(h, xlabel = "x", ylabel = "y", title = "Migration matrix M(t, r)", l
     with plt.rc_context(dict(sns.axes_style("whitegrid"),**sns.plotting_context("paper", font_scale=2.5))):
       if logz:
         mat = copy.deepcopy(h)
-        for i in xrange(mat.shape[0]):
-          for j in xrange(mat.shape[1]):
+        for i in range(mat.shape[0]):
+          for j in range(mat.shape[1]):
             if mat.val[i, j] < 1e-7:
               mat.val[i, j] = 1e-7
         cax = sns.heatmap(mat.val, cmap="YlGnBu", cbar = True, annot = annot, linewidths=.5, fmt=fmt, square = True, annot_kws={"size": 16}, norm=LogNorm(vmin=vmin, vmax=vmax))
