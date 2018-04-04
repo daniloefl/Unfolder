@@ -498,6 +498,8 @@ class Unfolder:
       self.hunf_mode = H1D(self.truth)
       self.hnp_mode = H1D(np.zeros(len(self.systematics)))
       self.hnpu_mode = H1D(np.zeros(len(self.unf_systematics)))
+      self.hnp_mode.x = [""]*len(self.systematics)
+      self.hnpu_mode.x = [""]*len(self.unf_systematics)
 
       x0 = np.zeros(self.Nt+len(self.systematics)+len(self.unf_systematics))
       for i in range(0, self.Nt):
@@ -565,15 +567,15 @@ class Unfolder:
       mode = optimize.minimize(mll, x0, method='L-BFGS-B', options={'ftol': 1e-6, 'gtol': 0, 'maxiter': 100, 'eps': 1e-3, 'disp': True})
       for k in range(0, self.Nt):
         self.hunf_mode.val[i] = mode.x[k]
-        self.hunf_mode.err[i] = np.sqrt(mode.hess_inv[k,k]) #self.hunf.err[i]
+        self.hunf_mode.err[i] = np.sqrt(mode.hess_inv.todense()[k,k]) #self.hunf.err[i]
       for k in range(0, len(self.systematics)):
         self.hnp_mode.val[k] = mode.x[self.Nt+k]
-        self.hnp_mode.err[k] = np.sqrt(mode.hess_inv[self.Nt+k, self.Nt+k])
+        self.hnp_mode.err[k] = np.sqrt(mode.hess_inv.todense()[self.Nt+k, self.Nt+k])
         self.hnp_mode.x[k] = self.systematics[k]
         self.hnp_mode.x_err[k] = 1
       for k in range(0, len(self.unf_systematics)):
         self.hnpu_mode.val[k] = mode.x[self.Nt+len(self.systematics)+k]
-        self.hnpu_mode.err[k] = np.sqrt(mode.hess_inv[self.Nt+len(self.systematics)+k, self.Nt+len(self.systematics)+k])
+        self.hnpu_mode.err[k] = np.sqrt(mode.hess_inv.todense()[self.Nt+len(self.systematics)+k, self.Nt+len(self.systematics)+k])
         self.hnpu_mode.x[k] = self.unf_systematics[k]
         self.hnpu_mode.x_err[k] = 1
 
@@ -638,9 +640,9 @@ class Unfolder:
       ax.set_xlim([0, m])
       ax.axvline(self.hunf_mode.val[i], linestyle = '--', linewidth = 1.5, color = 'r', label = 'Mode')
       ax.axvline(self.hunf.val[i], linestyle = ':', linewidth = 1.5, color = 'm', label = 'Marginal mean')
+      ax.legend()
     plt.xlabel("Truth bin value")
     plt.tight_layout()
-    plt.legend()
     plt.savefig("%s"%fname)
     plt.close()
 
@@ -695,14 +697,14 @@ class Unfolder:
   '''
   def plotCov(self, fname):
     fig = plt.figure(figsize=(10, 10))
-    plotH2D(np.cov(self.trace.Truth, rowvar = 0), "Unfolded bin", "Unfolded bin", "Covariance matrix of unfolded bins", logz=False, fname = fname, fmt = "")
+    plotH2D(np.cov(self.trace.Truth, rowvar = 0), "", "", "Covariance matrix of unfolded bins", logz=False, fname = fname, fmt = "")
 
   '''
   Plot the Pearson correlation coefficients.
   '''
   def plotCorr(self, fname):
     fig = plt.figure(figsize=(10, 10))
-    plotH2D(np.corrcoef(self.trace.Truth, rowvar = 0), "Unfolded bin", "Unfolded bin", "Pearson correlation of unfolded bins", logz = False, fname = fname)
+    plotH2D(np.corrcoef(self.trace.Truth, rowvar = 0), "", "", "Pearson correlation of unfolded bins", logz = False, fname = fname)
 
   '''
   Plot the Pearson correlation coefficients including the NPs.
@@ -715,8 +717,8 @@ class Unfolder:
       tmp[self.Nt+i, :] = self.trace['t_'+self.systematics[i]]
     for i in range(0, len(self.unf_systematics)):
       tmp[self.Nt+len(self.systematics)+i, :] = self.trace['tu_'+self.unf_systematics[i]]
-    tmplabel = ["Unf. bin %d" % i for i in range(0, self.Nt)] + self.systematics + self.unf_systematics
-    plotH2DWithText(np.corrcoef(tmp, rowvar = 1), tmplabel, "Variable", "Variable", "Pearson correlation of posterior", fname)
+    tmplabel = ["%d" % i for i in range(0, self.Nt)] + self.systematics + self.unf_systematics
+    plotH2DWithText(np.corrcoef(tmp, rowvar = 1), tmplabel, "", "", "Pearson correlation of posterior", fname)
 
   '''
   Plot skewness.
