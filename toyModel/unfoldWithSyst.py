@@ -97,6 +97,9 @@ for k in uncUnfList:
   # one can also use a non-linear term in the unfolding
   m.addUnfoldingUncertainty(k, bkg[k], mig[k], eff[k])
 
+print(m.response.val)
+print(m.response_unfsyst["B"].val)
+
 m.run(data)
 #m.graph("modelWithSysts.png")
 m.setAlpha(0)
