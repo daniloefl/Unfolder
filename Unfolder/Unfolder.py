@@ -615,7 +615,7 @@ class Unfolder:
       return p
     args = {'pdf': pdf}
     print("Start minimization with %s = %f" % (str(S), mpdf(S, args)))
-    res = optimize.minimize(mpdf, S, args = args, method='L-BFGS-B', options={'ftol': 0, 'gtol': 1e-12, 'maxiter': 100, 'disp': True})
+    res = optimize.minimize(mpdf, S, args = args, method='L-BFGS-B', options={'maxiter': 100, 'disp': True})
     print(res)
 
     # get 68% interval
