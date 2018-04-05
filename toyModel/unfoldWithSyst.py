@@ -72,8 +72,8 @@ m = Unfolder(bkg["A"], mig["A"], eff["A"], truth["A"])
 m.setUniformPrior()
 #m.setGaussianPrior()
 #m.setCurvaturePrior()
-if fb > 0:
-  m.setFirstDerivativePrior(fb)
+#if fb > 0:
+#  m.setFirstDerivativePrior(fb)
 
 m.run(data)
 #m.graph("model.png")
@@ -88,21 +88,22 @@ m = Unfolder(bkg["A"], mig["A"], eff["A"], truth["A"])
 m.setUniformPrior()
 #m.setGaussianPrior()
 #m.setCurvaturePrior()
-if fb > 0:
-  m.setFirstDerivativePrior(fb)
+#if fb > 0:
+#  m.setFirstDerivativePrior(fb)
   
 for k in uncUnfList:
   # use uncertainty at reconstruction level, by using the nominal truth folded with the alternative response matrix
   #m.addUncertainty(k, bkg["A"], np.dot(truth["A"].val, response[k].val))
   # one can also use a non-linear term in the unfolding
-  m.addUnfoldingUncertainty(k, bkg[k], mig[k], eff[k])
+  m.addUnfoldingUncertainty(k, bkg["A"], mig[k], eff[k])
 
+print("Response")
 print(m.response.val)
 print(m.response_unfsyst["B"].val)
 
 m.run(data)
 #m.graph("modelWithSysts.png")
-m.setAlpha(0)
+#m.setAlpha(0)
 m.sample(50000)
 
 # plot marginal distributions
