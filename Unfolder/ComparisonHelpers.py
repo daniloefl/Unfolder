@@ -74,11 +74,13 @@ def comparePlot(listHist, listLegend, f = 1.0, normaliseByBinWidth = True, units
   sty = ['rv', 'bo', 'g^', 'mo', 'cv', 'ks']
   siz = [14, 12, 10, 8, 6, 4]
   c = 0
-  if logy:
-    plt.yscale("log")
-  else:
-    plt.yscale("linear")
+  ymax = 0
+  ymin = 1e10
   for item in newListHist:
+    ma = np.amax(item.val)
+    ymax = np.amax([ymax, ma])
+    mi = np.amin(item.val)
+    ymin = np.amin([ymin, mi])
     plt.errorbar(item.x, item.val, item.err**0.5, item.x_err, fmt = sty[c], linewidth=2, label = listLegend[c], markersize=siz[c])
     c += 1
   plt.legend()
@@ -87,6 +89,14 @@ def comparePlot(listHist, listLegend, f = 1.0, normaliseByBinWidth = True, units
   else:
     plt.ylabel("Events")
   plt.xlabel("Observable")
+  if logy:
+    plt.ylim([ymin*0.8, ymax*2])
+    ax = plt.gca()
+    ax.set_yscale('log')
+  else:
+    ax = plt.gca()
+    ax.set_yscale('linear')
+    plt.ylim([0, ymax*1.2])
   plt.tight_layout()
   plt.savefig(fname)
   plt.close()

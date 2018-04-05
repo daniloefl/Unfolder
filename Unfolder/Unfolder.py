@@ -489,7 +489,7 @@ class Unfolder:
       self.N = self.trace.Truth.shape[0]
       #print("Number of truth samples:", self.N)
 
-      pm.summary(self.trace)
+      #pm.summary(self.trace)
 
       self.hnp = H1D(np.zeros(len(self.systematics)))
       self.hnpu = H1D(np.zeros(len(self.unf_systematics)))
@@ -510,35 +510,8 @@ class Unfolder:
         x0[i] = m
       
 
-      self.hunf_np0 = H1D(self.truth)
-      self.hunf_np1p = H1D(self.truth)
-      self.hunf_np1m = H1D(self.truth)
       self.hnp.x = [""]*len(self.systematics)
       self.hnpu.x = [""]*len(self.unf_systematics)
-      for i in range(0, self.Nt):
-        L = range(0, len(self.trace.Truth[:, 0]))
-        for k in range(0, len(self.systematics)):
-          L = [x for x in L if x in np.where(np.fabs(self.trace['t_'+self.systematics[k]][:]) < 0.1)[0]]
-        for k in range(0, len(self.unf_systematics)):
-          L = [x for x in L if x in np.where(np.fabs(self.trace['tu_'+self.unf_systematics[k]][:]) < 0.1)[0]]
-        self.hunf_np0.val[i] = np.mean(self.trace.Truth[L, i])
-        self.hunf_np0.err[i] = np.std(self.trace.Truth[L, i], ddof = 1)**2
-
-        L = range(0, len(self.trace.Truth[:, 0]))
-        for k in range(0, len(self.systematics)):
-          L = [x for x in L if x in np.where(self.trace['t_'+self.systematics[k]][:] > 0.9)[0]]
-        for k in range(0, len(self.unf_systematics)):
-          L = [x for x in L if x in np.where(self.trace['tu_'+self.unf_systematics[k]][:] > 0.9)[0]]
-        self.hunf_np1p.val[i] = np.mean(self.trace.Truth[L, i])
-        self.hunf_np1p.err[i] = np.std(self.trace.Truth[L, i], ddof = 1)**2
-
-        L = range(0, len(self.trace.Truth[:, 0]))
-        for k in range(0, len(self.systematics)):
-          L = [x for x in L if x in np.where(self.trace['t_'+self.systematics[k]][:] < -0.9)[0]]
-        for k in range(0, len(self.unf_systematics)):
-          L = [x for x in L if x in np.where(self.trace['tu_'+self.unf_systematics[k]][:] < -0.9)[0]]
-        self.hunf_np1m.val[i] = np.mean(self.trace.Truth[L, i])
-        self.hunf_np1m.err[i] = np.std(self.trace.Truth[L, i], ddof = 1)**2
       for k in range(0, len(self.systematics)):
         self.hnp.val[k] = np.mean(self.trace['t_'+self.systematics[k]])
         self.hnp.err[k] = np.std(self.trace['t_'+self.systematics[k]], ddof = 1)**2
@@ -553,29 +526,31 @@ class Unfolder:
         self.hnpu.x_err[k] = 1
 
       # get mode
-      tmp = np.zeros((self.Nt+len(self.systematics)+len(self.unf_systematics), self.N))
-      for i in range(0, self.Nt):
-        tmp[i, :] = self.trace.Truth[:, i]
-      for i in range(0, len(self.systematics)):
-        tmp[self.Nt+i, :] = self.trace['t_'+self.systematics[i]]
-      for i in range(0, len(self.unf_systematics)):
-        tmp[self.Nt+len(self.systematics)+i, :] = self.trace['tu_'+self.unf_systematics[i]]
-      pdf = stats.gaussian_kde(tmp)
-      def mpdf(x):
-        return -pdf(x)
-      # now need to find the PDF maximum
-      mode = optimize.minimize(mpdf, x0, method='L-BFGS-B', options={'maxiter': 1000, 'eps': 1e-3, 'disp': True})
+      #tmp = np.zeros((self.Nt+len(self.systematics)+len(self.unf_systematics), self.N))
+      #for i in range(0, self.Nt):
+      #  tmp[i, :] = self.trace.Truth[:, i]
+      #for i in range(0, len(self.systematics)):
+      #  tmp[self.Nt+i, :] = self.trace['t_'+self.systematics[i]]
+      #for i in range(0, len(self.unf_systematics)):
+      #  tmp[self.Nt+len(self.systematics)+i, :] = self.trace['tu_'+self.unf_systematics[i]]
+      #pdf = stats.gaussian_kde(tmp)
+      #def mpdf(x, args):
+      #  MyPdf = args[0]
+      #  return -np.log(MyPdf(x))
+      ## now need to find the PDF maximum
+      #mode = optimize.minimize(mpdf, x0, args = [pdf], method='L-BFGS-B', options={'ftol': 0, 'gtol': 0, 'maxiter': 1000, 'disp': True})
+      mode = self.getPosteriorMode()
       for k in range(0, self.Nt):
         self.hunf_mode.val[i] = mode.x[k]
-        self.hunf_mode.err[i] = np.sqrt(mode.hess_inv.todense()[k,k]) #self.hunf.err[i]
+        self.hunf_mode.err[i] = mode.hess_inv.todense()[k,k]
       for k in range(0, len(self.systematics)):
         self.hnp_mode.val[k] = mode.x[self.Nt+k]
-        self.hnp_mode.err[k] = np.sqrt(mode.hess_inv.todense()[self.Nt+k, self.Nt+k])
+        self.hnp_mode.err[k] = mode.hess_inv.todense()[self.Nt+k, self.Nt+k]
         self.hnp_mode.x[k] = self.systematics[k]
         self.hnp_mode.x_err[k] = 1
       for k in range(0, len(self.unf_systematics)):
         self.hnpu_mode.val[k] = mode.x[self.Nt+len(self.systematics)+k]
-        self.hnpu_mode.err[k] = np.sqrt(mode.hess_inv.todense()[self.Nt+len(self.systematics)+k, self.Nt+len(self.systematics)+k])
+        self.hnpu_mode.err[k] = mode.hess_inv.todense()[self.Nt+len(self.systematics)+k, self.Nt+len(self.systematics)+k]
         self.hnpu_mode.x[k] = self.unf_systematics[k]
         self.hnpu_mode.x_err[k] = 1
 
@@ -583,47 +558,67 @@ class Unfolder:
   Estimate modes from GKE.
   '''
   def getPosteriorMode(self):
-    dt = self.trace.Truth.shape[1]
-    du = len(self.unf_systematics)
-    d = dt + du
-    r = self.trace.Truth.shape[0]
+    d = self.Nt + len(self.systematics) + len(self.unf_systematics)
+    r = self.N
     value = np.zeros( (d, r) )
     S = np.zeros( (d, 1) )
     dS = np.zeros( (d, 1) )
-    for i in range(0, dt):
+    for i in range(0, self.Nt):
       value[i, :] = copy.deepcopy(self.trace.Truth[:, i])
       m = np.mean(self.trace.Truth[:, i])
       s = np.std(self.trace.Truth[:, i])
       S[i, 0] = m
       dS[i, 0] = s
-    for i in range(0, du):
-      value[dt + i, :] = copy.deepcopy(self.trace['tu_'+self.unf_systematics[i]][:])
+    for i in range(0, len(self.systematics)):
+      value[self.Nt + i, :] = copy.deepcopy(self.trace['t_'+self.systematics[i]][:])
+      m = np.mean(self.trace['t_'+self.systematics[i]])
+      s = np.std(self.trace['t_'+self.systematics[i]])
+      S[self.Nt + i, 0] = m
+      dS[self.Nt + i, 0] = s
+    for i in range(0, len(self.unf_systematics)):
+      value[self.Nt +len(self.systematics) + i, :] = copy.deepcopy(self.trace['tu_'+self.unf_systematics[i]][:])
       m = np.mean(self.trace['tu_'+self.unf_systematics[i]])
       s = np.std(self.trace['tu_'+self.unf_systematics[i]])
-      S[dt + i, 0] = m
-      dS[dt + i, 0] = s
-    #pdf = stats.kde.gaussian_kde(value)
-    H = np.cov(value)
-    Hi = np.linalg.inv(H)
-    detH = np.linalg.det(H)
-    def mpdf(x):
-      #scale = np.power(2*np.pi, -r*0.5) *np.power(detH, -0.5)  # this is constant ...
-      scale = 1.0
-      p = 0
-      for i in range(0, r):
-        xs = x.reshape(d, 1) - value[:, i].reshape(d, 1)
-        xs = xs.reshape(d, 1)
-        p += scale*np.exp(-0.5*float(np.matmul(np.transpose(xs), np.matmul(Hi, xs))))
+      S[self.Nt + len(self.systematics) + i, 0] = m
+      dS[self.Nt +len(self.systematics) + i, 0] = s
+    pdf = stats.gaussian_kde(value)
+    #H = np.cov(value)
+    #Hi = np.linalg.inv(H)
+    #detH = np.linalg.det(H)
+    def mpdf(x, args):
+      pdf = args['pdf']
+      p = pdf(x)
       if p > 0:
-        p = -2*np.log(p)
+        p = -np.log(p)
       elif p == 0:
         p = 1e20
       else:
         print("Negative PDF:", p)
       return p
-    print("Start minimization with %s = %f" % (str(S), mpdf(S)))
-    res = optimize.minimize(mpdf, S, method='L-BFGS-B', options={'ftol': 1e-6, 'gtol': 0, 'maxiter': 100, 'eps': 1e-3, 'disp': True})
+      #Hi = args['Hi']
+      #d = args['d']
+      #r = args['r']
+      ##scale = np.power(2*np.pi, -r*0.5) *np.power(detH, -0.5)  # this is constant ...
+      #scale = 1.0
+      #p = 0
+      #for i in range(0, r):
+      #  xs = x.reshape(d, 1) - value[:, i].reshape(d, 1)
+      #  xs = xs.reshape(d, 1)
+      #  p += scale*np.exp(-0.5*float(np.matmul(np.transpose(xs), np.matmul(Hi, xs))))
+      #if p > 0:
+      #  p = -2*np.log(p)
+      #elif p == 0:
+      #  p = 1e20
+      #else:
+      #  print("Negative PDF:", p)
+      #return p
+    #args = {'Hi': Hi, 'd': d, 'r': r}
+    args = {'pdf': pdf}
+    print("Start minimization with %s = %f" % (str(S), mpdf(S, args)))
+    #res = optimize.minimize(mpdf, S, args = args, method='L-BFGS-B', options={'ftol': 0, 'gtol': 1e-6, 'maxiter': 100, 'eps': 1e-3, 'disp': True})
+    res = optimize.minimize(mpdf, S, args = args, method='L-BFGS-B', options={'ftol': 0, 'gtol': 1e-12, 'maxiter': 100, 'disp': True})
     print(res)
+    return res
 
   '''
   Plot the distributions for each bin regardless of the other bins
@@ -697,14 +692,14 @@ class Unfolder:
   '''
   def plotCov(self, fname):
     fig = plt.figure(figsize=(10, 10))
-    plotH2D(np.cov(self.trace.Truth, rowvar = 0), "", "", "Covariance matrix of unfolded bins", logz=False, fname = fname, fmt = "")
+    plotH2D(np.cov(self.trace.Truth, rowvar = 0), "", "", "Covariance of unfolded bins", logz=False, fname = fname, fmt = "")
 
   '''
   Plot the Pearson correlation coefficients.
   '''
   def plotCorr(self, fname):
     fig = plt.figure(figsize=(10, 10))
-    plotH2D(np.corrcoef(self.trace.Truth, rowvar = 0), "", "", "Pearson correlation of unfolded bins", logz = False, fname = fname)
+    plotH2D(np.corrcoef(self.trace.Truth, rowvar = 0), "", "", "Correlation of unfolded bins", logz = False, fname = fname)
 
   '''
   Plot the Pearson correlation coefficients including the NPs.
@@ -718,7 +713,7 @@ class Unfolder:
     for i in range(0, len(self.unf_systematics)):
       tmp[self.Nt+len(self.systematics)+i, :] = self.trace['tu_'+self.unf_systematics[i]]
     tmplabel = ["%d" % i for i in range(0, self.Nt)] + self.systematics + self.unf_systematics
-    plotH2DWithText(np.corrcoef(tmp, rowvar = 1), tmplabel, "", "", "Pearson correlation of posterior", fname)
+    plotH2DWithText(np.corrcoef(tmp, rowvar = 1), tmplabel, "", "", "Correlation of posterior", fname)
 
   '''
   Plot skewness.
@@ -728,7 +723,7 @@ class Unfolder:
     sk = H1D(self.truth)
     sk.val = stats.skew(self.trace.Truth, axis = 0, bias = False)
     sk.err = np.zeros(len(sk.val))
-    plotH1D(sk, "Particle-level observable", "Skewness", "Skewness of the distribution after unfolding", logy = False, fname = fname)
+    plotH1D(sk, "Unfolded bins", "Skewness", "Skewness of unfolded bins", logy = False, fname = fname)
 
   '''
   Plot nuisance parameter mode.
@@ -752,22 +747,24 @@ class Unfolder:
     sk = H1D(self.truth)
     sk.val = stats.kurtosis(self.trace.Truth, axis = 0, fisher = True, bias = False)
     sk.err = np.zeros(len(sk.val))
-    plotH1D(sk, "Particle-level observable", "Fisher kurtosis", "Fisher kurtosis of the distribution after unfolding", logy = False, fname = fname)
+    plotH1D(sk, "Unfolded bins", "Fisher kurtosis", "Kurtosis of unfolded bins", logy = False, fname = fname)
 
   '''
   Plot data, truth, reco and unfolded result
   '''
   def plotUnfolded(self, fname = "plotUnfolded.png"):
     fig = plt.figure(figsize=(10, 10))
+    ymax = 0
+    for item in [self.truth, self.hunf_mode, self.hunf]:
+      ma = np.amax(item.val)
+      ymax = np.amax([ymax, ma])
     #plt.errorbar(self.data.x, self.data.val, self.data.err**0.5, self.data.x_err, fmt = 'bs', linewidth=2, label = "Pseudo-data", markersize=10)
     #plt.errorbar(self.datasubbkg.x, self.datasubbkg.val, self.datasubbkg.err**0.5, self.datasubbkg.x_err, fmt = 'co', linewidth=2, label = "Background subtracted", markersize=10)
     #plt.errorbar(self.recoWithoutFakes.x, self.recoWithoutFakes.val, self.recoWithoutFakes.err**0.5, self.recoWithoutFakes.x_err, fmt = 'mv', linewidth=2, label = "Expected signal (no fakes) distribution", markersize=5)
     plt.errorbar(self.truth.x, self.truth.val, self.truth.err**0.5, self.truth.x_err, fmt = 'g^', linewidth=2, label = "Truth", markersize=10)
     plt.errorbar(self.hunf_mode.x, self.hunf_mode.val, self.hunf_mode.err**0.5, self.hunf_mode.x_err, fmt = 'm^', linewidth=2, label = "Unfolded mode", markersize = 5)
-    plt.errorbar(self.hunf.x, self.hunf.val, self.hunf.err**0.5, self.hunf.x_err, fmt = 'rv', linewidth=2, label = "Unfolded mean", markersize=5)
-    #plt.errorbar(self.hunf_np0.x, self.hunf_np0.val, self.hunf_np0.err**0.5, self.hunf_np0.x_err, fmt = 'b*', linewidth=1, label = "Unfolded mean for abs(NP) < 0.1", markersize=5)
-    #plt.errorbar(self.hunf_np1p.x, self.hunf_np1p.val, self.hunf_np1p.err**0.5, self.hunf_np1p.x_err, fmt = 'b^', linewidth=1, label = "Unfolded mean for NP > 0.9", markersize=5)
-    #plt.errorbar(self.hunf_np1m.x, self.hunf_np1m.val, self.hunf_np1m.err**0.5, self.hunf_np1m.x_err, fmt = 'bv', linewidth=1, label = "Unfolded mean for NP < -0.9", markersize=5)
+    plt.errorbar(self.hunf.x, self.hunf.val, self.hunf.err**0.5, self.hunf.x_err, fmt = 'rv', linewidth=2, label = "Marginal mean", markersize=5)
+    plt.ylim([0, ymax*1.2])
     plt.legend()
     plt.ylabel("Events")
     plt.xlabel("Observable")
@@ -789,14 +786,19 @@ class Unfolder:
       observedCs = observedCs.overBinWidth()
       observedCs_mode = observedCs_mode.overBinWidth()
     plt.errorbar(expectedCs.x, expectedCs.val, expectedCs.err**0.5, expectedCs.x_err, fmt = 'g^', linewidth=2, label = "Truth", markersize=10)
-    #plt.errorbar(observedCs.x, observedCs.val, observedCs.err**0.5, observedCs.x_err, fmt = 'rv', linewidth=2, label = "Unfolded mean", markersize=5)
+    plt.errorbar(observedCs.x, observedCs.val, observedCs.err**0.5, observedCs.x_err, fmt = 'rv', linewidth=2, label = "Marginal mean", markersize=5)
     plt.errorbar(observedCs_mode.x, observedCs_mode.val, observedCs_mode.err**0.5, observedCs_mode.x_err, fmt = 'bv', linewidth=2, label = "Unfolded mode", markersize=5)
+    ymax = 0
+    for item in [expectedCs, observedCs, observedCs_mode]:
+      ma = np.amax(item.val)
+      ymax = np.amax([ymax, ma])
     plt.legend()
     if units != "":
       plt.ylabel("Differential cross section ["+units+"]")
     else:
       plt.ylabel("Events")
     plt.xlabel("Observable")
+    plt.ylim([0, ymax*1.2])
     plt.tight_layout()
     plt.savefig(fname)
     plt.close()

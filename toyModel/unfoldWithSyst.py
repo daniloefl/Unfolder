@@ -124,6 +124,6 @@ m.plotNPU("plotNPU.%s" % extension)
 m.plotUnfolded("plotUnfolded.%s" % extension)
 #m.plotOnlyUnfolded(1.0, False, "", "plotOnlyUnfolded.%s" % extension)
 
-comparePlot([truth[data_input], m.hunf_mode, unf_orig_mode], ["Truth %s" % data_input, "FBU w/ syst. (mode)", "FBU (mode)"], 1.0, False, "", logy = True, fname = "compareMethods.%s" % extension)
-comparePlot([truth[data_input], m.hunf, unf_orig], ["Truth %s" % data_input, "FBU w/ syst. (mean)", "FBU (mean)"], 1.0, False, "", logy = True, fname = "compareMethods_mean.%s" % extension)
+comparePlot([truth[data_input], m.hunf_mode, unf_orig_mode], ["Truth %s" % data_input, "FBU w/ syst. (mode)", "FBU (mode)"], 1.0, False, "", logy = False, fname = "compareMethods.%s" % extension)
+comparePlot([truth[data_input], m.hunf, unf_orig], ["Truth %s" % data_input, "FBU w/ syst. (mean)", "FBU (mean)"], 1.0, False, "", logy = False, fname = "compareMethods_mean.%s" % extension)
 
