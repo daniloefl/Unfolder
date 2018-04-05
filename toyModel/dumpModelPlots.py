@@ -64,7 +64,7 @@ for i in recoWithFakes:
 
 comparePlot(listHist = [bkg["A"], bkg["B"]],
             listLegend = ["Background A", "Background B"],
-            f = 1.0, normaliseByBinWidth = False, units = "", logy = True, fname = "compare_bkg.%s" % extension)
+            f = 1.0, normaliseByBinWidth = False, units = "", logy = False, fname = "compare_bkg.%s" % extension)
 
 comparePlot(listHist = [eff["A"], eff["B"]],
             listLegend = ["Efficiency A", "Efficiency B"],
@@ -72,13 +72,13 @@ comparePlot(listHist = [eff["A"], eff["B"]],
 
 comparePlot(listHist = [recoWithoutFakes["A"], recoWithoutFakes["B"]],
             listLegend = ["Reco A", "Reco B"],
-            f = 1.0, normaliseByBinWidth = False, units = "", logy = True, fname = "compare_reco.%s" % extension)
+            f = 1.0, normaliseByBinWidth = False, units = "", logy = False, fname = "compare_reco.%s" % extension)
 
 comparePlot(listHist = [recoWithFakes["A"], recoWithFakes["B"]],
             listLegend = ["Reco+bkg A", "Reco+bkg B"],
-            f = 1.0, normaliseByBinWidth = False, units = "", logy = True, fname = "compare_recobkg.%s" % extension)
+            f = 1.0, normaliseByBinWidth = False, units = "", logy = False, fname = "compare_recobkg.%s" % extension)
 
 comparePlot(listHist = [truth["A"], truth["B"]],
             listLegend = ["Truth A", "Truth B"],
-            f = 1.0, normaliseByBinWidth = False, units = "", logy = True, fname = "compare_truth.%s" % extension)
+            f = 1.0, normaliseByBinWidth = False, units = "", logy = False, fname = "compare_truth.%s" % extension)
 
