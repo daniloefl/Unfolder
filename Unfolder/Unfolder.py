@@ -346,6 +346,8 @@ class Unfolder:
     plt_bias = H1D(truth)
     plt_bias.val = bias
     plt_bias.err = np.power(bias_std, 2)
+    plt_bias.err_up = np.power(bias_std, 2)
+    plt_bias.err_dw = np.power(bias_std, 2)
     return plt_bias
 
   '''
@@ -421,16 +423,22 @@ class Unfolder:
     plt_bias = H1D(bias)
     plt_bias.val = bias
     plt_bias.err = np.zeros(len(rangeAlpha))
+    plt_bias.err_up = np.zeros(len(rangeAlpha))
+    plt_bias.err_dw = np.zeros(len(rangeAlpha))
     plt_bias.x = rangeAlpha
     plt_bias.x_err = np.zeros(len(rangeAlpha))
     plt_bias_e = H1D(bias)
     plt_bias_e.val = bias_std
     plt_bias_e.err = np.zeros(len(rangeAlpha))
+    plt_bias_e.err_up = np.zeros(len(rangeAlpha))
+    plt_bias_e.err_dw = np.zeros(len(rangeAlpha))
     plt_bias_e.x = rangeAlpha
     plt_bias_e.x_err = np.zeros(len(rangeAlpha))
     plt_bias_syst = H1D(bias)
     plt_bias_syst.val = bias_syst
     plt_bias_syst.err = np.zeros(len(rangeAlpha))
+    plt_bias_syst.err_up = np.zeros(len(rangeAlpha))
+    plt_bias_syst.err_dw = np.zeros(len(rangeAlpha))
     plt_bias_syst.x = rangeAlpha
     plt_bias_syst.x_err = np.zeros(len(rangeAlpha))
     #plotH1DLines({r"$E_{\mathrm{bins}}[|E_{\mathrm{toys}}[\mathrm{bias}]|]$": plt_bias, r"$E_{\mathrm{bins}}[\sqrt{\mathrm{Var}_{\mathrm{toys}}[\mathrm{bias}]}]$": plt_bias_e, r"$E_{\mathrm{bins}}[|\mathrm{only \;\; syst. \;\; bias}|]$": plt_bias_syst}, r"$\alpha$", "Bias", "", fname)
@@ -438,22 +446,30 @@ class Unfolder:
     plt_bias_norm = H1D(bias)
     plt_bias_norm.val = bias_norm
     plt_bias_norm.err = np.zeros(len(rangeAlpha))
+    plt_bias_norm.err_up = np.zeros(len(rangeAlpha))
+    plt_bias_norm.err_dw = np.zeros(len(rangeAlpha))
     plt_bias_norm.x = rangeAlpha
     plt_bias_norm.x_err = np.zeros(len(rangeAlpha))
     plt_bias_norm_e = H1D(bias)
     plt_bias_norm_e.val = bias_norm_std
     plt_bias_norm_e.err = np.zeros(len(rangeAlpha))
+    plt_bias_norm_e.err_up = np.zeros(len(rangeAlpha))
+    plt_bias_norm_e.err_dw = np.zeros(len(rangeAlpha))
     plt_bias_norm_e.x = rangeAlpha
     plt_bias_norm_e.x_err = np.zeros(len(rangeAlpha))
     plotH1DLines({r"$E_{\mathrm{toys}}[\mathrm{norm. \;\; bias}]$": plt_bias_norm, r"$\sqrt{\mathrm{Var}_{\mathrm{toys}}[\mathrm{norm. \;\; bias}]}$": plt_bias_norm_e}, r"$\alpha$", "Normalisation bias", "", fname_norm)
     plt_bias_chi2 = H1D(bias_chi2)
     plt_bias_chi2.val = bias_chi2
     plt_bias_chi2.err = np.ones(len(rangeAlpha))*np.sqrt(float(len(self.truth.val))/float(N)) # error in chi^2 considering errors in the mean of std/sqrt(N)
+    plt_bias_chi2.err_up = np.ones(len(rangeAlpha))*np.sqrt(float(len(self.truth.val))/float(N)) # error in chi^2 considering errors in the mean of std/sqrt(N)
+    plt_bias_chi2.err_dw = np.ones(len(rangeAlpha))*np.sqrt(float(len(self.truth.val))/float(N)) # error in chi^2 considering errors in the mean of std/sqrt(N)
     plt_bias_chi2.x = rangeAlpha
     plt_bias_chi2.x_err = np.zeros(len(rangeAlpha))
     plt_cte = H1D(plt_bias_chi2)
     plt_cte.val = 0.5*np.ones(len(rangeAlpha))
     plt_cte.err = np.zeros(len(rangeAlpha))
+    plt_cte.err_up = np.zeros(len(rangeAlpha))
+    plt_cte.err_dw = np.zeros(len(rangeAlpha))
     plotH1DLines({r"$E_{\mathrm{bins}}[E_{\mathrm{toys}}[\mathrm{bias}]^2/\mathrm{Var}_{\mathrm{toys}}[\mathrm{bias}]]$": plt_bias_chi2, "0.5": plt_cte}, r"$\alpha$", r"Bias $\mathrm{mean}^2/\mathrm{variance}$", "", fname_chi2)
     self.setAlpha(bkp_alpha)
     return [bestAlpha, bestChi2, bias[bestI], bias_std[bestI], bias_norm[bestI], bias_norm_std[bestI]]
@@ -505,6 +521,8 @@ class Unfolder:
       for i in range(0, self.Nt):
         self.hunf.val[i] = np.mean(self.trace.Truth[:, i])
         self.hunf.err[i] = np.std(self.trace.Truth[:, i], ddof = 1)**2
+        self.hunf.err_up[i] = np.std(self.trace.Truth[:, i], ddof = 1)**2
+        self.hunf.err_dw[i] = np.std(self.trace.Truth[:, i], ddof = 1)**2
         m = self.hunf.val[i]
         s = np.sqrt(self.hunf.err[i])
         x0[i] = m
@@ -515,42 +533,42 @@ class Unfolder:
       for k in range(0, len(self.systematics)):
         self.hnp.val[k] = np.mean(self.trace['t_'+self.systematics[k]])
         self.hnp.err[k] = np.std(self.trace['t_'+self.systematics[k]], ddof = 1)**2
+        self.hnp.err_up[k] = np.std(self.trace['t_'+self.systematics[k]], ddof = 1)**2
+        self.hnp.err_dw[k] = np.std(self.trace['t_'+self.systematics[k]], ddof = 1)**2
         x0[self.Nt+k] = self.hnp.val[k]
         self.hnp.x[k] = self.systematics[k]
         self.hnp.x_err[k] = 1
       for k in range(0, len(self.unf_systematics)):
         self.hnpu.val[k] = np.mean(self.trace['tu_'+self.unf_systematics[k]])
         self.hnpu.err[k] = np.std(self.trace['tu_'+self.unf_systematics[k]], ddof = 1)**2
+        self.hnpu.err_up[k] = np.std(self.trace['tu_'+self.unf_systematics[k]], ddof = 1)**2
+        self.hnpu.err_dw[k] = np.std(self.trace['tu_'+self.unf_systematics[k]], ddof = 1)**2
         x0[self.Nt+len(self.systematics)+k] = self.hnpu.val[k]
         self.hnpu.x[k] = self.unf_systematics[k]
         self.hnpu.x_err[k] = 1
 
       # get mode
-      #tmp = np.zeros((self.Nt+len(self.systematics)+len(self.unf_systematics), self.N))
-      #for i in range(0, self.Nt):
-      #  tmp[i, :] = self.trace.Truth[:, i]
-      #for i in range(0, len(self.systematics)):
-      #  tmp[self.Nt+i, :] = self.trace['t_'+self.systematics[i]]
-      #for i in range(0, len(self.unf_systematics)):
-      #  tmp[self.Nt+len(self.systematics)+i, :] = self.trace['tu_'+self.unf_systematics[i]]
-      #pdf = stats.gaussian_kde(tmp)
-      #def mpdf(x, args):
-      #  MyPdf = args[0]
-      #  return -np.log(MyPdf(x))
-      ## now need to find the PDF maximum
-      #mode = optimize.minimize(mpdf, x0, args = [pdf], method='L-BFGS-B', options={'ftol': 0, 'gtol': 0, 'maxiter': 1000, 'disp': True})
       mode = self.getPosteriorMode()
       for k in range(0, self.Nt):
-        self.hunf_mode.val[i] = mode.x[k]
-        self.hunf_mode.err[i] = mode.hess_inv.todense()[k,k]
+        self.hunf_mode.val[k] = mode.x[k]
+        #self.hunf_mode.err[k] = mode.hess_inv.todense()[k,k]
+        self.hunf_mode.err[k] = mode.errMode[k]**2
+        self.hunf_mode.err_up[k] = mode.errModeUp[k]**2
+        self.hunf_mode.err_dw[k] = mode.errModeDw[k]**2
       for k in range(0, len(self.systematics)):
         self.hnp_mode.val[k] = mode.x[self.Nt+k]
-        self.hnp_mode.err[k] = mode.hess_inv.todense()[self.Nt+k, self.Nt+k]
+        #self.hnp_mode.err[k] = mode.hess_inv.todense()[self.Nt+k, self.Nt+k]
+        self.hnp_mode.err[k] = mode.errMode[self.Nt+k]**2
+        self.hnp_mode.err_up[k] = mode.errModeUp[self.Nt+k]**2
+        self.hnp_mode.err_dw[k] = mode.errModeDw[self.Nt+k]**2
         self.hnp_mode.x[k] = self.systematics[k]
         self.hnp_mode.x_err[k] = 1
       for k in range(0, len(self.unf_systematics)):
         self.hnpu_mode.val[k] = mode.x[self.Nt+len(self.systematics)+k]
-        self.hnpu_mode.err[k] = mode.hess_inv.todense()[self.Nt+len(self.systematics)+k, self.Nt+len(self.systematics)+k]
+        #self.hnpu_mode.err[k] = mode.hess_inv.todense()[self.Nt+len(self.systematics)+k, self.Nt+len(self.systematics)+k]
+        self.hnpu_mode.err[k] = mode.errMode[self.Nt+len(self.systematics)+k]**2
+        self.hnpu_mode.err_up[k] = mode.errModeUp[self.Nt+len(self.systematics)+k]**2
+        self.hnpu_mode.err_dw[k] = mode.errModeDw[self.Nt+len(self.systematics)+k]**2
         self.hnpu_mode.x[k] = self.unf_systematics[k]
         self.hnpu_mode.x_err[k] = 1
 
@@ -582,41 +600,66 @@ class Unfolder:
       S[self.Nt + len(self.systematics) + i, 0] = m
       dS[self.Nt +len(self.systematics) + i, 0] = s
     pdf = stats.gaussian_kde(value)
-    #H = np.cov(value)
-    #Hi = np.linalg.inv(H)
-    #detH = np.linalg.det(H)
     def mpdf(x, args):
       pdf = args['pdf']
       p = pdf(x)
-      if p > 0:
-        p = -np.log(p)
-      elif p == 0:
-        p = 1e20
-      else:
-        print("Negative PDF:", p)
-      return p
-      #Hi = args['Hi']
-      #d = args['d']
-      #r = args['r']
-      ##scale = np.power(2*np.pi, -r*0.5) *np.power(detH, -0.5)  # this is constant ...
-      #scale = 1.0
-      #p = 0
-      #for i in range(0, r):
-      #  xs = x.reshape(d, 1) - value[:, i].reshape(d, 1)
-      #  xs = xs.reshape(d, 1)
-      #  p += scale*np.exp(-0.5*float(np.matmul(np.transpose(xs), np.matmul(Hi, xs))))
+      p = np.asarray(p)
+      p[p == 0] = 1e20
+      p[p > 0] = -np.log(p)
       #if p > 0:
-      #  p = -2*np.log(p)
+      #  p = -np.log(p)
       #elif p == 0:
       #  p = 1e20
       #else:
       #  print("Negative PDF:", p)
-      #return p
-    #args = {'Hi': Hi, 'd': d, 'r': r}
+      return p
     args = {'pdf': pdf}
     print("Start minimization with %s = %f" % (str(S), mpdf(S, args)))
-    #res = optimize.minimize(mpdf, S, args = args, method='L-BFGS-B', options={'ftol': 0, 'gtol': 1e-6, 'maxiter': 100, 'eps': 1e-3, 'disp': True})
     res = optimize.minimize(mpdf, S, args = args, method='L-BFGS-B', options={'ftol': 0, 'gtol': 1e-12, 'maxiter': 100, 'disp': True})
+    print(res)
+
+    # get 68% interval
+    # T is a list of linear spaces around the mode +/- 5 sigma
+    # ie: T = [np.linspace(mode1 - 5*sigma1, mode1 + 5*sigma1, Ngrid), np.linspace(mode2 - 5*sigma2, mode2 + 5*sigma2, Ngrid), ...]
+    T = []
+    Ngrid = 1000*Ndims
+    Ndims = self.Nt+len(self.systematics)+len(self.unf_systematics)
+    for i in range(0, self.Nt+len(self.systematics)+len(self.unf_systematics)):
+      T.append(np.linspace(res.x[i]-5*dS[i,0], res.x[i]+5*dS[i,0], Ngrid))
+
+    # build mesh with coordinates
+    meshT = np.meshgrid(T)
+    # meshTpos[i, k] has the i-th coordinate for mesh point k
+    meshTpos = np.reshape(np.vstack(map(np.ravel, meshT)), (Ndims, -1))
+    # get the -ln(pdf) value for each mesh point k
+    meshPdf = mpdf(meshTpos, args)
+    # get index permutation that would order the pdf values list in increasing order of -ln(pdf)
+    pdfPerm = meshPdf.argsort()
+    # get pdf values under decreasing order (since indices above are in increasing order of -ln(pdf) )
+    orderedPdf = np.exp(-meshPdf[pdfPerm])
+    # get pdf normalisation to normalise it to 1
+    pdfNorm = np.sum(orderedPdf)
+    # get decreasingly ordered pdf values so that total integral is 1
+    orderedPdfNorm = np.asarray([x/pdfNorm for x in orderedPdf])
+    # perform cumulative sum to get cdf values, summing up most probable values first
+    orderedCdf = np.cumsum(orderedPdfNorm)
+    # get first index of the cdf, where the cumulative probability is larger than 68%
+    boundaryIdx = np.argwhere(orderedCdf > 0.68)[0][0]
+    # transpose mesh (so now i-th coordinate for mesh point k is in index (k, i) ) and get points ordered by most probable mesh point to least probable
+    orderedMesh = (meshTpos.T)[pdfPerm]
+    # get only mesh points up to 68% boundary under the ordering principle above
+    confidenceSurface = orderedMesh[0:boundaryIdx, :]
+    # get maximum and minimum values for each coordinate i
+    errMin = [np.amin(confidenceSurface[:, i]) for i in range(0, Ndims)]
+    errMax = [np.amax(confidenceSurface[:, i]) for i in range(0, Ndims)]
+    # get mode errors by taking differences between values
+    modeErr = [0.5*(errMax[k] - errMin[k]) for k in range(0, Ndims)]
+    modeErrUp = [errMax[k] - res.x[k] for k in range(0, Ndims)]
+    modeErrDw = [res.x[k] - errMin[k] for k in range(0, Ndims)]
+    # add this to result structure
+    res.errMode = modeErr
+    res.errModeUp = modeErrUp
+    res.errModeDw = modeErrDw
     print(res)
     return res
 
@@ -723,6 +766,8 @@ class Unfolder:
     sk = H1D(self.truth)
     sk.val = stats.skew(self.trace.Truth, axis = 0, bias = False)
     sk.err = np.zeros(len(sk.val))
+    sk.err_up = np.zeros(len(sk.val))
+    sk.err_dw = np.zeros(len(sk.val))
     plotH1D(sk, "Unfolded bins", "Skewness", "Skewness of unfolded bins", logy = False, fname = fname)
 
   '''
@@ -747,6 +792,8 @@ class Unfolder:
     sk = H1D(self.truth)
     sk.val = stats.kurtosis(self.trace.Truth, axis = 0, fisher = True, bias = False)
     sk.err = np.zeros(len(sk.val))
+    sk.err_up = np.zeros(len(sk.val))
+    sk.err_dw = np.zeros(len(sk.val))
     plotH1D(sk, "Unfolded bins", "Fisher kurtosis", "Kurtosis of unfolded bins", logy = False, fname = fname)
 
   '''
@@ -761,9 +808,9 @@ class Unfolder:
     #plt.errorbar(self.data.x, self.data.val, self.data.err**0.5, self.data.x_err, fmt = 'bs', linewidth=2, label = "Pseudo-data", markersize=10)
     #plt.errorbar(self.datasubbkg.x, self.datasubbkg.val, self.datasubbkg.err**0.5, self.datasubbkg.x_err, fmt = 'co', linewidth=2, label = "Background subtracted", markersize=10)
     #plt.errorbar(self.recoWithoutFakes.x, self.recoWithoutFakes.val, self.recoWithoutFakes.err**0.5, self.recoWithoutFakes.x_err, fmt = 'mv', linewidth=2, label = "Expected signal (no fakes) distribution", markersize=5)
-    plt.errorbar(self.truth.x, self.truth.val, self.truth.err**0.5, self.truth.x_err, fmt = 'g^', linewidth=2, label = "Truth", markersize=10)
-    plt.errorbar(self.hunf_mode.x, self.hunf_mode.val, self.hunf_mode.err**0.5, self.hunf_mode.x_err, fmt = 'm^', linewidth=2, label = "Unfolded mode", markersize = 5)
-    plt.errorbar(self.hunf.x, self.hunf.val, self.hunf.err**0.5, self.hunf.x_err, fmt = 'rv', linewidth=2, label = "Marginal mean", markersize=5)
+    plt.errorbar(self.truth.x, self.truth.val, [self.truth.err_dw**0.5, self.truth.err_up**0.5], self.truth.x_err, fmt = 'g^', linewidth=2, label = "Truth", markersize=10)
+    plt.errorbar(self.hunf_mode.x, self.hunf_mode.val, [self.hunf_mode.err_dw**0.5, self.hunf_mode.err_up**0.5], self.hunf_mode.x_err, fmt = 'm^', linewidth=2, label = "Unfolded mode", markersize = 5)
+    plt.errorbar(self.hunf.x, self.hunf.val, [self.hunf.err_dw**0.5, self.hunf.err_up**0.5], self.hunf.x_err, fmt = 'rv', linewidth=2, label = "Marginal mean", markersize=5)
     plt.ylim([0, ymax*1.2])
     plt.legend()
     plt.ylabel("Events")
@@ -785,9 +832,9 @@ class Unfolder:
       expectedCs = expectedCs.overBinWidth()
       observedCs = observedCs.overBinWidth()
       observedCs_mode = observedCs_mode.overBinWidth()
-    plt.errorbar(expectedCs.x, expectedCs.val, expectedCs.err**0.5, expectedCs.x_err, fmt = 'g^', linewidth=2, label = "Truth", markersize=10)
-    plt.errorbar(observedCs.x, observedCs.val, observedCs.err**0.5, observedCs.x_err, fmt = 'rv', linewidth=2, label = "Marginal mean", markersize=5)
-    plt.errorbar(observedCs_mode.x, observedCs_mode.val, observedCs_mode.err**0.5, observedCs_mode.x_err, fmt = 'bv', linewidth=2, label = "Unfolded mode", markersize=5)
+    plt.errorbar(expectedCs.x, expectedCs.val, [expectedCs.err_dw**0.5, expectedCs.err_up**0.5], expectedCs.x_err, fmt = 'g^', linewidth=2, label = "Truth", markersize=10)
+    plt.errorbar(observedCs.x, observedCs.val, [observedCs.err_dw**0.5, observedCs.err_up**0.5], observedCs.x_err, fmt = 'rv', linewidth=2, label = "Marginal mean", markersize=5)
+    plt.errorbar(observedCs_mode.x, observedCs_mode.val, [observedCs_mode.err_dw**0.5, observedCs_mode.err_up**0.5], observedCs_mode.x_err, fmt = 'bv', linewidth=2, label = "Unfolded mode", markersize=5)
     ymax = 0
     for item in [expectedCs, observedCs, observedCs_mode]:
       ma = np.amax(item.val)

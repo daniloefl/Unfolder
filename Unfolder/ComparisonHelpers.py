@@ -81,7 +81,7 @@ def comparePlot(listHist, listLegend, f = 1.0, normaliseByBinWidth = True, units
     ymax = np.amax([ymax, ma])
     mi = np.amin(item.val)
     ymin = np.amin([ymin, mi])
-    plt.errorbar(item.x, item.val, item.err**0.5, item.x_err, fmt = sty[c], linewidth=2, label = listLegend[c], markersize=siz[c])
+    plt.errorbar(item.x, item.val, [item.err_dw**0.5, item.err_up**0.5], item.x_err, fmt = sty[c], linewidth=2, label = listLegend[c], markersize=siz[c])
     c += 1
   plt.legend()
   if units != "":

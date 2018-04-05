@@ -32,12 +32,16 @@ class H1D:
     if isinstance(other, H1D):
       self.val   = copy.deepcopy(other.val)
       self.err   = copy.deepcopy(other.err)
+      self.err_up= copy.deepcopy(other.err_up)
+      self.err_dw= copy.deepcopy(other.err_dw)
       self.x     = copy.deepcopy(other.x)
       self.x_err = copy.deepcopy(other.x_err)
       self.shape = copy.deepcopy(self.val.shape)
     else:
       self.val   = copy.deepcopy(other)
-      self.err   = copy.deepcopy(np.sqrt(other))
+      self.err   = copy.deepcopy(other)
+      self.err_up= copy.deepcopy(other)
+      self.err_dw= copy.deepcopy(other)
       self.x     = np.arange(0, float(len(other)))
       self.x_err = 0.5*np.ones(len(self.x))
       self.shape = [len(other)]
@@ -54,6 +58,8 @@ class H1D:
         break
     self.val[i] += w
     self.err[i] += w*w
+    self.err_up[i] += w*w
+    self.err_dw[i] += w*w
     return i
 
   '''
@@ -62,19 +68,27 @@ class H1D:
   def loadFromROOT(self, rootObj):
     self.val   = np.zeros(rootObj.GetNbinsX(), dtype = np.float64)
     self.err   = np.zeros(rootObj.GetNbinsX(), dtype = np.float64)
+    self.err_up= np.zeros(rootObj.GetNbinsX(), dtype = np.float64)
+    self.err_dw= np.zeros(rootObj.GetNbinsX(), dtype = np.float64)
     self.x     = np.zeros(rootObj.GetNbinsX(), dtype = np.float64)
     self.x_err = np.zeros(rootObj.GetNbinsX(), dtype = np.float64)
     for i in range(0, rootObj.GetNbinsX()):
       self.val[i]   = rootObj.GetBinContent(i+1)
       self.err[i]   = rootObj.GetBinError(i+1)**2
+      self.err_up[i]= rootObj.GetBinError(i+1)**2
+      self.err_dw[i]= rootObj.GetBinError(i+1)**2
       self.x[i]     = rootObj.GetXaxis().GetBinCenter(i+1)
       self.x_err[i] = rootObj.GetXaxis().GetBinWidth(i+1)*0.5
       if i == 0:
         self.val[i]+= rootObj.GetBinContent(0)
         self.err[i]+= rootObj.GetBinError(0)**2
+        self.err_up[i]+= rootObj.GetBinError(0)**2
+        self.err_dw[i]+= rootObj.GetBinError(0)**2
       if i == rootObj.GetNbinsX()-1:
         self.val[i]+= rootObj.GetBinContent(rootObj.GetNbinsX()+1)
         self.err[i]+= rootObj.GetBinError(rootObj.GetNbinsX()+1)**2
+        self.err_up[i]+= rootObj.GetBinError(rootObj.GetNbinsX()+1)**2
+        self.err_dw[i]+= rootObj.GetBinError(rootObj.GetNbinsX()+1)**2
     self.shape = self.val.shape
 
   '''
@@ -98,11 +112,15 @@ class H1D:
     if isinstance(other, numbers.Number):
       for i in range(0, len(other.x)): h.val[i] += other
       for i in range(0, len(other.x)): h.err[i] += other**2
+      for i in range(0, len(other.x)): h.err_up[i] += other**2
+      for i in range(0, len(other.x)): h.err_dw[i] += other**2
       return h
       
     if len(self.x) != len(other.x): raise 'Trying to add two incompatible histograms'
     for i in range(0, len(other.x)): h.val[i] += other.val[i]
     for i in range(0, len(other.x)): h.err[i] += other.err[i]
+    for i in range(0, len(other.x)): h.err_up[i] += other.err_up[i]
+    for i in range(0, len(other.x)): h.err_dw[i] += other.err_dw[i]
     return h
 
   '''
@@ -113,10 +131,14 @@ class H1D:
     if isinstance(other, numbers.Number):
       for i in range(0, len(other.x)): h.val[i] -= other
       for i in range(0, len(other.x)): h.err[i] += other**2
+      for i in range(0, len(other.x)): h.err_up[i] += other**2
+      for i in range(0, len(other.x)): h.err_dw[i] += other**2
       return h
     if len(self.x) != len(other.x): raise 'Trying to subtract two incompatible histograms'
     for i in range(0, len(other.x)): h.val[i] -= other.val[i]
     for i in range(0, len(other.x)): h.err[i] += other.err[i]
+    for i in range(0, len(other.x)): h.err_up[i] += other.err_up[i]
+    for i in range(0, len(other.x)): h.err_dw[i] += other.err_dw[i]
     return h
 
   '''
@@ -127,6 +149,8 @@ class H1D:
     h = H1D(self)
     for i in range(0, len(self.x)): h.val[i] *= other
     for i in range(0, len(self.x)): h.err[i] *= other**2
+    for i in range(0, len(self.x)): h.err_up[i] *= other**2
+    for i in range(0, len(self.x)): h.err_dw[i] *= other**2
     return h
 
   '''
@@ -137,6 +161,8 @@ class H1D:
     h = H1D(self)
     for i in range(0, len(self.x)): h.val[i] *= other
     for i in range(0, len(self.x)): h.err[i] *= other**2
+    for i in range(0, len(self.x)): h.err_up[i] *= other**2
+    for i in range(0, len(self.x)): h.err_dw[i] *= other**2
     return h
 
   '''
@@ -147,6 +173,8 @@ class H1D:
     for i in range(0, len(self.x)):
       f = self.x_err[i]*2.0
       h.err[i] = h.err[i]/f**2
+      h.err_up[i] = h.err_up[i]/f**2
+      h.err_dw[i] = h.err_dw[i]/f**2
       h.val[i] /= f
     return h
 
@@ -160,10 +188,14 @@ class H1D:
       for i in range(0, len(other.x)):
         if other.val[i] == 0: continue
         h.err[i] = h.val[i]**2/(other.val[i]**2)*(h.err[i]/(h.val[i]**2) + other.err[i]/(other.val[i]**2))
+        h.err_up[i] = h.val[i]**2/(other.val[i]**2)*(h.err_up[i]/(h.val[i]**2) + other.err_up[i]/(other.val[i]**2))
+        h.err_dw[i] = h.val[i]**2/(other.val[i]**2)*(h.err_dw[i]/(h.val[i]**2) + other.err_dw[i]/(other.val[i]**2))
         h.val[i] /= other.val[i]
     else:
       for i in range(0, len(other.x)): h.val[i] /= other
       for i in range(0, len(other.x)): h.err[i] /= other**2
+      for i in range(0, len(other.x)): h.err_up[i] /= other**2
+      for i in range(0, len(other.x)): h.err_dw[i] /= other**2
     return h
 
   '''
@@ -190,20 +222,30 @@ class H1D:
         b = other.val[i]
         da2 = h.err[i]
         db2 = other.err[i]
+        da2u = h.err_up[i]
+        db2u = other.err_up[i]
+        da2d = h.err_dw[i]
+        db2d = other.err_dw[i]
         eff = a/b
         if eff > 1: eff = 1
         if eff < 0: eff = 0
         h.err[i] = np.abs( ( (1 - 2*eff)*da2 + eff**2 * db2 )/(b**2) )
+        h.err_up[i] = np.abs( ( (1 - 2*eff)*da2u + eff**2 * db2u )/(b**2) )
+        h.err_dw[i] = np.abs( ( (1 - 2*eff)*da2d + eff**2 * db2d )/(b**2) )
         h.val[i] = eff
     else:
       for i in range(0, len(other.x)):
         a = h.val[i]
         b = other
         da2 = h.err[i]
+        da2u = h.err_up[i]
+        da2d = h.err_dw[i]
         db2 = 0
         eff = a/b
         h.val[i] = eff
         h.err[i] = np.abs( ( (1 - 2*eff)*da2 + eff**2 * db2 )/(b**2) )
+        h.err_up[i] = np.abs( ( (1 - 2*eff)*da2u + eff**2 * db2u )/(b**2) )
+        h.err_dw[i] = np.abs( ( (1 - 2*eff)*da2d + eff**2 * db2d )/(b**2) )
     return h
 
   '''
@@ -221,9 +263,17 @@ class H1D:
         e = other.val[i]
         da2 = h.err[i]
         de2 = other.err[i]
+        da2u = h.err_up[i]
+        de2u = other.err_up[i]
+        da2d = h.err_dw[i]
+        de2d = other.err_dw[i]
         b = a/e
         h.err[i] = (b**2*de2 - (1 - 2*e)*da2)/(e**2)
+        h.err_up[i] = (b**2*de2u - (1 - 2*e)*da2u)/(e**2)
+        h.err_dw[i] = (b**2*de2d - (1 - 2*e)*da2d)/(e**2)
         if h.err[i] < 0: h.err[i] = 0.0
+        if h.err_up[i] < 0: h.err_up[i] = 0.0
+        if h.err_dw[i] < 0: h.err_dw[i] = 0.0
         h.val[i] = b
     return h
 
@@ -240,8 +290,14 @@ class H1D:
         b = other.val[i]
         da2 = h.err[i]
         db2 = other.err[i]
+        da2u = h.err_up[i]
+        db2u = other.err_up[i]
+        da2d = h.err_dw[i]
+        db2d = other.err_dw[i]
         e = a/b
         h.err[i] = da2/b
+        h.err_up[i] = da2u/b
+        h.err_dw[i] = da2d/b
         h.val[i] = e
     return h
 
@@ -556,9 +612,9 @@ def plotH1D(h, xlabel = "x", ylabel = "Events", title = "", logy = False, fname 
   ymax = 0.1
   for n in h:
     k = h[n]
-    plt.errorbar(k.x, k.val, k.err**0.5, k.x_err, fmt = sty[i], markersize=10, label = n)
-    if np.amax(k.val + k.err**0.5) > ymax: ymax = np.amax(k.val + k.err**0.5)
-    if np.amin(k.val - k.err**0.5) < ymin: ymin = np.amin(k.val - k.err**0.5)
+    plt.errorbar(k.x, k.val, [k.err_dw**0.5, k.err_up**0.5], k.x_err, fmt = sty[i], markersize=10, label = n)
+    if np.amax(k.val + k.err_up**0.5) > ymax: ymax = np.amax(k.val + k.err_up**0.5)
+    if np.amin(k.val - k.err_dw**0.5) < ymin: ymin = np.amin(k.val - k.err_dw**0.5)
     i += 1
   plt.ylabel(ylabel)
   plt.xlabel(xlabel)
@@ -580,9 +636,9 @@ def plotH1DLines(h, xlabel = "x", ylabel = "Events", title = "", logy = False, f
   ymax = 1
   for n in h:
     k = h[n]
-    plt.errorbar(k.x, k.val, k.err**0.5, k.x_err, fmt = sty[i], markersize=10, label = n)
-    if np.amax(k.val + k.err**0.5) > ymax: ymax = np.amax(k.val + k.err**0.5)
-    if np.amin(k.val - k.err**0.5) < ymin: ymin = np.amin(k.val - k.err**0.5)
+    plt.errorbar(k.x, k.val, [k.err_dw**0.5, k.err_up**0.5], k.x_err, fmt = sty[i], markersize=10, label = n)
+    if np.amax(k.val + k.err_up**0.5) > ymax: ymax = np.amax(k.val + k.err_up**0.5)
+    if np.amin(k.val - k.err_dw**0.5) < ymin: ymin = np.amin(k.val - k.err_dw**0.5)
     i += 1
   plt.ylabel(ylabel)
   plt.xlabel(xlabel)
@@ -601,7 +657,7 @@ def plotH1DWithText(h, ylabel = "Events", title = "", fname = "plotH1DWithText.p
   fig = plt.figure()
   plt.title(title)
   plt.xticks(range(0, len(h.val)), h.x, rotation = 90)
-  plt.errorbar(range(0, len(h.val)), h.val, h.err**0.5, [0.5]*len(h.val), fmt = 'r+', markersize=10)
+  plt.errorbar(range(0, len(h.val)), h.val, [h.err_dw**0.5, h.err_up**0.5], [0.5]*len(h.val), fmt = 'r+', markersize=10)
   plt.ylabel(ylabel)
   plt.xlabel("")
   sns.despine()
