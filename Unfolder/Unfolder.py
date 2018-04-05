@@ -11,6 +11,8 @@ from Unfolder.ComparisonHelpers import getDataFromModel
 from scipy import stats
 from scipy import optimize
 
+import sympy
+
 theano.config.compute_test_value = 'warn'
 
 '''
@@ -43,6 +45,8 @@ class Unfolder:
          instead of (reco&truth)/truth, the error propagation will be incorrect.
   '''
   def __init__(self, bkg, mig, eff, truth = None):
+    self.nll = 0
+
     self.bkg = H1D(bkg)    # background
     self.Nr = mig.shape[1] # number of reco bins
     self.Nt = mig.shape[0] # number of truth bins
@@ -224,6 +228,7 @@ class Unfolder:
     self.minT = 0
     self.maxT = 10*np.amax(self.truth.val)
 
+
     self.model = pm.Model()                  # create the model
     with self.model:                         # all in this scope is in the model's context
       self.var_alpha = theano.shared(value = 1.0, borrow = False)
@@ -286,6 +291,39 @@ class Unfolder:
       self.U = pm.Poisson('U', mu = self.R_full, observed = self.var_data, shape = (self.Nr, 1))
       if self.constrainArea:
         self.Norm = pm.Poisson('Norm', mu = self.T.sum()*self.ave_eff + self.tot_bkg, observed = self.var_data.sum(), shape = (1))
+
+      # define symbolic negative log-likelihood
+      self.symb_data = []
+      self.symb_T = []
+      self.symb_theta = {}
+      self.symb_R = [0 for k in range(self.Nr)]
+      for i in range(self.Nr):
+        self.symb_data.append(sympy.symbols('data_%d' % i))
+      for i in range(self.Nt):
+        self.symb_T.append(sympy.symbols('T_%d' % i))
+      for name in self.systematics:
+        self.symb_theta[name] = sympy.symbols('theta_%s' % name)
+      for name in self.unf_systematics:
+        self.symb_theta[name] = sympy.symbols('theta_%s' % name)
+      for i in range(self.Nr):
+        for k in range(self.Nt):
+          self.symb_R[i] += self.symb_T[k] * self.response.val[k, i]
+        self.symb_R[i] += self.bkg.val[i]
+        for name in self.systematics:
+          self.symb_R[i] += self.symb_theta[name]*(self.reco_syst[name].val[i] + self.bkg_syst[name].val[i])
+        for name in self.unf_systematics:
+          self.symb_R[i] += self.symb_theta[name]*(self.bkg_unfsyst[name].val[i] - self.bkg.val[i])
+          for k in range(self.Nt):
+            self.symb_R[i] += self.symb_theta[name]*self.symb_T[k]*(self.response_unfsyst[name].val[k, i] - self.response.val[k, i])
+      self.dummy = sympy.symbols('dummy')
+      for i in range(self.Nr):
+        self.nll += -self.symb_data[i]*sympy.log(self.symb_R[i]) + self.symb_R[i] + sympy.summation(sympy.log(self.dummy), (self.dummy, 1, self.symb_data[i]))
+      for name in self.systematics:
+        self.nll += 0.5*self.symb_theta[name]**2 + 0.5*np.log(2*np.pi)
+      for name in self.unf_systematics:
+        self.nll += 0.5*self.symb_theta[name]**2 + 0.5*np.log(2*np.pi)
+      print("Defined -ln(L) symbolically as:")
+      print(self.nll)
 
   '''
   Make theano graph used for calculation.
@@ -517,6 +555,12 @@ class Unfolder:
       self.hnp_mode.x = [""]*len(self.systematics)
       self.hnpu_mode.x = [""]*len(self.unf_systematics)
 
+      self.hunf_smode = H1D(self.truth)
+      self.hnp_smode = H1D(np.zeros(len(self.systematics)))
+      self.hnpu_smode = H1D(np.zeros(len(self.unf_systematics)))
+      self.hnp_smode.x = [""]*len(self.systematics)
+      self.hnpu_smode.x = [""]*len(self.unf_systematics)
+
       x0 = np.zeros(self.Nt+len(self.systematics)+len(self.unf_systematics))
       for i in range(0, self.Nt):
         self.hunf.val[i] = np.mean(self.trace.Truth[:, i])
@@ -555,6 +599,10 @@ class Unfolder:
         self.hunf_mode.err[k] = mode.errMode[k]**2
         self.hunf_mode.err_up[k] = mode.errModeUp[k]**2
         self.hunf_mode.err_dw[k] = mode.errModeDw[k]**2
+        self.hunf_smode.val[k] = mode.symb_x[k]
+        self.hunf_smode.err[k] = mode.symb_errMode[k]**2
+        self.hunf_smode.err_up[k] = mode.symb_errModeUp[k]**2
+        self.hunf_smode.err_dw[k] = mode.symb_errModeDw[k]**2
       for k in range(0, len(self.systematics)):
         self.hnp_mode.val[k] = mode.x[self.Nt+k]
         #self.hnp_mode.err[k] = mode.hess_inv.todense()[self.Nt+k, self.Nt+k]
@@ -563,6 +611,12 @@ class Unfolder:
         self.hnp_mode.err_dw[k] = mode.errModeDw[self.Nt+k]**2
         self.hnp_mode.x[k] = self.systematics[k]
         self.hnp_mode.x_err[k] = 1
+        self.hnp_smode.val[k] = mode.symb_x[self.Nt+k]
+        self.hnp_smode.err[k] = mode.symb_errMode[self.Nt+k]**2
+        self.hnp_smode.err_up[k] = mode.symb_errModeUp[self.Nt+k]**2
+        self.hnp_smode.err_dw[k] = mode.symb_errModeDw[self.Nt+k]**2
+        self.hnp_smode.x[k] = self.systematics[k]
+        self.hnp_smode.x_err[k] = 1
       for k in range(0, len(self.unf_systematics)):
         self.hnpu_mode.val[k] = mode.x[self.Nt+len(self.systematics)+k]
         #self.hnpu_mode.err[k] = mode.hess_inv.todense()[self.Nt+len(self.systematics)+k, self.Nt+len(self.systematics)+k]
@@ -571,6 +625,12 @@ class Unfolder:
         self.hnpu_mode.err_dw[k] = mode.errModeDw[self.Nt+len(self.systematics)+k]**2
         self.hnpu_mode.x[k] = self.unf_systematics[k]
         self.hnpu_mode.x_err[k] = 1
+        self.hnpu_smode.val[k] = mode.symb_x[self.Nt+len(self.systematics)+k]
+        self.hnpu_smode.err[k] = mode.symb_errMode[self.Nt+len(self.systematics)+k]**2
+        self.hnpu_smode.err_up[k] = mode.symb_errModeUp[self.Nt+len(self.systematics)+k]**2
+        self.hnpu_smode.err_dw[k] = mode.symb_errModeDw[self.Nt+len(self.systematics)+k]**2
+        self.hnpu_smode.x[k] = self.unf_systematics[k]
+        self.hnpu_smode.x_err[k] = 1
 
   '''
   Estimate modes from GKE.
@@ -631,6 +691,7 @@ class Unfolder:
     meshT = np.meshgrid(T)
     # meshTpos[i, k] has the i-th coordinate for mesh point k
     meshTpos = np.reshape(np.vstack(map(np.ravel, meshT)), (Ndims, -1))
+
     # get the -ln(pdf) value for each mesh point k
     meshPdf = mpdf(meshTpos, args)
     # get index permutation that would order the pdf values list in increasing order of -ln(pdf)
@@ -661,6 +722,59 @@ class Unfolder:
     res.errModeUp = modeErrUp
     res.errModeDw = modeErrDw
     print(res)
+
+    # now doing it symbolically
+    dataTuples = []
+    for i in range(self.Nr):
+      dataTuples.append( (self.symb_data[i], int(self.data.val[i])) )
+    nllWithData = self.nll.subs(dataTuples)
+    print("-ln(L) with data substituted in:")
+    print(nllWithData)
+    xx = [self.symb_T[k] for k in range(self.Nt)] + [self.symb_theta[k] for k in self.systematics] + [self.symb_theta[k] for k in self.unf_systematics]
+    nllWithDataHandle = sympy.utilities.lambdify(xx, nllWithData, modules = 'numpy')
+    def nllWithDataProxy(zz):
+      return nllWithDataHandle(*zz)
+    jac = [nllWithData.diff(s) for s in xx]
+    jacHandle = [sympy.utilities.lambdify(xx, jf, modules = 'numpy') for jf in jac]
+    def jacProxy(zz):
+      return np.array([jfn(*zz) for jfn in jacHandle])
+    symb_res = optimize.minimize(nllWithDataProxy, S, jac = jacProxy, method='L-BFGS-B', options={'maxiter': 100, 'disp': True})
+    print("Symbolic minimisation:")
+    print(symb_res)
+    res.symb_x = symb_res.x
+
+    # get the -ln(pdf) value for each mesh point k
+    symb_meshPdf = nllWithDataProxy(meshTpos)
+    # get index permutation that would order the pdf values list in increasing order of -ln(pdf)
+    symb_pdfPerm = symb_meshPdf.argsort()
+    # get pdf values under decreasing order (since indices above are in increasing order of -ln(pdf) )
+    symb_orderedPdf = np.exp(-symb_meshPdf[symb_pdfPerm])
+    # get pdf normalisation to normalise it to 1
+    symb_pdfNorm = np.sum(symb_orderedPdf)
+    # get decreasingly ordered pdf values so that total integral is 1
+    symb_orderedPdfNorm = np.asarray([x/symb_pdfNorm for x in symb_orderedPdf])
+    # perform cumulative sum to get cdf values, summing up most probable values first
+    symb_orderedCdf = np.cumsum(symb_orderedPdfNorm)
+    # get first index of the cdf, where the cumulative probability is larger than 68%
+    symb_boundaryIdx = np.argwhere(symb_orderedCdf > 0.68)[0][0]
+    # transpose mesh (so now i-th coordinate for mesh point k is in index (k, i) ) and get points ordered by most probable mesh point to least probable
+    symb_orderedMesh = (meshTpos.T)[symb_pdfPerm]
+    # get only mesh points up to 68% boundary under the ordering principle above
+    symb_confidenceSurface = symb_orderedMesh[0:symb_boundaryIdx, :]
+    # get maximum and minimum values for each coordinate i
+    symb_errMin = [np.amin(symb_confidenceSurface[:, i]) for i in range(0, Ndims)]
+    symb_errMax = [np.amax(symb_confidenceSurface[:, i]) for i in range(0, Ndims)]
+    # get mode errors by taking differences between values
+    symb_modeErr = [0.5*(symb_errMax[k] - symb_errMin[k]) for k in range(0, Ndims)]
+    symb_modeErrUp = [symb_errMax[k] - res.symb_x[k] for k in range(0, Ndims)]
+    symb_modeErrDw = [res.symb_x[k] - symb_errMin[k] for k in range(0, Ndims)]
+    # add this to result structure
+    res.symb_errMode = symb_modeErr
+    res.symb_errModeUp = symb_modeErrUp
+    res.symb_errModeDw = symb_modeErrDw
+
+    print(res)
+    
     return res
 
   '''
@@ -677,6 +791,7 @@ class Unfolder:
       ax.set_ylabel("Probability")
       ax.set_xlim([0, m])
       ax.axvline(self.hunf_mode.val[i], linestyle = '--', linewidth = 1.5, color = 'r', label = 'Mode')
+      ax.axvline(self.hunf_smode.val[i], linestyle = '-.', linewidth = 1.5, color = 'b', label = 'Mode (symbolic)')
       ax.axvline(self.hunf.val[i], linestyle = ':', linewidth = 1.5, color = 'm', label = 'Marginal mean')
       ax.legend()
     plt.xlabel("Truth bin value")
@@ -692,6 +807,7 @@ class Unfolder:
     fig = plt.figure(figsize=(10, 10))
     sns.distplot(self.trace['t_'+self.systematics[i]], kde = True, hist = True, label = self.systematics[i])
     plt.axvline(self.hnp_mode.val[i], linestyle = '--', linewidth = 1.5, color = 'r', label = 'Mode')
+    plt.axvline(self.hnp_smode.val[i], linestyle = '-.', linewidth = 1.5, color = 'b', label = 'Mode (symbolic)')
     plt.axvline(self.hnp.val[i], linestyle = ':', linewidth = 1.5, color = 'm', label = 'Marginal mean')
     plt.title(self.systematics[i])
     plt.ylabel("Probability")
@@ -710,6 +826,7 @@ class Unfolder:
     fig = plt.figure(figsize=(10, 10))
     sns.distplot(self.trace['tu_'+self.unf_systematics[i]], kde = True, hist = True, label = self.unf_systematics[i])
     plt.axvline(self.hnpu_mode.val[i], linestyle = '--', linewidth = 1.5, color = 'r', label = 'Mode')
+    plt.axvline(self.hnpu_smode.val[i], linestyle = '-.', linewidth = 1.5, color = 'b', label = 'Mode (symbolic)')
     plt.axvline(self.hnpu.val[i], linestyle = ':', linewidth = 1.5, color = 'm', label = 'Marginal mean')
     plt.title(self.unf_systematics[i])
     plt.ylabel("Probability")
@@ -802,7 +919,7 @@ class Unfolder:
   def plotUnfolded(self, fname = "plotUnfolded.png"):
     fig = plt.figure(figsize=(10, 10))
     ymax = 0
-    for item in [self.truth, self.hunf_mode, self.hunf]:
+    for item in [self.truth, self.hunf_mode, self.hunf_smode, self.hunf]:
       ma = np.amax(item.val)
       ymax = np.amax([ymax, ma])
     #plt.errorbar(self.data.x, self.data.val, self.data.err**0.5, self.data.x_err, fmt = 'bs', linewidth=2, label = "Pseudo-data", markersize=10)
@@ -810,6 +927,7 @@ class Unfolder:
     #plt.errorbar(self.recoWithoutFakes.x, self.recoWithoutFakes.val, self.recoWithoutFakes.err**0.5, self.recoWithoutFakes.x_err, fmt = 'mv', linewidth=2, label = "Expected signal (no fakes) distribution", markersize=5)
     plt.errorbar(self.truth.x, self.truth.val, [self.truth.err_dw**0.5, self.truth.err_up**0.5], self.truth.x_err, fmt = 'g^', linewidth=2, label = "Truth", markersize=10)
     plt.errorbar(self.hunf_mode.x, self.hunf_mode.val, [self.hunf_mode.err_dw**0.5, self.hunf_mode.err_up**0.5], self.hunf_mode.x_err, fmt = 'm^', linewidth=2, label = "Unfolded mode", markersize = 5)
+    plt.errorbar(self.hunf_smode.x, self.hunf_smode.val, [self.hunf_smode.err_dw**0.5, self.hunf_smode.err_up**0.5], self.hunf_smode.x_err, fmt = 'b^', linewidth=2, label = "Unfolded mode (symbolic)", markersize = 5)
     plt.errorbar(self.hunf.x, self.hunf.val, [self.hunf.err_dw**0.5, self.hunf.err_up**0.5], self.hunf.x_err, fmt = 'rv', linewidth=2, label = "Marginal mean", markersize=5)
     plt.ylim([0, ymax*1.2])
     plt.legend()

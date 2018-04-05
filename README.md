@@ -17,13 +17,14 @@ More information on HMC can be found in http://www.sciencedirect.com/science/art
 
 # Installing pre-requisites
 
-You can use install Numpy, Matplotlib, SciPy, Pandas, Seaborn and pyMC3 in Ubuntu as follows.
+You can use install Numpy, Matplotlib, SciPy, Pandas, Seaborn, pyMC3 and Sympy in Ubuntu as follows.
 
 ```
 sudo apt-get install python3 python3-pip
 pip3 install --user pandas
 pip3 install --user seaborn
 pip3 install --user pymc3
+pip3 install --user sympy
 ```
 
 After this, running the following should run a test unfolding using the toy model in toyModel/ModelChris.json:
