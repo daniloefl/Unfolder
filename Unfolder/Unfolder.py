@@ -622,8 +622,8 @@ class Unfolder:
     # T is a list of linear spaces around the mode +/- 5 sigma
     # ie: T = [np.linspace(mode1 - 5*sigma1, mode1 + 5*sigma1, Ngrid), np.linspace(mode2 - 5*sigma2, mode2 + 5*sigma2, Ngrid), ...]
     T = []
-    Ngrid = 1000*Ndims
     Ndims = self.Nt+len(self.systematics)+len(self.unf_systematics)
+    Ngrid = 1000*Ndims
     for i in range(0, self.Nt+len(self.systematics)+len(self.unf_systematics)):
       T.append(np.linspace(res.x[i]-5*dS[i,0], res.x[i]+5*dS[i,0], Ngrid))
 
