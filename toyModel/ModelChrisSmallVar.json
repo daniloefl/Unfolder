@@ -1,0 +1,59 @@
+{
+  "Data" : [335, 290, 195, 100, 10]
+  , "Nominal" : { 
+    "Bkgs" : { }
+    , "Sig" : [0, 0, 0, 0]
+    , "Mig" :
+      [ [0.80, 0.10, 0.00, 0.00, 0.00]
+      , [0.05, 0.80, 0.10, 0.00, 0.00]
+      , [0.00, 0.05, 0.80, 0.10, 0.00]
+      , [0.00, 0.00, 0.05, 0.80, 0.10]
+      ]
+    , "Lumi" : 1
+  }
+  , "ModelVars" : {
+    "truthbin0" : {
+      "InitialValue" : 400
+      , "Prior" : "NonNegative"
+      , "Variation" : {
+        "Sig" : [1, 0, 0, 0]
+      }
+    }
+    , "truthbin1" : {
+      "InitialValue" : 300
+      , "Prior" : "NonNegative"
+      , "Variation" : {
+        "Sig" : [0, 1, 0, 0]
+      }
+    }
+    , "truthbin2" : {
+      "InitialValue" : 200
+      , "Prior" : "NonNegative"
+      , "Variation" : {
+        "Sig" : [0, 0, 1, 0]
+      }
+    }
+    , "truthbin3" : {
+      "InitialValue" : 100
+      , "Prior" : "NonNegative"
+      , "Variation" : {
+        "Sig" : [0, 0, 0, 1]
+      }
+    }
+
+    , "resolution" : {
+      "InitialValue" : 0
+      , "Prior" : {
+        "Normal" : { "Mu" : 0, "Sigma" : 1 }
+      }
+      , "Variation" : {
+        "Mig" :
+          [ [0.70, 0.09, 0.00, 0.00, 0.00]
+          , [0.06, 0.70, 0.09, 0.00, 0.00]
+          , [0.00, 0.06, 0.70, 0.09, 0.00]
+          , [0.00, 0.00, 0.06, 0.70, 0.09]
+          ]
+      }
+    }
+  }
+}
