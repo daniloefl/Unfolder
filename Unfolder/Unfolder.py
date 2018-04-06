@@ -14,7 +14,7 @@ from scipy import optimize
 # FIXME
 # Change this to estimate the mode using Sympy
 # Useful as a cross check
-doSymbolicMode = False
+doSymbolicMode = True
 try:
   import sympy
 except:
@@ -559,6 +559,12 @@ class Unfolder:
       self.hnpu = H1D(np.zeros(len(self.unf_systematics)))
       self.hunf = H1D(self.truth)
 
+      self.hunf_median = H1D(self.truth)
+      self.hnp_median = H1D(np.zeros(len(self.systematics)))
+      self.hnpu_median = H1D(np.zeros(len(self.unf_systematics)))
+      self.hnp_median.x = [""]*len(self.systematics)
+      self.hnpu_median.x = [""]*len(self.unf_systematics)
+
       self.hunf_mode = H1D(self.truth)
       self.hnp_mode = H1D(np.zeros(len(self.systematics)))
       self.hnpu_mode = H1D(np.zeros(len(self.unf_systematics)))
@@ -573,33 +579,53 @@ class Unfolder:
 
       x0 = np.zeros(self.Nt+len(self.systematics)+len(self.unf_systematics))
       for i in range(0, self.Nt):
-        self.hunf.val[i] = np.mean(self.trace.Truth[:, i])
-        self.hunf.err[i] = np.std(self.trace.Truth[:, i], ddof = 1)**2
-        self.hunf.err_up[i] = np.std(self.trace.Truth[:, i], ddof = 1)**2
-        self.hunf.err_dw[i] = np.std(self.trace.Truth[:, i], ddof = 1)**2
-        m = self.hunf.val[i]
-        s = np.sqrt(self.hunf.err[i])
+        m = np.mean(self.trace.Truth[:, i])
+        s = np.std(self.trace.Truth[:, i], ddof = 1)
         x0[i] = m
+        self.hunf.val[i] = m
+        self.hunf.err[i] = s**2
+        self.hunf.err_up[i] = s**2
+        self.hunf.err_dw[i] = s**2
+        self.hunf_median.val[i] = np.median(self.trace.Truth[:, i])
+        self.hunf_median.err[i] = s**2
+        self.hunf_median.err_up[i] = s**2
+        self.hunf_median.err_dw[i] = s**2
       
 
       self.hnp.x = [""]*len(self.systematics)
       self.hnpu.x = [""]*len(self.unf_systematics)
       for k in range(0, len(self.systematics)):
-        self.hnp.val[k] = np.mean(self.trace['t_'+self.systematics[k]])
-        self.hnp.err[k] = np.std(self.trace['t_'+self.systematics[k]], ddof = 1)**2
-        self.hnp.err_up[k] = np.std(self.trace['t_'+self.systematics[k]], ddof = 1)**2
-        self.hnp.err_dw[k] = np.std(self.trace['t_'+self.systematics[k]], ddof = 1)**2
-        x0[self.Nt+k] = self.hnp.val[k]
+        m = np.mean(self.trace['t_'+self.systematics[k]])
+        s = np.std(self.trace['t_'+self.systematics[k]], ddof = 1)
+        x0[self.Nt+k] = m
+        self.hnp.val[k] = m
+        self.hnp.err[k] = s**2
+        self.hnp.err_up[k] = s**2
+        self.hnp.err_dw[k] = s**2
         self.hnp.x[k] = self.systematics[k]
         self.hnp.x_err[k] = 1
+        self.hnp_median.val[k] = np.median(self.trace['t_'+self.systematics[k]])
+        self.hnp_median.err[k] = s**2
+        self.hnp_median.err_up[k] = s**2
+        self.hnp_median.err_dw[k] = s**2
+        self.hnp_median.x[k] = self.systematics[k]
+        self.hnp_median.x_err[k] = 1
       for k in range(0, len(self.unf_systematics)):
-        self.hnpu.val[k] = np.mean(self.trace['tu_'+self.unf_systematics[k]])
-        self.hnpu.err[k] = np.std(self.trace['tu_'+self.unf_systematics[k]], ddof = 1)**2
-        self.hnpu.err_up[k] = np.std(self.trace['tu_'+self.unf_systematics[k]], ddof = 1)**2
-        self.hnpu.err_dw[k] = np.std(self.trace['tu_'+self.unf_systematics[k]], ddof = 1)**2
-        x0[self.Nt+len(self.systematics)+k] = self.hnpu.val[k]
+        m = np.mean(self.trace['tu_'+self.unf_systematics[k]])
+        s = np.std(self.trace['tu_'+self.unf_systematics[k]], ddof = 1)
+        x0[self.Nt+len(self.systematics)+k] = m
+        self.hnpu.val[k] = m
+        self.hnpu.err[k] = s**2
+        self.hnpu.err_up[k] = s**2
+        self.hnpu.err_dw[k] = s**2
         self.hnpu.x[k] = self.unf_systematics[k]
         self.hnpu.x_err[k] = 1
+        self.hnpu_median.val[k] = np.median(self.trace['tu_'+self.unf_systematics[k]])
+        self.hnpu_median.err[k] = s**2
+        self.hnpu_median.err_up[k] = s**2
+        self.hnpu_median.err_dw[k] = s**2
+        self.hnpu_median.x[k] = self.unf_systematics[k]
+        self.hnpu_median.x_err[k] = 1
 
       # get mode
       mode = self.getPosteriorMode()
@@ -810,6 +836,7 @@ class Unfolder:
       if doSymbolicMode:
         ax.axvline(self.hunf_smode.val[i], linestyle = '-.', linewidth = 1.5, color = 'b', label = 'Mode (symbolic)')
       ax.axvline(self.hunf.val[i], linestyle = ':', linewidth = 1.5, color = 'm', label = 'Marginal mean')
+      ax.axvline(self.hunf_median.val[i], linestyle = '-', linewidth = 1.5, color = 'k', label = 'Marginal median')
       ax.legend()
     plt.xlabel("Truth bin value")
     plt.tight_layout()
@@ -824,8 +851,10 @@ class Unfolder:
     fig = plt.figure(figsize=(10, 10))
     sns.distplot(self.trace['t_'+self.systematics[i]], kde = True, hist = True, label = self.systematics[i])
     plt.axvline(self.hnp_mode.val[i], linestyle = '--', linewidth = 1.5, color = 'r', label = 'Mode')
-    plt.axvline(self.hnp_smode.val[i], linestyle = '-.', linewidth = 1.5, color = 'b', label = 'Mode (symbolic)')
+    if doSymbolicMode:
+      plt.axvline(self.hnp_smode.val[i], linestyle = '-.', linewidth = 1.5, color = 'b', label = 'Mode (symbolic)')
     plt.axvline(self.hnp.val[i], linestyle = ':', linewidth = 1.5, color = 'm', label = 'Marginal mean')
+    plt.axvline(self.hnp_median.val[i], linestyle = '-', linewidth = 1.5, color = 'k', label = 'Marginal median')
     plt.title(self.systematics[i])
     plt.ylabel("Probability")
     plt.xlim([-5, 5])
@@ -843,8 +872,10 @@ class Unfolder:
     fig = plt.figure(figsize=(10, 10))
     sns.distplot(self.trace['tu_'+self.unf_systematics[i]], kde = True, hist = True, label = self.unf_systematics[i])
     plt.axvline(self.hnpu_mode.val[i], linestyle = '--', linewidth = 1.5, color = 'r', label = 'Mode')
-    plt.axvline(self.hnpu_smode.val[i], linestyle = '-.', linewidth = 1.5, color = 'b', label = 'Mode (symbolic)')
+    if doSymbolicMode:
+      plt.axvline(self.hnpu_smode.val[i], linestyle = '-.', linewidth = 1.5, color = 'b', label = 'Mode (symbolic)')
     plt.axvline(self.hnpu.val[i], linestyle = ':', linewidth = 1.5, color = 'm', label = 'Marginal mean')
+    plt.axvline(self.hnpu_median.val[i], linestyle = '-', linewidth = 1.5, color = 'k', label = 'Marginal median')
     plt.title(self.unf_systematics[i])
     plt.ylabel("Probability")
     plt.xlim([-5, 5])
@@ -944,6 +975,7 @@ class Unfolder:
     #plt.errorbar(self.recoWithoutFakes.x, self.recoWithoutFakes.val, self.recoWithoutFakes.err**0.5, self.recoWithoutFakes.x_err, fmt = 'mv', linewidth=2, label = "Expected signal (no fakes) distribution", markersize=5)
     plt.errorbar(self.truth.x, self.truth.val, [self.truth.err_dw**0.5, self.truth.err_up**0.5], self.truth.x_err, fmt = 'g^', linewidth=2, label = "Truth", markersize=10)
     plt.errorbar(self.hunf_mode.x, self.hunf_mode.val, [self.hunf_mode.err_dw**0.5, self.hunf_mode.err_up**0.5], self.hunf_mode.x_err, fmt = 'm^', linewidth=2, label = "Unfolded mode", markersize = 5)
+    plt.errorbar(self.hunf_median.x, self.hunf_median.val, [self.hunf_median.err_dw**0.5, self.hunf_median.err_up**0.5], self.hunf_median.x_err, fmt = 'k^', linewidth=2, label = "Marginal median", markersize = 5)
     if doSymbolicMode:
       plt.errorbar(self.hunf_smode.x, self.hunf_smode.val, [self.hunf_smode.err_dw**0.5, self.hunf_smode.err_up**0.5], self.hunf_smode.x_err, fmt = 'b^', linewidth=2, label = "Unfolded mode (symbolic)", markersize = 5)
     plt.errorbar(self.hunf.x, self.hunf.val, [self.hunf.err_dw**0.5, self.hunf.err_up**0.5], self.hunf.x_err, fmt = 'rv', linewidth=2, label = "Marginal mean", markersize=5)
