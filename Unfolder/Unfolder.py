@@ -288,14 +288,13 @@ class Unfolder:
       # reco result including systematics:
       self.R_full = self.R
 
+      for name in self.unf_systematics:
+        # add it to the total reco result
+        self.R_full += theano.tensor.dot(self.unf_theta[name]*self.T, self.var_response_unfsyst[name])
+
       for name in self.systematics:
         # add it to the total reco result
         self.R_full += self.theta[name]*self.R_syst[name]
-
-      for name in self.unf_systematics:
-        # add it to the total reco result
-        #self.R_full += theano.tensor.dot(self.unf_theta[name]*self.asMat(self.truth.val), self.var_response_unfsyst[name])
-        self.R_full += theano.tensor.dot(self.unf_theta[name]*self.T, self.var_response_unfsyst[name])
 
       self.U = pm.Poisson('U', mu = self.R_full, observed = self.var_data, shape = (self.Nr, 1))
       #self.U = pm.Normal('U', mu = self.R_full, sd = theano.tensor.sqrt(self.R_full), observed = self.var_data, shape = (self.Nr, 1))
