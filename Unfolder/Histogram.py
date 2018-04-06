@@ -574,7 +574,7 @@ def plotH2D(h, xlabel = "x", ylabel = "y", title = "Migration matrix M(t, r)", l
   plt.title(title, size = 16)
   plt.ylabel(ylabel)
   plt.xlabel(xlabel)
-  #plt.tight_layout()
+  plt.tight_layout()
   plt.savefig(fname)
   plt.close()
 
@@ -618,7 +618,10 @@ def plotH1D(h, xlabel = "x", ylabel = "Events", title = "", logy = False, fname 
     i += 1
   plt.ylabel(ylabel)
   plt.xlabel(xlabel)
-  plt.ylim([ymin-0.4*abs(ymin), (1.8 + 0.4*len(h))*ymax])
+  if logy:
+    plt.ylim([ymin-0.4*abs(ymin), (1.8 + 0.4*len(h))*ymax])
+  else:
+    plt.ylim([ymin-0.1*abs(ymin), 1.1*ymax])
   plt.legend(loc = "upper right")
   sns.despine()
   plt.tight_layout()

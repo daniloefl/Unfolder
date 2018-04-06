@@ -784,9 +784,21 @@ class Unfolder:
       print("Symbolic minimisation:")
       print(symb_res)
       res.symb_x = symb_res.x
+
+      # get 68% interval
+      # T is a list of linear spaces around the mode +/- 2 sigma
+      # ie: T = [np.linspace(mode1 - 2*sigma1, mode1 + 2*sigma1, Ngrid), np.linspace(mode2 - 2*sigma2, mode2 + 2*sigma2, Ngrid), ...]
+      symb_T = []
+      for i in range(0, self.Nt+len(self.systematics)+len(self.unf_systematics)):
+        symb_T.append(np.linspace(res.symb_x[i]-2*dS[i,0], res.symb_x[i]+2*dS[i,0], Ngrid))
   
+      # build mesh with coordinates
+      symb_meshT = np.meshgrid(symb_T)
+      # meshTpos[i, k] has the i-th coordinate for mesh point k
+      symb_meshTpos = np.reshape(np.vstack(map(np.ravel, symb_meshT)), (Ndims, -1))
+
       # get the -ln(pdf) value for each mesh point k
-      symb_meshPdf = nllWithDataProxy(meshTpos)
+      symb_meshPdf = nllWithDataProxy(symb_meshTpos)
       # get index permutation that would order the pdf values list in increasing order of -ln(pdf)
       symb_pdfPerm = symb_meshPdf.argsort()
       # get pdf values under decreasing order (since indices above are in increasing order of -ln(pdf) )
@@ -800,7 +812,7 @@ class Unfolder:
       # get first index of the cdf, where the cumulative probability is larger than 68%
       symb_boundaryIdx = np.argwhere(symb_orderedCdf > 0.68)[0][0]
       # transpose mesh (so now i-th coordinate for mesh point k is in index (k, i) ) and get points ordered by most probable mesh point to least probable
-      symb_orderedMesh = (meshTpos.T)[symb_pdfPerm]
+      symb_orderedMesh = (symb_meshTpos.T)[symb_pdfPerm]
       # get only mesh points up to 68% boundary under the ordering principle above
       symb_confidenceSurface = symb_orderedMesh[0:symb_boundaryIdx, :]
       # get maximum and minimum values for each coordinate i

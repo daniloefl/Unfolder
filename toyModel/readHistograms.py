@@ -27,8 +27,14 @@ def getHistogramsFromJson(fname = "toyModel/ModelChrisSmallVar.json", direc = "A
   # the migration matrix is eff(truth = i) * P(t=i,r=j) = response(t = i, r = j) * P(t = i)
   if direc == "A":
     resp = H2D(np.asarray(parsed_json["Nominal"]["Mig"], dtype = np.float64))
+    resp.err = np.zeros(shape = resp.val.shape)
+    resp.err_up = np.zeros(shape = resp.val.shape)
+    resp.err_dw = np.zeros(shape = resp.val.shape)
   else:
     resp = H2D(np.asarray(parsed_json["ModelVars"]["resolution"]["Variation"]["Mig"], dtype = np.float64))
+    resp.err = np.zeros(shape = resp.val.shape)
+    resp.err_up = np.zeros(shape = resp.val.shape)
+    resp.err_dw = np.zeros(shape = resp.val.shape)
 
   # input assumed to have reco in Y axis and truth in X
   # from here on
@@ -64,6 +70,9 @@ def getHistogramsFromJson(fname = "toyModel/ModelChrisSmallVar.json", direc = "A
   for i in range(Ntruth):
     truth_a.append(parsed_json["ModelVars"]["truthbin%d" % i]["InitialValue"])
   truth = H1D(np.asarray(truth_a, dtype = np.float64))
+  truth.err = np.zeros(shape = truth.val.shape)
+  truth.err_up = np.zeros(shape = truth.val.shape)
+  truth.err_dw = np.zeros(shape = truth.val.shape)
   #print("Truth: ", truth.val)
 
 
@@ -86,10 +95,15 @@ def getHistogramsFromJson(fname = "toyModel/ModelChrisSmallVar.json", direc = "A
     recoWithFakes.err[ireco] = 0
 
   tr_1dtruth = mig.project('x')
+  tr_1dtruth.err = np.zeros(shape = tr_1dtruth.val.shape)
+  tr_1dtruth.err_up = np.zeros(shape = tr_1dtruth.val.shape)
+  tr_1dtruth.err_dw = np.zeros(shape = tr_1dtruth.val.shape)
   nrt = truth - tr_1dtruth
 
   ones = H1D(np.ones(len(nrt.val)))
   ones.err = copy.deepcopy(np.zeros(len(nrt.val)))
+  ones.err_up = copy.deepcopy(np.zeros(len(nrt.val)))
+  ones.err_dw = copy.deepcopy(np.zeros(len(nrt.val)))
   ones.x = copy.deepcopy(nrt.x)
   ones.x_err = copy.deepcopy(nrt.x_err)
   eff = ones + nrt.divideBinomial(truth)*(-1.0)
@@ -123,6 +137,8 @@ def getHistogramsFromPkl(fname = "histograms.pkl", direc = "A"):
 
   ones = H1D(np.ones(len(nrt.val)))
   ones.err = copy.deepcopy(np.zeros(len(nrt.val)))
+  ones.err_up = copy.deepcopy(np.zeros(len(nrt.val)))
+  ones.err_dw = copy.deepcopy(np.zeros(len(nrt.val)))
   ones.x = copy.deepcopy(nrt.x)
   ones.x_err = copy.deepcopy(nrt.x_err)
   eff = ones + nrt.divideBinomial(truth)*(-1.0)

@@ -37,30 +37,30 @@ for i in recoWithFakes:
   recoWithoutFakes[i] = mig[i].project("y")
 
   # plot migration matrix as it will be used next for unfolding
-  plotH2D(mig[i], "Reconstructed-level bin", "Particle-level bin", "Number of events for each (reco, truth) configuration", logz = False, fname = "mig_%s.%s" % (i,extension), fmt ="")
+  plotH2D(mig[i], "Reconstructed", "Truth", "Number of events", fname = "mig_%s.%s" % (i,extension), fmt = "")
 
   # plot 1D histograms for cross checks
-  plotH1D(bkg[i], "Reconstructed "+varname, "Events", "Background", logy = False, fname = "bkg_%s.%s" % (i, extension))
+  plotH1D(bkg[i], "Reconstructed", "Events", "Background", logy = False, fname = "bkg_%s.%s" % (i, extension))
 
-  plotH1D({"Original truth": truth[i], "Projected": mig[i].project("x")/eff[i]}, "Particle-level "+varname, "Events", "Particle-level distribution", logy = True, fname = "truth_project.%s" % extension)
-  plotH1D({"Original truth - projected": truth[i] - mig[i].project("x")/eff[i]}, "Particle-level "+varname, "Events", "Particle-level distribution", logy = False, fname = "truth_project_diff.%s" % extension)
+  plotH1D({"Original truth": truth[i], "Projected": mig[i].project("x")/eff[i]}, "Truth", "Events", "Truth", logy = False, fname = "truth_project.%s" % extension)
+  plotH1D({"Original truth - projected": truth[i] - mig[i].project("x")/eff[i]}, "Truth", "Events", "Truth", logy = False, fname = "truth_project_diff.%s" % extension)
 
-  plotH1D(truth[i], "Particle-level "+varname, "Events", "Particle-level distribution", logy = True, fname = "truth_%s.%s" % (i, extension))
-  plotH1D(nrt[i], "Particle-level "+varname, "Events", "Events in particle-level selection but not reconstructed", logy = False, fname = "nrt_%s.%s" % (i,extension))
-  plotH1D(recoWithFakes[i], "Reconstructed "+varname, "Events", "Reconstructed-level distribution with fakes", logy = False, fname = "recoWithFakes_%s.%s" % (i,extension))
-  plotH1D(recoWithoutFakes[i], "Reconstructed "+varname, "Events", "Reconstructed-level distribution without fakes", logy = True, fname = "recoWithoutFakes_%s.%s" % (i,extension))
-  plotH1D(eff[i], "Particle-level "+varname, "Efficiency", "Efficiency of particle-level selection", logy = False, fname = "eff_%s.%s" % (i,extension))
+  plotH1D(truth[i], "Particle-level "+varname, "Events", "Truth", logy = False, fname = "truth_%s.%s" % (i, extension))
+  plotH1D(nrt[i], "Particle-level "+varname, "Events", "Truth, but not reco.", logy = False, fname = "nrt_%s.%s" % (i,extension))
+  plotH1D(recoWithFakes[i], "Reconstructed", "Events", "Reconstructed with bkg.", logy = False, fname = "recoWithFakes_%s.%s" % (i,extension))
+  plotH1D(recoWithoutFakes[i], "Reconstructed", "Events", "Reconstructed", logy = False, fname = "recoWithoutFakes_%s.%s" % (i,extension))
+  plotH1D(eff[i], "Truth", "Efficiency", "Efficiency", logy = False, fname = "eff_%s.%s" % (i,extension))
 
-  plotH1D({"Reco with fakes from projection": recoWithoutFakes[i]+bkg[i], "From getHistograms": recoWithFakes[i]}, "Reconstructed "+varname, "Events", "Reconstructed-level distribution without fakes", logy = True, fname = "reco_project.%s" % extension)
-  plotH1D({"Reco with fakes from projection - getHistograms": recoWithoutFakes[i]+bkg[i] - recoWithFakes[i]}, "Reconstructed "+varname, "Events", "Reconstructed-level distribution without fakes", logy = False, fname = "reco_project_diff.%s" % extension)
+  plotH1D({"Reco. with fakes from projection": recoWithoutFakes[i]+bkg[i], "From getHistograms": recoWithFakes[i]}, "Reconstructed "+varname, "Events", "Reconstructed", logy = False, fname = "reco_project.%s" % extension)
+  plotH1D({"Reco- with fakes from projection - getHistograms": recoWithoutFakes[i]+bkg[i] - recoWithFakes[i]}, "Reconstructed "+varname, "Events", "Reconstructed", logy = False, fname = "reco_project_diff.%s" % extension)
 
   # Create unfolding class
   m = Unfolder(bkg[i], mig[i], eff[i], truth[i])
 
   # plot response matrix P(r|t)*eff(r)
-  plotH2D(m.response, "Reconstructed-level bin", "Particle-level bin", "Transpose of response matrix P(r|t)*eff(t)", logz = True, fname = "responseMatrix_%s.%s" % (i, extension))
+  plotH2D(m.response, "Reconstructed", "Truth", "Transpose of P(r|t)*eff(t)", fname = "responseMatrix_%s.%s" % (i, extension))
 # and also the migration probabilities matrix
-  plotH2D(m.response_noeff, "Reconstructed-level bin", "Particle-level bin", "Transpose of migration probabilities P(r|t)", logz = False, fname = "migrationMatrix_%s.%s" % (i, extension), vmin = 0, vmax = 1)
+  plotH2D(m.response_noeff, "Reconstructed", "Truth", "Transpose of P(r|t)", fname = "migrationMatrix_%s.%s" % (i, extension), vmin = 0, vmax = 1)
 
 comparePlot(listHist = [bkg["A"], bkg["B"]],
             listLegend = ["Background A", "Background B"],
