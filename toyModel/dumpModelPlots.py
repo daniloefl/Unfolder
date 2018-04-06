@@ -16,7 +16,7 @@ from Unfolder.Unfolder import Unfolder
 from Unfolder.Histogram import H1D, H2D, plotH1D, plotH2D
 from readHistograms import *
 
-sns.set(context = "paper", style = "whitegrid", font_scale=2.0)
+sns.set(context = "paper", style = "whitegrid", font_scale=1.1)
 
 varname = "observable"
 extension = "eps"
