@@ -199,6 +199,8 @@ class Unfolder:
       # and multiply the response matrix by the efficiency
       for j in range(0, self.Nr):
         self.response_unfsyst[name].val[i, j] = mig.val[i, j]/rsum*eff.val[i]  # P(r|t) = P(t, r)/P(t) = Mtr*eff(t)/sum_k=1^Nr Mtk
+        # keep the same efficiency (FIXME -- only uncomment for tests)
+        #self.response_unfsyst[name].val[i, j] = mig.val[i, j]/rsum*self.eff.val[i]  # P(r|t) = P(t, r)/P(t) = Mtr*eff(t)/sum_k=1^Nr Mtk
         self.response_unfsyst[name].err[i, j] = 0 # FIXME
     self.unf_systematics.append(name)
 
