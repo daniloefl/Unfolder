@@ -94,6 +94,7 @@ class Unfolder:
     self.response_unfsyst = {}
     self.bkg_unfsyst = {}
     self.unf_systematics = []
+    self.prior_unfsyst = {}
     self.fb = 0
     self.constrainArea = False
     self.tot_bkg = self.bkg.integral()[0]
@@ -185,8 +186,10 @@ class Unfolder:
   Where Nr is the number of reconstruction-level bins. The first term keeps the effect in the background at zero so that the background
   is not correlated with this uncertainty.
   The second term is the reconstruction-level histogram one would get if the nominal truth is folded with an alternative unfolding factor.
+  The prior can be "lognormal" or "normal" to choose what the prior on the nuisance parameter would be.
+  A lognormal prior generates a posterior with a similar mean and mode, leading to a more natural interpretation of the marginal mean.
   '''
-  def addUnfoldingUncertainty(self, name, bkg, mig, eff):
+  def addUnfoldingUncertainty(self, name, bkg, mig, eff, prior = "lognormal"):
     # calculate response matrix, defined as response[i, j] = P(r = j|t = i) = P(t = i, r = j)/P(t = i)
     self.response_unfsyst[name] = H2D(mig)
     self.bkg_unfsyst[name] = H1D(bkg)
@@ -203,6 +206,7 @@ class Unfolder:
         #self.response_unfsyst[name].val[i, j] = mig.val[i, j]/rsum*self.eff.val[i]  # P(r|t) = P(t, r)/P(t) = Mtr*eff(t)/sum_k=1^Nr Mtk
         self.response_unfsyst[name].err[i, j] = 0 # FIXME
     self.unf_systematics.append(name)
+    self.prior_unfsyst[name] = prior
 
   '''
   Set a uniform prior.
@@ -261,13 +265,17 @@ class Unfolder:
       self.theta = {}
       self.unf_theta = {}
       for name in self.unf_systematics:
-        self.unf_theta[name] = pm.Normal('tu_'+name, mu = 0, sd = 1, testval = 0)
+        if self.prior_unfsyst[name] == "lognormal":
+          self.unf_theta[name] = pm.Lognormal('tu_'+name, mu = 0, sd = 0.69, testval = 1)
+        else:
+          self.unf_theta[name] = pm.Normal('tu_'+name, mu = 0, sd = 1, testval = 0)
+        #self.unf_theta[name] = pm.Laplace('tu_'+name, mu = 0, b = (2.0)**(-0.5), testval = 0)
       for name in self.systematics:
         self.theta[name] = pm.Normal('t_'+name, mu = 0, sd = 1, testval = 0)
 
       self.var_bkg = theano.shared(value = self.asMat(self.bkg.val))
       self.var_response = theano.shared(value = self.asMat(self.response.val))
-      self.R = theano.tensor.dot(self.T, self.var_response) + self.var_bkg
+      self.R = theano.tensor.dot(self.T, self.var_response)
 
       self.var_response_unfsyst = {}
       self.var_bkg_unfsyst = {}
@@ -290,11 +298,18 @@ class Unfolder:
 
       for name in self.unf_systematics:
         # add it to the total reco result
-        self.R_full += theano.tensor.dot(self.unf_theta[name]*self.T, self.var_response_unfsyst[name])
+        if self.prior_unfsyst[name] == 'lognormal':
+          self.R_full += theano.tensor.dot((1 - self.unf_theta[name])*self.T, self.var_response_unfsyst[name])
+          self.R_full += (1 - self.unf_theta[name])*self.var_bkg_unfsyst[name]
+        else:
+          self.R_full += theano.tensor.dot(self.unf_theta[name]*self.T, self.var_response_unfsyst[name])
+          self.R_full += self.unf_theta[name]*self.var_bkg_unfsyst[name]
 
       for name in self.systematics:
         # add it to the total reco result
         self.R_full += self.theta[name]*self.R_syst[name]
+
+      self.R_full += self.var_bkg
 
       self.U = pm.Poisson('U', mu = self.R_full, observed = self.var_data, shape = (self.Nr, 1))
       #self.U = pm.Normal('U', mu = self.R_full, sd = theano.tensor.sqrt(self.R_full), observed = self.var_data, shape = (self.Nr, 1))
@@ -322,16 +337,28 @@ class Unfolder:
           for name in self.systematics:
             self.symb_R[i] += self.symb_theta[name]*(self.reco_syst[name].val[i] + self.bkg_syst[name].val[i])
           for name in self.unf_systematics:
-            self.symb_R[i] += self.symb_theta[name]*(self.bkg_unfsyst[name].val[i] - self.bkg.val[i])
+            if self.prior_unfsyst[name] == 'lognormal':
+              self.symb_R[i] += (1 - self.symb_theta[name])*(self.bkg_unfsyst[name].val[i] - self.bkg.val[i])
+            else:
+              self.symb_R[i] += self.symb_theta[name]*(self.bkg_unfsyst[name].val[i] - self.bkg.val[i])
             for k in range(self.Nt):
-              self.symb_R[i] += self.symb_theta[name]*self.symb_T[k]*(self.response_unfsyst[name].val[k, i] - self.response.val[k, i])
+              if self.prior_unfsyst[name] == 'lognormal':
+                self.symb_R[i] += (1 - self.symb_theta[name])*self.symb_T[k]*(self.response_unfsyst[name].val[k, i] - self.response.val[k, i])
+              else:
+                self.symb_R[i] += self.symb_theta[name]*self.symb_T[k]*(self.response_unfsyst[name].val[k, i] - self.response.val[k, i])
         self.dummy = sympy.symbols('dummy')
         for i in range(self.Nr):
           self.nll += -self.symb_data[i]*sympy.log(self.symb_R[i]) + self.symb_R[i] + sympy.summation(sympy.log(self.dummy), (self.dummy, 1, self.symb_data[i]))
         for name in self.systematics:
           self.nll += 0.5*self.symb_theta[name]**2 + 0.5*np.log(2*np.pi)
         for name in self.unf_systematics:
-          self.nll += 0.5*self.symb_theta[name]**2 + 0.5*np.log(2*np.pi)
+          if self.prior_unfsyst[name] == 'lognormal':
+            mu = 0.0
+            sd = 0.69
+            tau = sd**(-2.0)
+            self.nll += 0.5*tau*sympy.log(self.symb_theta[name] - mu)**2 - 0.5*np.log(tau/np.sqrt(2*np.pi)) + sympy.log(self.symb_theta[name])
+          else:
+            self.nll += 0.5*self.symb_theta[name]**2 + 0.5*np.log(2*np.pi)
         print("Defined -ln(L) symbolically as:")
         print(self.nll)
 
@@ -709,9 +736,16 @@ class Unfolder:
       #else:
       #  print("Negative PDF:", p)
       return p
+
+    bounds = []
+    for i in range(0, self.Nt+len(self.systematics)+len(self.unf_systematics)):
+      bounds.append((S[i, 0]-3*dS[i,0], S[i,0]+3*dS[i,0]))
+    for i in range(len(self.unf_systematics)):
+      if self.prior_unfsyst[self.unf_systematics[i]] == 'lognormal':
+        bounds[self.Nt+len(self.systematics)+i] = (1e-6, S[i,0]+3*dS[i,0])
     args = {'pdf': pdf}
     print("Start minimization with %s = %f" % (str(S), mpdf(S, args)))
-    res = optimize.minimize(mpdf, S, args = args, method='L-BFGS-B', options={'maxiter': 100, 'disp': True})
+    res = optimize.minimize(mpdf, S, args = args, bounds = bounds, method='L-BFGS-B', options={'maxiter': 100, 'disp': True})
     print(res)
 
     # get 68% interval
@@ -721,7 +755,10 @@ class Unfolder:
     Ndims = self.Nt+len(self.systematics)+len(self.unf_systematics)
     Ngrid = 1000*Ndims
     for i in range(0, self.Nt+len(self.systematics)+len(self.unf_systematics)):
-      T.append(np.linspace(res.x[i]-5*dS[i,0], res.x[i]+5*dS[i,0], Ngrid))
+      if i >= self.Nt+len(self.systematics) and self.prior_unfsyst[self.unf_systematics[i - self.Nt+len(self.systematics)]] == 'lognormal':
+        T.append(np.linspace(1e-6, res.x[i]+5*dS[i,0], Ngrid))
+      else:
+        T.append(np.linspace(res.x[i]-5*dS[i,0], res.x[i]+5*dS[i,0], Ngrid))
 
     # build mesh with coordinates
     meshT = np.meshgrid(T)
@@ -780,7 +817,7 @@ class Unfolder:
       jacHandle = [sympy.utilities.lambdify(xx, jf, modules = 'numpy') for jf in jac]
       def jacProxy(zz):
         return np.array([jfn(*zz) for jfn in jacHandle])
-      symb_res = optimize.minimize(nllWithDataProxy, S, jac = jacProxy, method='L-BFGS-B', options={'maxiter': 100, 'disp': True})
+      symb_res = optimize.minimize(nllWithDataProxy, S, bounds = bounds, jac = jacProxy, method='L-BFGS-B', options={'maxiter': 100, 'disp': True})
       print("Symbolic minimisation:")
       print(symb_res)
       res.symb_x = symb_res.x
@@ -790,7 +827,10 @@ class Unfolder:
       # ie: T = [np.linspace(mode1 - 2*sigma1, mode1 + 2*sigma1, Ngrid), np.linspace(mode2 - 2*sigma2, mode2 + 2*sigma2, Ngrid), ...]
       symb_T = []
       for i in range(0, self.Nt+len(self.systematics)+len(self.unf_systematics)):
-        symb_T.append(np.linspace(res.symb_x[i]-2*dS[i,0], res.symb_x[i]+2*dS[i,0], Ngrid))
+        if i >= self.Nt+len(self.systematics) and self.prior_unfsyst[self.unf_systematics[i - self.Nt+len(self.systematics)]] == 'lognormal':
+          symb_T.append(np.linspace(1e-6, res.x[i]+2*dS[i,0], Ngrid))
+        else:
+          symb_T.append(np.linspace(res.symb_x[i]-2*dS[i,0], res.symb_x[i]+2*dS[i,0], Ngrid))
   
       # build mesh with coordinates
       symb_meshT = np.meshgrid(symb_T)
