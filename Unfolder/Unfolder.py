@@ -353,7 +353,7 @@ class Unfolder:
           self.nll += 0.5*self.symb_theta[name]**2 + 0.5*np.log(2*np.pi)
         for name in self.unf_systematics:
           if self.prior_unfsyst[name] == 'lognormal':
-            mu = 0.0
+            mu = 0
             sd = 0.69
             tau = sd**(-2.0)
             self.nll += 0.5*tau*sympy.log(self.symb_theta[name] - mu)**2 - 0.5*np.log(tau/np.sqrt(2*np.pi)) + sympy.log(self.symb_theta[name])
@@ -930,7 +930,10 @@ class Unfolder:
     plt.axvline(self.hnpu_median.val[i], linestyle = '-', linewidth = 1.5, color = 'k', label = 'Marginal median')
     plt.title(self.unf_systematics[i])
     plt.ylabel("Probability")
-    plt.xlim([-5, 5])
+    if self.prior_unfsyst[syst] == 'lognormal':
+      plt.xlim([0, 8])
+    else:
+      plt.xlim([-5, 5])
     plt.xlabel("Nuisance parameter value")
     plt.legend()
     plt.tight_layout()
