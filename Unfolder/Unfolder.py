@@ -189,7 +189,7 @@ class Unfolder:
   The prior can be "lognormal" or "normal" to choose what the prior on the nuisance parameter would be.
   A lognormal prior generates a posterior with a similar mean and mode, leading to a more natural interpretation of the marginal mean.
   '''
-  def addUnfoldingUncertainty(self, name, bkg, mig, eff, prior = "lognormal"):
+  def addUnfoldingUncertainty(self, name, bkg, mig, eff, prior = "gaussian"):
     # calculate response matrix, defined as response[i, j] = P(r = j|t = i) = P(t = i, r = j)/P(t = i)
     self.response_unfsyst[name] = H2D(mig)
     self.bkg_unfsyst[name] = H1D(bkg)
@@ -739,7 +739,7 @@ class Unfolder:
 
     bounds = []
     for i in range(0, self.Nt+len(self.systematics)+len(self.unf_systematics)):
-      bounds.append((S[i, 0]-3*dS[i,0], S[i,0]+3*dS[i,0]))
+      bounds.append((S[i, 0]-5*dS[i,0], S[i,0]+5*dS[i,0]))
     for i in range(len(self.unf_systematics)):
       if self.prior_unfsyst[self.unf_systematics[i]] == 'lognormal':
         bounds[self.Nt+len(self.systematics)+i] = (1e-6, S[i,0]+3*dS[i,0])
