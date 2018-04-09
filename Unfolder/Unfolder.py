@@ -309,6 +309,9 @@ class Unfolder:
         # add it to the total reco result
         self.R_full += self.theta[name]*self.R_syst[name]
 
+      # cut-off at 0 to create efficiency boundaries
+      self.R_full = theano.tensor.maximum(self.R_full, 0)
+
       self.R_full += self.var_bkg
 
       self.U = pm.Poisson('U', mu = self.R_full, observed = self.var_data, shape = (self.Nr, 1))
