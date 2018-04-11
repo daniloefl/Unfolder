@@ -14,7 +14,7 @@ from scipy import optimize
 # FIXME
 # Change this to estimate the mode using Sympy
 # Useful as a cross check
-doSymbolicMode = True
+doSymbolicMode = False
 try:
   import sympy
 except:
@@ -189,7 +189,7 @@ class Unfolder:
   The prior can be "lognormal" or "normal" to choose what the prior on the nuisance parameter would be.
   A lognormal prior generates a posterior with a similar mean and mode, leading to a more natural interpretation of the marginal mean.
   '''
-  def addUnfoldingUncertainty(self, name, bkg, mig, eff, prior = "gaussian"):
+  def addUnfoldingUncertainty(self, name, bkg, mig, eff, prior = "categorical"):
     # calculate response matrix, defined as response[i, j] = P(r = j|t = i) = P(t = i, r = j)/P(t = i)
     self.response_unfsyst[name] = H2D(mig)
     self.bkg_unfsyst[name] = H1D(bkg)
@@ -267,6 +267,8 @@ class Unfolder:
       for name in self.unf_systematics:
         if self.prior_unfsyst[name] == "lognormal":
           self.unf_theta[name] = pm.Lognormal('tu_'+name, mu = 0, sd = 0.69, testval = 1)
+        elif self.prior_unfsyst[name] == 'categorical':
+          self.unf_theta[name] = pm.Categorical('tu_'+name, p = [0.67, 0.33], testval = 0)
         else:
           self.unf_theta[name] = pm.Normal('tu_'+name, mu = 0, sd = 1, testval = 0)
         #self.unf_theta[name] = pm.Laplace('tu_'+name, mu = 0, b = (2.0)**(-0.5), testval = 0)
@@ -278,9 +280,11 @@ class Unfolder:
       self.R = theano.tensor.dot(self.T, self.var_response)
 
       self.var_response_unfsyst = {}
+      self.var_response_alt_unfsyst = {}
       self.var_bkg_unfsyst = {}
       for name in self.unf_systematics:
         self.var_response_unfsyst[name] = theano.shared(value = self.asMat(self.response_unfsyst[name].val - self.response.val))
+        self.var_response_alt_unfsyst[name] = theano.shared(value = self.asMat(self.response_unfsyst[name].val))
         self.var_bkg_unfsyst[name] = theano.shared(value = self.asMat(self.bkg_unfsyst[name].val - self.bkg.val))
 
       self.var_bkg_syst = {}
@@ -294,13 +298,17 @@ class Unfolder:
         self.R_syst[name] = self.var_reco_syst[name] + self.var_bkg_syst[name]
 
       # reco result including systematics:
-      self.R_full = self.R
+      self.R_full = 0
 
       for name in self.unf_systematics:
         # add it to the total reco result
         if self.prior_unfsyst[name] == 'lognormal':
           self.R_full += theano.tensor.dot((1 - self.unf_theta[name])*self.T, self.var_response_unfsyst[name])
           self.R_full += (1 - self.unf_theta[name])*self.var_bkg_unfsyst[name]
+        elif self.prior_unfsyst[name] == 'categorical':
+          self.R_full += theano.tensor.dot(1.0*self.unf_theta[name]*self.T, self.var_response_alt_unfsyst[name])
+          self.R_full += self.unf_theta[name]*self.var_bkg_unfsyst[name]
+          self.R = theano.tensor.dot(self.R, (1.0 - self.unf_theta[name]))
         else:
           self.R_full += theano.tensor.dot(self.unf_theta[name]*self.T, self.var_response_unfsyst[name])
           self.R_full += self.unf_theta[name]*self.var_bkg_unfsyst[name]
@@ -308,6 +316,8 @@ class Unfolder:
       for name in self.systematics:
         # add it to the total reco result
         self.R_full += self.theta[name]*self.R_syst[name]
+
+      self.R_full += self.R
 
       # cut-off at 0 to create efficiency boundaries
       self.R_full = theano.tensor.maximum(self.R_full, 0)
@@ -1032,11 +1042,11 @@ class Unfolder:
     #plt.errorbar(self.datasubbkg.x, self.datasubbkg.val, self.datasubbkg.err**0.5, self.datasubbkg.x_err, fmt = 'co', linewidth=2, label = "Background subtracted", markersize=10)
     #plt.errorbar(self.recoWithoutFakes.x, self.recoWithoutFakes.val, self.recoWithoutFakes.err**0.5, self.recoWithoutFakes.x_err, fmt = 'mv', linewidth=2, label = "Expected signal (no fakes) distribution", markersize=5)
     plt.errorbar(self.truth.x, self.truth.val, [self.truth.err_dw**0.5, self.truth.err_up**0.5], self.truth.x_err, fmt = 'g^', linewidth=2, label = "Truth", markersize=10)
-    plt.errorbar(self.hunf_mode.x, self.hunf_mode.val, [self.hunf_mode.err_dw**0.5, self.hunf_mode.err_up**0.5], self.hunf_mode.x_err, fmt = 'm^', linewidth=2, label = "Unfolded mode", markersize = 5)
     plt.errorbar(self.hunf_median.x, self.hunf_median.val, [self.hunf_median.err_dw**0.5, self.hunf_median.err_up**0.5], self.hunf_median.x_err, fmt = 'k^', linewidth=2, label = "Marginal median", markersize = 5)
     if doSymbolicMode:
       plt.errorbar(self.hunf_smode.x, self.hunf_smode.val, [self.hunf_smode.err_dw**0.5, self.hunf_smode.err_up**0.5], self.hunf_smode.x_err, fmt = 'b^', linewidth=2, label = "Unfolded mode (symbolic)", markersize = 5)
     plt.errorbar(self.hunf.x, self.hunf.val, [self.hunf.err_dw**0.5, self.hunf.err_up**0.5], self.hunf.x_err, fmt = 'rv', linewidth=2, label = "Marginal mean", markersize=5)
+    plt.errorbar(self.hunf_mode.x, self.hunf_mode.val, [self.hunf_mode.err_dw**0.5, self.hunf_mode.err_up**0.5], self.hunf_mode.x_err, fmt = 'm^', linewidth=2, label = "Unfolded mode", markersize = 5)
     plt.ylim([0, ymax*1.2])
     plt.legend()
     plt.ylabel("Events")
