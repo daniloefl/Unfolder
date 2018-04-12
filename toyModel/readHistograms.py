@@ -8,7 +8,7 @@ import json
 '''
 Read unfolding factors, deciding whether to use the JSON format or the PKL format based on the file name.
 '''
-def getHistograms(fname = "toyModel/ModelChrisSmallVar.json", direc = "A"):
+def getHistograms(fname = "toyModel/ModelChrisSmallVar2.json", direc = "A"):
   if '.json' in fname:
     return getHistogramsFromJson(fname, direc)
   return getHistogramsFromPkl
