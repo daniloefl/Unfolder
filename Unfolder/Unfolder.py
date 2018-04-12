@@ -320,7 +320,7 @@ class Unfolder:
       self.R_full += self.R
 
       # cut-off at 0 to create efficiency boundaries
-      self.R_full = theano.tensor.maximum(self.R_full, 0)
+      #self.R_full = theano.tensor.maximum(self.R_full, 0)
 
       self.R_full += self.var_bkg
 
