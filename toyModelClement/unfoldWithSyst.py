@@ -76,7 +76,12 @@ for k in ["B"]:
 
 print("Response")
 print(m.response.val)
-print(m.response_unfsyst["B"].val)
+print("Bkg and reco (nominal)")
+print(m.bkg)
+print(m.recoWithoutFakes)
+print("Uncertainties in bkg and reco")
+print(m.bkg_syst['B'])
+print(m.reco_syst['B'])
 
 m.run(data)
 m.sample(10000)
