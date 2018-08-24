@@ -51,7 +51,7 @@ for i in recoWithFakes:
 
 # generate perfect fake data
 import sys
-data = recoWithFakes[data_input]
+data = recoWithFakes[data_input] + bkg[data_input]
 
 Nr = len(bkg["A"].val)
 
@@ -60,7 +60,7 @@ m = Unfolder(bkg["A"], mig["A"], eff["A"], truth["A"])
 m.setUniformPrior()
 
 m.run(data)
-m.sample(10000)
+m.sample(50000)
 
 unf_orig = m.hunf
 unf_orig_mode = m.hunf_mode
@@ -70,9 +70,8 @@ n = None
 m = Unfolder(bkg["A"], mig["A"], eff["A"], truth["A"])
 m.setUniformPrior()
   
-for k in ["B"]:
-  # use uncertainty at reconstruction level, by using the nominal truth folded with the alternative response matrix
-  m.addUncertainty(k, bkg["B"], np.dot(truth["B"].val, response["B"].val))
+# use uncertainty at reconstruction level, by using the nominal truth folded with the alternative response matrix
+m.addUncertainty("B", bkg["B"], recoWithoutFakes["B"])
 
 print("Response")
 print(m.response.val)
@@ -82,9 +81,11 @@ print(m.recoWithoutFakes.val)
 print("Uncertainties in bkg and reco")
 print(m.bkg_syst['B'].val)
 print(m.reco_syst['B'].val)
+print("Data")
+print(data.val)
 
 m.run(data)
-m.sample(10000)
+m.sample(50000)
 
 # plot marginal distributions
 m.plotMarginal("plotMarginal.%s" % extension)
@@ -93,7 +94,7 @@ for i in ["B"]:
   m.plotNPMarginal(i, "plotNPMarginal_%s.%s" % (i, extension))
 
 # plot correlations
-m.plotPairs("pairPlot.%s" % extension) # takes forever
+#m.plotPairs("pairPlot.%s" % extension) # takes forever
 m.plotCov("covPlot.%s" % extension)
 m.plotCorr("corrPlot.%s" % extension)
 m.plotCorrWithNP("corrPlotWithNP.%s" % extension)
