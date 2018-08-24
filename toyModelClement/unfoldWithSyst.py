@@ -60,7 +60,7 @@ m = Unfolder(bkg["A"], mig["A"], eff["A"], truth["A"])
 m.setUniformPrior()
 
 m.run(data)
-m.sample(50000)
+m.sample(100000)
 
 unf_orig = m.hunf
 unf_orig_mode = m.hunf_mode
@@ -85,7 +85,7 @@ print("Data")
 print(data.val)
 
 m.run(data)
-m.sample(50000)
+m.sample(100000)
 
 # plot marginal distributions
 m.plotMarginal("plotMarginal.%s" % extension)
