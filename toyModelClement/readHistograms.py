@@ -42,7 +42,10 @@ def getHistogramsFromJson(fname, direc):
   Nreco = resp.val.shape[1]
 
   # no background for now
-  bkg = H1D(np.zeros(Nreco, dtype = np.float64))
+  if direc == "A":
+    bkg = H1D(np.asarray(parsed_json["Nominal"]["Bkgs"]["Bkg"], dtype = np.float64))
+  else:
+    bkg = H1D(np.asarray(parsed_json["ModelVars"]["resolution"]["Variation"]["Bkgs"]["Bkg"], dtype = np.float64))
 
 
   #print("Response matrix")

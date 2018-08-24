@@ -72,7 +72,7 @@ m.setUniformPrior()
   
 for k in ["B"]:
   # use uncertainty at reconstruction level, by using the nominal truth folded with the alternative response matrix
-  m.addUncertainty(k, bkg["A"], np.dot(truth["A"].val, response[k].val))
+  m.addUncertainty(k, bkg["B"], np.dot(truth["B"].val, response["B"].val))
 
 print("Response")
 print(m.response.val)
