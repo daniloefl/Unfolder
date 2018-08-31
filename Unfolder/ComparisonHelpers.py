@@ -53,7 +53,7 @@ comparePlot([f_data, f_data - f_bkg, truth, tunfold_result], ["Data", "Data - bk
 def getTUnfolder(bkg, mig, eff, data, regMode = None, normMode = None):
   if regMode == None: regMode = ROOT.TUnfold.kRegModeDerivative
   if normMode == None: normMode = ROOT.TUnfold.kEConstraintArea
-  tunfolder = ROOT.TUnfoldDensity(mig.T().toROOT("tunfold_mig"), ROOT.TUnfold.kHistMapOutputVert, regMode, normMode, ROOT.TUnfoldDensity.kDensityModeeNone)
+  tunfolder = ROOT.TUnfoldDensity(mig.T().toROOT("tunfold_mig"), ROOT.TUnfold.kHistMapOutputVert, regMode, normMode, ROOT.TUnfoldDensity.kDensityModeNone)
   bkg_noerr = H1D(bkg)
   for k in range(0, len(bkg.err)):
     bkg_noerr.err[k] = 0
